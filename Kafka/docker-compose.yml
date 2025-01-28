@@ -1,0 +1,38 @@
+services:
+  kafka1:
+    image: bitnami/kafka:3.8.1
+    container_name: kafka1
+    env_file:
+      - ./instance1/.env
+    volumes:
+      - ./instance1/data:/var/lib/kafka/data
+    networks:
+      - kafka-net
+
+  kafka2:
+    image: bitnami/kafka:3.8.1
+    container_name: kafka2
+    env_file:
+      - ./instance2/.env
+    volumes:
+      - ./instance2/data:/var/lib/kafka/data
+    networks:
+      - kafka-net
+
+  kafka-init:
+    image: bitnami/kafka:3.8.1
+    container_name: kafka-init
+    depends_on:
+      - kafka1
+      - kafka2
+    entrypoint: /init.sh
+    volumes:
+      - ./init.sh:/init.sh
+    networks:
+      - kafka-net
+
+networks:
+  kafka-net:
+    name: kafka-net
+    driver: bridge
+    external: false
