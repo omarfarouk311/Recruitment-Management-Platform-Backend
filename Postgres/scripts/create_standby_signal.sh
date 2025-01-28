@@ -1,0 +1,1 @@
+touch /var/lib/postgresql/data/standby.signal
