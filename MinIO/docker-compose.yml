@@ -1,0 +1,20 @@
+services:
+  object-store:
+    image: minio/minio:RELEASE.2025-01-20T14-49-07Z
+    container_name: object-store
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-store:/data
+    networks:
+      - internal-net
+    ports:
+      - 9001:9001
+
+volumes:
+  minio-store:
+
+networks:
+  internal-net:
+    name: internal-net
