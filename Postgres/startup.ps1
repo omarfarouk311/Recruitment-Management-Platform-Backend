@@ -1,9 +1,9 @@
-docker-compose up -d
+docker compose up -d
 
-Start-Sleep -Seconds 60
+Start-Sleep -Seconds 90
 
-docker-compose stop
+docker compose stop
 
 .\replication_setup.ps1
 
-docker-compose start
+docker compose start

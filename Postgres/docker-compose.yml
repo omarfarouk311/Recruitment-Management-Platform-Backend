@@ -2,11 +2,16 @@ services:
   master:
     image: postgres:17.2
     container_name: master
+    ports:
+      - 5432:5432
     volumes:
       - ./master/data:/var/lib/postgresql/data
-      - ./scripts/create_replication_user.sql:/docker-entrypoint-initdb.d/create_replication_user.sql
+      - ./scripts/create_users.sql:/docker-entrypoint-initdb.d/create_users.sql
+      - ./scripts/init_table.sh:/docker-entrypoint-initdb.d/init_table.sh
+      - ./scripts/table_creation.sql:/scripts/table_creation.sql
+      - ./scripts/set_permissions.sql:/docker-entrypoint-initdb.d/set_permissions.sql
     networks:
-      - db-net
+      - internal-net
     env_file:
       - .env
 
@@ -17,7 +22,7 @@ services:
       - ./standby1/data:/var/lib/postgresql/data
       - ./scripts/create_standby_signal.sh:/docker-entrypoint-initdb.d/create_standby_signal.sh
     networks:
-      - db-net
+      - internal-net
     depends_on:
       - master
     env_file:
@@ -30,15 +35,15 @@ services:
       - ./standby2/data:/var/lib/postgresql/data
       - ./scripts/create_standby_signal.sh:/docker-entrypoint-initdb.d/create_standby_signal.sh
     networks:
-      - db-net
+      - internal-net
     depends_on:
       - master
     env_file:
       - .env
 
 networks:
-  db-net:
-    name: db-net
+  internal-net:
+    name: internal-net
     driver: bridge
     ipam:
       config:
