@@ -1,6 +1,3 @@
-CREATE DATABASE keycloak OWNER postgres;
-CREATE DATABASE app OWNER postgres;
-
 CREATE USER replicator WITH REPLICATION PASSWORD 'rep';
 CREATE USER keycloak WITH PASSWORD 'keycloak';
 CREATE USER select_user WITH PASSWORD 'public1';
