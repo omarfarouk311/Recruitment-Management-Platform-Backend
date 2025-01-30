@@ -56,9 +56,9 @@ CREATE TABLE Education (
   school_name TEXT NOT NULL,
   field TEXT NOT NULL,
   degree TEXT NOT NULL,
-  grade float
+  grade float,
   start_date date NOT NULL,
-  end_date date NOT NULL,
+  end_date date NOT NULL
 );
 
 CREATE TABLE Company_Invitations (
@@ -210,8 +210,7 @@ CREATE TABLE Recommendations (
   similarity_score float NOT NULL
 ) PARTITION BY RANGE (seeker_id);
 
-CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations
-    FOR VALUES FROM (1) TO (10001);
+CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FROM (1) TO (10001);
 
 CREATE TABLE Reviews (
   company_id int NOT NULL,
@@ -424,5 +423,6 @@ GRANT UPDATE ON ALL TABLES IN SCHEMA public TO update_user;
 -- Grant DELETE permission
 GRANT DELETE ON ALL TABLES IN SCHEMA public TO delete_user;
 
+-- Grant sequence usage for insert & delete users
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO update_user;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO insert_user;
