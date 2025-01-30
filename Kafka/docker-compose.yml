@@ -7,7 +7,7 @@ services:
     volumes:
       - ./instance1/data:/var/lib/kafka/data
     networks:
-      - kafka-net
+      - internal-net
 
   kafka2:
     image: bitnami/kafka:3.8.1
@@ -17,7 +17,7 @@ services:
     volumes:
       - ./instance2/data:/var/lib/kafka/data
     networks:
-      - kafka-net
+      - internal-net
 
   kafka-init:
     image: bitnami/kafka:3.8.1
@@ -29,10 +29,8 @@ services:
     volumes:
       - ./init.sh:/init.sh
     networks:
-      - kafka-net
+      - internal-net
 
 networks:
-  kafka-net:
-    name: kafka-net
-    driver: bridge
-    external: false
+  internal-net:
+    name: internal-net
