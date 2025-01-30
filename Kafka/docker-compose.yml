@@ -30,7 +30,9 @@ services:
       - ./init.sh:/init.sh
     networks:
       - internal-net
+    
 
 networks:
   internal-net:
     name: internal-net
+    external: true

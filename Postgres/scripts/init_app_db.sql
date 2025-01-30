@@ -57,6 +57,8 @@ CREATE TABLE Education (
   field TEXT NOT NULL,
   degree TEXT NOT NULL,
   grade float
+  start_date date NOT NULL,
+  end_date date NOT NULL,
 );
 
 CREATE TABLE Company_Invitations (
