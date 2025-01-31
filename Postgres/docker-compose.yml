@@ -1,6 +1,6 @@
 services:
   master:
-    image: postgres:17.2
+    image: pgvector/pgvector:pg17
     container_name: master
     ports:
       - 5432:5432
@@ -17,7 +17,7 @@ services:
       - .env
 
   standby1:
-    image: postgres:17.2
+    image: pgvector/pgvector:pg17
     container_name: standby1
     volumes:
       - ./standby1/data:/var/lib/postgresql/data
@@ -30,7 +30,7 @@ services:
       - .env
 
   standby2:
-    image: postgres:17.2
+    image: pgvector/pgvector:pg17
     container_name: standby2
     volumes:
       - ./standby2/data:/var/lib/postgresql/data

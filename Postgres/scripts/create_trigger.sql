@@ -29,6 +29,15 @@ BEGIN
                 partition_start,
                 partition_end + 1
             );
+            Execute format(
+                'ALTER TABLE %I ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;',
+                partition_name
+            );
+            Execute format(
+                'ALTER TABLE %I ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;',
+                partition_name
+            );
+
         END IF;
     END IF;
 
