@@ -196,7 +196,6 @@ CREATE TABLE Assessment_Score (
   score smallint NOT NULL
 );
 
--------------------------------------------Add Indexes-------------------------------------------
 CREATE TABLE Candidate_History (
   seeker_id int NOT NULL,
   job_id int NOT NULL,
@@ -271,6 +270,8 @@ CREATE TABLE Logs (
 );
 
 CREATE INDEX company_name_tsvector_index ON Company USING GIN (name_tsvector);
+
+CREATE INDEX job_title_tsvector_index ON Job USING GIN (title_tsvector);
 
 CREATE INDEX ON Candidate_History (seeker_id, status);
 

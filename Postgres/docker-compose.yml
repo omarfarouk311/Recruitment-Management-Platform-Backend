@@ -1,23 +1,24 @@
 services:
   master:
-    image: pgvector/pgvector:pg17
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: master
-    ports:
-      - 5432:5432
     volumes:
       - ./master/data:/var/lib/postgresql/data
       - ./scripts/create_users.sql:/docker-entrypoint-initdb.d/create_users.sql
       - ./scripts/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
       - ./scripts/init_table.sh:/docker-entrypoint-initdb.d/init_table.sh
       - ./scripts:/scripts
-
     networks:
       - internal-net
     env_file:
       - .env
 
   standby1:
-    image: pgvector/pgvector:pg17
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: standby1
     volumes:
       - ./standby1/data:/var/lib/postgresql/data
@@ -30,7 +31,9 @@ services:
       - .env
 
   standby2:
-    image: pgvector/pgvector:pg17
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: standby2
     volumes:
       - ./standby2/data:/var/lib/postgresql/data
