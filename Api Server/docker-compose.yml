@@ -1,0 +1,15 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api
+    networks:
+      - internal-net
+    env_file:
+      - .env
+
+networks:
+  internal-net:
+    name: internal-net
+    external: true
