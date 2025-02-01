@@ -195,8 +195,8 @@ CREATE TABLE Assessment_Score (
 );
 
 CREATE TABLE Candidate_History (
-  seeker_id int NOT NULL,
-  job_id int NOT NULL,
+  seeker_id int,
+  job_id int,
   job_title text NOT NULL,
   phase_name text NOT NULL,
   status BOOLEAN NOT NULL,
@@ -260,6 +260,7 @@ CREATE TABLE Action (
 );
 
 CREATE TABLE Logs (
+  id bytea PRIMARY KEY,
   performed_by text NOT NULL,
   company_id int NOT NULL,
   created_at timestamp NOT NULL,
@@ -345,7 +346,7 @@ CREATE INDEX ON Logs (company_id, created_at);
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
-ALTER TABLE Candidate_History ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE SET NULL;
+ALTER TABLE Candidate_History ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE NO ACTION;
 
 ALTER TABLE Job_Seeker ADD FOREIGN KEY (id) REFERENCES Users (id) ON DELETE CASCADE;
 
