@@ -28,7 +28,6 @@ CREATE TABLE Recruiter (
 CREATE TABLE Company (
   id serial PRIMARY KEY,
   overview TEXT NOT NULL,
-  name_tsvector TSVECTOR NOT NULL,
   type BOOLEAN NOT NULL,
   founded_on DATE NOT NULL,
   company_size INTEGER NOT NULL,
@@ -104,7 +103,6 @@ CREATE TABLE Job (
   country TEXT,
   city TEXT,
   remote BOOLEAN NOT NULL,
-  title_tsvector tsvector NOT NULL,
   applied_cnt smallint NOT NULL,
   closed BOOLEAN NOT NULL
 );
@@ -269,9 +267,13 @@ CREATE TABLE Logs (
   action_type smallint NOT NULL
 );
 
-CREATE INDEX company_name_tsvector_index ON Company USING GIN (name_tsvector);
+CREATE INDEX ON Company USING GIN (name gin_trgm_ops);
 
-CREATE INDEX job_title_tsvector_index ON Job USING GIN (title_tsvector);
+CREATE INDEX ON Job USING GIN (title gin_trgm_ops);
+
+CREATE INDEX ON Job USING GIST (title gist_trgm_ops);
+
+CREATE INDEX ON Company USING GIST (name gist_trgm_ops);
 
 CREATE INDEX ON Candidate_History (seeker_id, status);
 
