@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: api
+    volumes:
+      - .:/src
     networks:
       - internal-net
     env_file:
