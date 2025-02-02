@@ -10,7 +10,7 @@ class Review {
         this.createdAt = createdAt;
     }
 
-    static async getReviews(companyId, page, limit = 5, filters = {}) {
+    static async getReviews(companyId, page, filters = {}, limit = 5) {
         const pool = getReadPool();
         // base query
         let query = `select company_id as "companyId", title, description, rating, role, created_at as "createdAt" from reviews where company_id = ($1)`;
