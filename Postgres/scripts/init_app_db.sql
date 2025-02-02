@@ -302,7 +302,7 @@ CREATE INDEX candidates_job_id_status_index ON Candidates (job_id, phase);
 
 CREATE INDEX candidates_last_status_update_index ON Candidates (last_status_update);
 
-CREATE INDEX candidates_score_index ON Candidates (similarity_score);
+CREATE INDEX candidates_score_index ON Candidates (job_id, similarity_score);
 
 CREATE INDEX phase_metadata_deadline_index ON Candidates (phase_deadline);
 
