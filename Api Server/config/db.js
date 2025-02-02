@@ -1,10 +1,11 @@
 const { Pool } = require('pg');
 const config = require('./config');
+const poolRound = false;
 
-exports.primaryPool = new Pool({
+const primaryPool = new Pool({
     host: config.master_db,
-    user: 'postgres',
-    password: 'postgres',
+    user: config.db_name,
+    password: config.db_user_password,
     port: config.db_port,
     database: config.db_name,
     statement_timeout: 5000,
@@ -15,7 +16,7 @@ exports.primaryPool = new Pool({
     min: 5,
 });
 
-exports.replica_1_Pool = new Pool({
+const replica_1_Pool = new Pool({
     host: config.replica1,
     user: config.db_user,
     password: config.db_user_password,
@@ -29,7 +30,7 @@ exports.replica_1_Pool = new Pool({
     min: 5,
 });
 
-exports.replica_2_Pool = new Pool({
+const replica_2_Pool = new Pool({
     host: config.replica2,
     user: config.db_user,
     password: config.db_user_password,
@@ -42,3 +43,11 @@ exports.replica_2_Pool = new Pool({
     max: 20,
     min: 5,
 });
+
+exports.getReadPool = () => {
+    poolRound = !poolRound;
+    if (poolRound) return replica_1_Pool;
+    return replica_2_Pool;
+}
+
+exports.getWritePool = () => primaryPool;
