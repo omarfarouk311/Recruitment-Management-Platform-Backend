@@ -5,3 +5,5 @@ const router = Router();
 
 router.route('/:companyId')
     .get(validateGetReviews, handleValidationErrors, reviewController.getReviews);
+
+module.exports = router;

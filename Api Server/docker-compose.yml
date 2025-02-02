@@ -1,8 +1,6 @@
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: node:22.13.1-bookworm-slim
     container_name: api
     volumes:
       - .:/src
@@ -10,6 +8,8 @@ services:
       - internal-net
     env_file:
       - .env
+    working_dir: /src
+    command: ["npm", "start"]
 
 networks:
   internal-net:
