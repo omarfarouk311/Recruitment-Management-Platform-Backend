@@ -10,7 +10,7 @@ class Review {
         this.createdAt = createdAt;
     }
 
-    static async getReviews(companyId, page, filters = {}, limit = 5) {
+    static async getReviews(companyId, filters = { page: 1 }, limit = 5) {
         const pool = getReadPool();
         // base query
         let query = `select company_id as "companyId", title, description, rating, role, created_at as "createdAt" from reviews where company_id = ($1)`;
@@ -59,7 +59,7 @@ class Review {
 
         // pagination
         query += `limit ($3) offset ($4)`;
-        values.push(limit, (page - 1) * limit);
+        values.push(limit, (filters.page - 1) * limit);
 
         const result = await pool.query(query, values);
         return result.rows;
