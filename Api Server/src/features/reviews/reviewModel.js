@@ -10,7 +10,7 @@ class Review {
         this.createdAt = createdAt;
     }
 
-    static async getReviews(companyId, filters = { page: 1 }, limit = 5) {
+    static async getReviews(companyId, filters, limit = 5) {
         const pool = getReadPool();
         // base query
         let query = `select company_id as "companyId", title, description, rating, role, created_at as "createdAt" from reviews where company_id = ($1)`;
@@ -22,43 +22,29 @@ class Review {
             values.push(filters.rating);
         }
 
-        //sorting by rating
-        if (filters.sort) {
-            const { sort } = filters;
-            const prev = false
-            //rating asc
-            if (sort.rating === 1) {
-                query += ` order by rating asc`;
-                prev = true;
-            }
+        //sorting
+        //rating asc
+        if (filters.sortByRating === 1) {
+            query += ` order by rating asc`;
+        }
 
-            //rating desc
-            if (sort.rating === -1) {
-                query += ` order by rating desc`;
-                prev = true
-            }
+        //rating desc
+        if (filters.sortByRating === -1) {
+            query += ` order by rating desc`;
+        }
 
-            // newest
-            if (sort.date === 1) {
-                if (prev) query += `,created_at asc`
-                else {
-                    query += `order by created_at asc`
-                    prev = true
-                }
-            }
+        // oldest
+        if (filters.sortByDate === 1) {
+            query += ` order by created_at asc`
+        }
 
-            // oldest
-            if (sort.date === -1) {
-                if (prev) query += `,created_at desc`
-                else {
-                    query += `order by created_at desc`
-                    prev = true
-                }
-            }
+        // newest
+        if (filters.sortByDate === -1) {
+            query += ` order by created_at desc`
         }
 
         // pagination
-        query += `limit ($3) offset ($4)`;
+        query += `limit ($3) offset ($4);`;
         values.push(limit, (filters.page - 1) * limit);
 
         const result = await pool.query(query, values);

@@ -1,6 +1,6 @@
 const reviewService = require('./reviewService');
 
-exports.getReviews = async (req, res) => {
+exports.getReviews = async (req, res, next) => {
     const { companyId } = req.params;
     // page property is mandatory, validation fails without it
     const filters = req.query;
