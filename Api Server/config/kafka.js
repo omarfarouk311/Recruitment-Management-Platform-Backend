@@ -5,4 +5,7 @@ const kafka = new Kafka({
   brokers: ['kafka1:9092', 'kafka2:9092']
 })
 
-module.exports=kafka.producer()
+const producer = kafka.producer();
+await producer.connect();
+
+module.exports = producer;
