@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 const config = require('./config');
-const poolRound = false;
+let poolRound = false;
 
 const primaryPool = new Pool({
     host: config.master_db,
