@@ -20,5 +20,5 @@ module.exports = {
     candidate_status_pending: 1,
     candidate_status_accepted: 2,
     candidate_status_rejected: 3,
-    pagination_limit: process.env.PAGINATION_LIMIT || 5,
+    pagination_limit: 10,
 };

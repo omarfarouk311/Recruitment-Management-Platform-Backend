@@ -204,8 +204,8 @@ CREATE TABLE Candidate_History (
   score smallint,
   company_name text NOT NULL,
   date_applied date NOT NULL,
-  country text NOT NULL,
-  city text NOT NULL,
+  country text,
+  city text,
   remote BOOLEAN NOT NULL,
   PRIMARY KEY (seeker_id, job_id)
 );
