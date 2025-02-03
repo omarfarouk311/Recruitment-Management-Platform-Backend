@@ -190,8 +190,9 @@ CREATE TABLE Assessment (
 CREATE TABLE Assessment_Score (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
-  phase_num smallint NOT NULL,
-  score smallint NOT NULL
+  phase_name text NOT NULL,
+  score smallint NOT NULL,
+  total_score smallint NOT NULL
 );
 
 CREATE TABLE Candidate_History (
@@ -334,7 +335,7 @@ CREATE INDEX ON Reviews (created_at);
 
 CREATE INDEX ON Report (seeker_id);
 
-CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_num);
+CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_name);
 
 CREATE INDEX ON Logs (company_id);
 
