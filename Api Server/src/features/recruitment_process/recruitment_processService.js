@@ -12,13 +12,13 @@ module.exports.getRecruitmentProcessById = async (processId) => {
         return recruitment_process;
 }
 
-module.exports.updateRecruitmentProcess = async (processId, data) => {
-        const recruitment_process = await recruitment_processModel.updateRecruitmentProcess(processId, data);
+module.exports.updateRecruitmentProcess = async (companyId, processId, data) => {
+        const recruitment_process = await recruitment_processModel.updateRecruitmentProcess(companyId, processId, data);
         return recruitment_process;
 }
 
 module.exports.CreateRecruitmentProcess = async (companyId, processName, data) => {
-        const recruitment_process = await recruitment_processModel.CreateRecruitmentProcess(companyId, processName, data);
+        const recruitment_process = await recruitment_processModel.createRecruitmentProcess(companyId, processName, data);
         return recruitment_process;
 }
 

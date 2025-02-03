@@ -40,14 +40,6 @@ const validateRecruitmentProcessPhaseNumber = () => {
         .exists().withMessage('Phase number is required')
         .bail()
         .isInt({ min: 1 }).withMessage('Phase number must be an integer greater than 0')
-        .custom((value) => {
-            const parsedValue = parseInt(value, 10);
-            if (isNaN(parsedValue) || parsedValue <= 0) {
-                return false;
-            }
-            return true;
-        })
-        .withMessage('Phase number must be a valid value greater than 0');
 };
 
 const validateRecruitmentProcessPhaseName = () => {
@@ -68,7 +60,7 @@ const validateRecruitmentProcessPhaseType = () => {
 const validateRecruitmentProcessDeadline = () => {
     return body('phases.*.deadline')
         .optional()
-        .isInt({ min: 1, max: 7 }).withMessage('Deadline must be an integer between 1 and 7');
+        .isInt({ min: 1, max: 20 }).withMessage('Deadline must be an integer between 1 and 20');
 };
 
 const validateRecruitmentProcessAssessmentId = () => {
@@ -78,7 +70,7 @@ const validateRecruitmentProcessAssessmentId = () => {
 };
 
 const validateRecruitmentProcessId = [
-    validateProcessId()  // Assuming validateProcessId is defined elsewhere
+    validateProcessId() 
 ];
 
 const validateRecruitmentProcessData = [
