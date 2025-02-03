@@ -13,13 +13,15 @@ class Review {
     static async getReviews(companyId, filters, limit = 5) {
         const pool = getReadPool();
         // base query
-        let query = `select company_id as "companyId", title, description, rating, role, created_at as "createdAt" from reviews where company_id = ($1)`;
+        let query = `select company_id as "companyId", title, description, rating, role, created_at as "createdAt" from reviews where company_id = $1`;
         const values = [companyId];
+        let index = 2;
 
         //specific rating & up
         if (filters.rating) {
-            query += ` and rating >= ($2)`;
+            query += ` and rating >= $${index}`;
             values.push(filters.rating);
+            index++;
         }
 
         //sorting
@@ -35,17 +37,18 @@ class Review {
 
         // oldest
         if (filters.sortByDate === 1) {
-            query += ` order by created_at asc`
+            query += ` order by created_at asc`;
         }
 
         // newest
         if (filters.sortByDate === -1) {
-            query += ` order by created_at desc`
+            query += ` order by created_at desc`;
         }
 
         // pagination
-        query += `limit ($3) offset ($4);`;
+        query += ` limit $${index} offset $${index + 1}`;
         values.push(limit, (filters.page - 1) * limit);
+        index += 2;
 
         const result = await pool.query(query, values);
         return result.rows;

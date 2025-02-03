@@ -7,37 +7,40 @@ const validateCompanyId = () => checkCompanyId('companyId')
     .withMessage("Company ID must be passed as a route patameter")
     .isInt({ min: 1, allow_leading_zeroes: false })
     .withMessage("Invalid Company ID")
-    .toInt()
+    .toInt();
 
 const validatePage = () => query('page')
     .trim()
     .notEmpty()
     .withMessage("Page number must be passed as a query patameter")
     .isInt({ min: 1, allow_leading_zeroes: false })
-    .toInt()
+    .withMessage("Invalid page number")
+    .toInt();
 
 const validateRating = () => query('rating')
     .optional()
     .trim()
     .isInt({ min: 2, max: 4, allow_leading_zeroes: false })
     .withMessage("Invalid rating option")
-    .toInt()
+    .toInt();
 
-const validateSortByRating = () => query('sortByRating')
+const validateSortByRating = () => query('sortByRating', "Invalid sort option")
     .optional()
     .trim()
     .custom((value, { req }) => req.query.sortByDate === undefined)
     .withMessage("Sort is only allowed by one option at a time")
-    .custom(value => value === 1 || value === -1)
-    .withMessage("Invalid sort option");
+    .isInt()
+    .toInt()
+    .custom(value => value === 1 || value === -1);
 
-const validateSortByDate = () => query('sortByDate')
+const validateSortByDate = () => query('sortByDate', "Invalid sort option")
     .optional()
     .trim()
     .custom((value, { req }) => req.query.sortByRating === undefined)
     .withMessage("Sort is only allowed by one option at a time")
-    .custom(value => value === 1 || value === -1)
-    .withMessage("Invalid sort option");
+    .isInt()
+    .toInt()
+    .custom(value => value === 1 || value === -1);
 
 exports.validateGetReviews = [validateCompanyId(), validatePage(), validateRating(), validateSortByDate(), validateSortByRating()];
 
