@@ -9,7 +9,7 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Job_Seeker (
-  id serial PRIMARY KEY,
+  id int PRIMARY KEY,
   phone_number TEXT NOT NULL UNIQUE,
   date_of_birth DATE NOT NULL,
   gender BOOLEAN NOT NULL,
@@ -19,19 +19,19 @@ CREATE TABLE Job_Seeker (
 );
 
 CREATE TABLE Recruiter (
-  id serial PRIMARY KEY ,
+  id int PRIMARY KEY ,
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL
 );
 
 CREATE TABLE Company (
-  id serial PRIMARY KEY,
+  id int PRIMARY KEY,
   overview TEXT NOT NULL,
   type BOOLEAN NOT NULL,
-  founded_on DATE NOT NULL,
-  company_size INTEGER NOT NULL,
-  rating float NOT NULL,
+  founded_in DATE NOT NULL,
+  size int NOT NULL,
+  rating real NOT NULL,
   name TEXT NOT NULL
 );
 
@@ -44,7 +44,8 @@ CREATE TABLE Company_Industry (
 CREATE TABLE Company_Location (
   company_id int,
   country TEXT NOT NULL,
-  city TEXT NOT NULL
+  city TEXT NOT NULL,
+  PRIMARY KEY (company_id, country, city)
 );
 
 CREATE TABLE Job_Skill (
@@ -237,6 +238,8 @@ CREATE TABLE Recommendations (
 CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FROM (1) TO (10001);
 
 CREATE TABLE Reviews (
+  id serial PRIMARY KEY,
+  creator_id int NOT NULL,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
@@ -284,7 +287,7 @@ CREATE INDEX ON Candidate_History (seeker_id, remote);
 
 CREATE INDEX ON Candidate_History (seeker_id, country, city);
 
-CREATE INDEX ON Company (company_size);
+CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (type);
 
@@ -407,6 +410,8 @@ ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (job_id) REFERENCES Job (id)
 ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Reviews ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE CASCADE;
+
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Report ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 

@@ -3,6 +3,7 @@ const express = require('express');
 const { port } = require('../config/config');
 const reviewRoutes = require('./features/reviews/reviewRoutes');
 const logRoutes = require('./features/logs/logRoutes');
+const companyRoutes = require('./features/companies/companyRoutes');
 const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware');
 
 const app = express();
@@ -10,6 +11,8 @@ const app = express();
 app.use('/reviews', reviewRoutes);
 
 app.use('/logs', logRoutes);
+
+app.use('/companies', companyRoutes);
 
 app.use(notFound);
 
