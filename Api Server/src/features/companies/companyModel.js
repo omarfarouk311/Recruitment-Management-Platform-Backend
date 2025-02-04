@@ -16,7 +16,7 @@ class Company {
         const values = [companyId];
         let index = 1;
 
-        const query =
+        let query =
             `
             with jobs_count as (
                 select company_id as id, count(id)::int as job_count
@@ -63,6 +63,22 @@ class Company {
 
         const { rows } = await pool.query(query, values);
         return rows;
+    }
+
+    static async getCompanyLocations(companyId) {
+        const pool = getReadPool();
+        const values = [companyId];
+        let index = 1;
+
+        let query =
+            `
+            select country, city
+            from Company_Location
+            where company_id = $${index}
+            `;
+
+        const { rows } = await pool.query(query, values)
+        return rows
     }
 }
 

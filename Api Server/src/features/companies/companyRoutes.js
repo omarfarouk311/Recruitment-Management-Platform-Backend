@@ -9,4 +9,8 @@ router.route('/:companyId')
     .get(companyValidation.validateGetCompanyData, handleValidationErrors, companyController.getCompanyData)
     .all(notAllowed);
 
+router.route('/:companyId/locations')
+    .get(companyValidation.validateGetCompanyData, handleValidationErrors, companyController.getCompanyLocations)
+    .all(notAllowed);
+
 module.exports = router;
