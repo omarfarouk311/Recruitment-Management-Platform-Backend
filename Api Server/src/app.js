@@ -7,12 +7,11 @@ const logRoutes = require('./features/logs/logRoutes');
 const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware');
 const recruitment_processRoutes = require('./features/recruitment_process/recruitment_processRoute');
 const app = express();
+
+
 app.use(express.json());
 
 app.use('/company', recruitment_processRoutes);
-
-app.use(express.json());
-
 app.use('/candidates', candidateRoutes);
 app.use('/reviews', reviewRoutes);
 
