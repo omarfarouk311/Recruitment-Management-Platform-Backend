@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.use('/company', recruitment_processRoutes);
+
 app.use('/reviews', reviewRoutes);
 
 app.use('/logs', logRoutes);

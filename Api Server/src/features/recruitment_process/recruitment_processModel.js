@@ -60,6 +60,8 @@ class recruitment_process {
             `;
             const values = [processName, data.length, companyId];
             const { rows } = await pool.query(createProcessQuery, values);
+            console.log(companyId, processName, data);
+
             const processId = rows[0].id;
             const validationPromises = data.map(async (item) => {
                 const errors = await this.validateRecruitmentProcessData(item);
@@ -110,7 +112,7 @@ class recruitment_process {
     }
 
     
-    static async validateRecruitmentProcessData({ phaseType, deadline, assessmentId } ) {
+    static async validateRecruitmentProcessData({ phaseName, phaseType, deadline, assessmentId } ) {
         let getPhaseType = `select name FROM Phase_Type WHERE id = $1`;
         let pool = poolConn.getReadPool(), errors = [];
         const { rows, rowCount } = await pool.query(getPhaseType, [phaseType]);
@@ -149,7 +151,7 @@ class recruitment_process {
                 console.log("Validation Error while updating recruitment process");
                 const error = new Error("Validation Error while updating recruitment process");
                 error.status = 400;
-                error.msg = allErrors;
+                error.msg = allErrors.flat()
                 throw error;
             }
             await pool.query('BEGIN');
