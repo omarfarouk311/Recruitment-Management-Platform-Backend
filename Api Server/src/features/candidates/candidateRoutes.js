@@ -6,8 +6,8 @@ const candidateValidation = require('./candidateValidation');
 
 router.get(
     '/job/:jobId', 
-    candidateAuth.authGetCandidatesForJob, 
     candidateValidation.getCandidatesForJobValidator, 
+    candidateAuth.authGetCandidatesForJob, 
     candidateController.getCandidatesForJob
 );
 
@@ -18,22 +18,22 @@ router.get(
 );
 
 router.patch('/assign-candidates', 
-    candidateAuth.authAssignCandidatesToRecruiter, 
     candidateValidation.assignCandidatesToRecruiterValidator, 
+    candidateAuth.authAssignCandidatesToRecruiter, 
     candidateController.assignCandidatesToRecruiter
 );
 
 router.post(
     '/make-decision', 
-    candidateAuth.authMakeDecisionToCandidates, 
     candidateValidation.makeDecisionToCandidatesValidator,
+    candidateAuth.authMakeDecisionToCandidates, 
     candidateController.MakeDecisionToCandidates
 );
 
 router.patch(
     '/unassign-candidates', 
-    candidateAuth.authAssignCandidatesToRecruiter, 
     candidateValidation.assignCandidatesToRecruiterValidator, 
+    candidateAuth.authAssignCandidatesToRecruiter, 
     candidateController.unassignCandidatesFromRecruiter
 );
 

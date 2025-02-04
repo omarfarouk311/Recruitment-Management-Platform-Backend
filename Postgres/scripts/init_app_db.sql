@@ -200,6 +200,7 @@ CREATE TABLE Candidate_History (
   job_id int,
   job_title text NOT NULL,
   phase_name text NOT NULL,
+  phase_type smallint NOT NULL,
   status BOOLEAN NOT NULL,
   score smallint,
   company_name text NOT NULL,
@@ -239,7 +240,7 @@ CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FRO
 
 CREATE TABLE Reviews (
   id serial PRIMARY KEY,
-  user_id int,
+  creator_id int,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
@@ -279,13 +280,15 @@ CREATE INDEX ON Job USING GIST (title gist_trgm_ops);
 
 CREATE INDEX ON Company USING GIST (name gist_trgm_ops);
 
-CREATE INDEX ON Candidate_History (seeker_id, status);
+CREATE INDEX ON Candidate_History (status);
 
-CREATE INDEX ON Candidate_History (seeker_id, company_name);
+CREATE INDEX ON Candidate_History (company_name);
 
-CREATE INDEX ON Candidate_History (seeker_id, remote);
+CREATE INDEX ON Candidate_History (remote);
 
-CREATE INDEX ON Candidate_History (seeker_id, country, city);
+CREATE INDEX ON Candidate_History (country, city);
+
+CREATE INDEX ON Candidate_History (job_id)
 
 CREATE INDEX ON Company (company_size);
 
@@ -352,6 +355,8 @@ ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELE
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE NO ACTION;
+
+ALTER TABLE Candidate_History ADD FOREIGN KEY (phase_type) REFERENCES Phase_Type (id) ON DELETE SET NULL;
 
 ALTER TABLE Job_Seeker ADD FOREIGN KEY (id) REFERENCES Users (id) ON DELETE CASCADE;
 

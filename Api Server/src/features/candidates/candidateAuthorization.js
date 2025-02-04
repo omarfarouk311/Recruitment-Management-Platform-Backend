@@ -16,9 +16,9 @@ exports.authGetCandidatesForJob = async (req, res, next) => {
 
 exports.authAssignCandidatesToRecruiter = async (req, res, next) => {
     try {
-        const candidateFound = await authQuerySets.candidateBelongsToCompany(
+        const candidateFound = await authQuerySets.candidatesBelongsToCompany(
             req.body.jobId, 
-            req.body.seekerId, 
+            req.body.candidates, 
             req.userId
         );
         const recruiterFound = await authQuerySets.recruiterBelongsToCompany(
@@ -38,9 +38,9 @@ exports.authAssignCandidatesToRecruiter = async (req, res, next) => {
 
 exports.authMakeDecisionToCandidates = async (req, res, next) => {
     try {
-        const found = await authQuerySets.candidateBelongsToRecruiterOrCompany(
+        const found = await authQuerySets.candidatesBelongsToRecruiterOrCompany(
             req.body.jobId, 
-            req.body.seekerId, 
+            req.body.candidates, 
             req.userId
         );
         if (!found) {

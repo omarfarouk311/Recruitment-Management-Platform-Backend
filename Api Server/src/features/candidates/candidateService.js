@@ -8,17 +8,17 @@ exports.getCandidatesForJob = async (jobId, filters, sortBy, page) => {
 
 exports.getCandidatesForRecruiter = async (recruiterId, simplified, filters, sortBy, page=1 ) => {
     offset = (page - 1) * limit;
-    return CandidateQueryset.getCandidatesForRecruiter(recruiterId, simplified, filters, sortBy, pagination_limit, offset);
+    return CandidateQueryset.getCandidatesForRecruiter(recruiterId, simplified, filters, sortBy, limit, offset);
 };
 
-exports.assignCandidatesToRecruiter = async (seekerId, recruiterId, jobId) => {
-    return CandidateQueryset.assignCandidatesToRecruiter(seekerId, recruiterId, jobId);
+exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId) => {
+    return CandidateQueryset.assignCandidatesToRecruiter(seekerIds, recruiterId, jobId);
 };
 
 exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision) => {
     return CandidateQueryset.makeDecisionToCandidates(seekerIds, jobId, decision);
 };
 
-exports.unassignCandidatesFromRecruiter = async (seekerId, jobId) => {
-    return CandidateQueryset.unassignCandidatesFromRecruiter(seekerId, jobId);
+exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId) => {
+    return CandidateQueryset.unassignCandidatesFromRecruiter(seekerIds, jobId);
 };
