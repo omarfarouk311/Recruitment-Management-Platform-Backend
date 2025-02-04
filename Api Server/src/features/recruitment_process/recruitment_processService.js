@@ -2,8 +2,8 @@
 const recruitment_processModel = require('./recruitment_processModel');
 
 
-module.exports.getRecruitmentProcess = async (companyId) => {
-        const recruitment_process = await recruitment_processModel.getRecruitmentProcess(companyId);
+module.exports.getRecruitmentProcess = async (companyId, page) => {
+        const recruitment_process = await recruitment_processModel.getRecruitmentProcess(companyId, page);
         return recruitment_process;
 }
 
@@ -12,8 +12,8 @@ module.exports.getRecruitmentProcessById = async (processId) => {
         return recruitment_process;
 }
 
-module.exports.updateRecruitmentProcess = async (companyId, processId, data) => {
-        const recruitment_process = await recruitment_processModel.updateRecruitmentProcess(companyId, processId, data);
+module.exports.updateRecruitmentProcess = async (companyId, processId, processName, data) => {
+        const recruitment_process = await recruitment_processModel.updateRecruitmentProcess(companyId, processId, processName, data);
         return recruitment_process;
 }
 

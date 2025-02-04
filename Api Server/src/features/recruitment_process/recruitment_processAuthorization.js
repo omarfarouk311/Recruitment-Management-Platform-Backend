@@ -2,8 +2,8 @@ const recruitment_processModel = require('./recruitment_processModel');
 
 
 module.exports.authorizeRecruitmentProcess = async (req, res, next) => {
-    let companyId = req.id; companyId = 1;
-    const recruitmentProcessId = req.params.recruitmentProcessId;
+    let companyId = req.id; companyId = 2;
+    const recruitmentProcessId = req.params.processId;
     
     try {
         const retrievedCompanyId = await recruitment_processModel.getProcessById(recruitmentProcessId);
@@ -15,6 +15,6 @@ module.exports.authorizeRecruitmentProcess = async (req, res, next) => {
     catch (error) {
         console.log('Error in: authorizeRecruitmentProcess', error);
         // next(error);
-        return res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({ message: error.message  });
     }
 }

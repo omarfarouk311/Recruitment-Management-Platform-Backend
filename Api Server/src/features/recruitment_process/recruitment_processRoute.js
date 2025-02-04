@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const recruitment_processController = require('./recruitment_processController');
 const { handleValidationErrors, validateRecruitmentProcessData,
-        validateCompanyId, validateRecruitmentProcessId } = require('./recruitment_processValidation');
+        validateCompanyId, validateRecruitmentProcessId, validatePagination } = require('./recruitment_processValidation');
 const { authorizeRecruitmentProcess } = require('./recruitment_processAuthorization');
 
 // Todo: Add authentication middleware 
 router.route('/recruitment_process')
-        .get(recruitment_processController.getRecruitmentProcess)
+        .get(validatePagination, recruitment_processController.getRecruitmentProcess)
         .post(validateRecruitmentProcessData, handleValidationErrors, recruitment_processController.CreateRecruitmentProcess);
 
 router.route('/recruitment_process/:processId')
@@ -19,3 +19,4 @@ router.route('/recruitment_process/:processId')
                 recruitment_processController.deleteRecruitmentProcess);
 
 
+module.exports = router;

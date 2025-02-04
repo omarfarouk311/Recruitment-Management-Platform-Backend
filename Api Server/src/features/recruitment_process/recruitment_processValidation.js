@@ -1,4 +1,4 @@
-const { check, validationResult, body } = require('express-validator');
+const { check, validationResult, body, query } = require('express-validator');
 
 
 module.exports.validateCompanyId = (req, res, next) => {
@@ -20,6 +20,7 @@ const validateProcessId = () => {
         .exists().withMessage('process id is required')
         .bail()
         .isInt({ min: 1 }).withMessage('process id must be a numeric value greater than 0')
+        .toInt();
 }
 
 const validateProcessName = () => {
@@ -40,6 +41,7 @@ const validateRecruitmentProcessPhaseNumber = () => {
         .exists().withMessage('Phase number is required')
         .bail()
         .isInt({ min: 1 }).withMessage('Phase number must be an integer greater than 0')
+        .toInt();
 };
 
 const validateRecruitmentProcessPhaseName = () => {
@@ -47,26 +49,46 @@ const validateRecruitmentProcessPhaseName = () => {
         .exists().withMessage('Phase name is required')
         .bail()
         .isString().withMessage('Phase name must be a string')
-        .length({ min: 4, max: 10 }).withMessage('Phase name must be a string with length between 4 and 10');
+        .isLength({ min: 4, max: 50 }).withMessage('Phase name must be a string with length between 4 and 50');
 };
 
 const validateRecruitmentProcessPhaseType = () => {
     return body('phases.*.phaseType')
         .exists().withMessage('Phase type is required')
         .bail()
-        .isInt({ min: 1 }).withMessage('Phase type must be an integer greater than 0');
+        .isInt({ min: 1 }).withMessage('Phase type must be an integer greater than 0')
+        .toInt();
 };
 
 const validateRecruitmentProcessDeadline = () => {
     return body('phases.*.deadline')
         .optional()
-        .isInt({ min: 1, max: 20 }).withMessage('Deadline must be an integer between 1 and 20');
+        .isInt({ min: 1, max: 20 }).withMessage('Deadline must be an integer between 1 and 20')
+        .toInt();
 };
 
 const validateRecruitmentProcessAssessmentId = () => {
     return body('phases.*.assessmentId')
         .optional()
-        .isInt({ min: 1 }).withMessage('Assessment ID must be an integer greater than 0');
+        .isInt({ min: 1 }).withMessage('Assessment ID must be an integer greater than 0')
+        .toInt();
+};
+
+
+
+const pagination = () => {
+    return [
+        query('page')
+            .optional()  
+            .isInt({ min: 1 }).withMessage('Page number must be a positive integer')
+            .toInt() 
+            .custom((value, { req }) => {
+                if (value === undefined) {
+                    req.query.page = 1;
+                }
+                return true;
+            }),
+    ];
 };
 
 const validateRecruitmentProcessId = [
@@ -83,16 +105,19 @@ const validateRecruitmentProcessData = [
     validateRecruitmentProcessAssessmentId()
 ];
 
-
+const validatePagination = [
+    pagination()
+];
 
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log("Error in handleValidationErrors in recruitment validation file with error msg", errors.array());
         const error = new Error("Error in recruitment process validation input");
-        error.statusCode = 400;
-        error.details = errors.array();
-        return next(error);
+        error.status = 400;
+        error.msg = errors.array();
+        // return next(error);
+        return res.status(status).json({ message: error.msg });
     }
     next();
 }
@@ -101,5 +126,6 @@ const handleValidationErrors = (req, res, next) => {
 module.exports = {
     handleValidationErrors,
     validateRecruitmentProcessData,
-    validateRecruitmentProcessId
+    validateRecruitmentProcessId,
+    validatePagination
 }

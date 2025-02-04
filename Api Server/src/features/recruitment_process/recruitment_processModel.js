@@ -1,32 +1,21 @@
 const produce = require('../../common/kafka');
+const poolConn = require('../../../config/db');
+
 
 class recruitment_process {
-    constructor({id, name, num_phases, company_id}) {
-        this.id = id;
-        this.name = name;
-        this.num_phases = num_phases;
-        this.company_id = company_id;
-    }
 
-    static async getRecruitmentProcess(companyId) {
+    static async getRecruitmentProcess(companyId, page) {
         try {
-            const query = `SELECT id, name, num_of_phases FROM Recruitment_Process WHERE company_id = $1`;
-            const values = [companyId];
-            let pool;
-            try {
-                pool = pool.getReadPool();
-            } catch (error) {
-                console.error('Error: getReadPool is not defined (getRecruitmentProcess) in recruitment_processModel');
-                error.statusCode = 500;
-                error.message = 'Cannot connect to database, ' + error.message;
-                throw error;
-            }
+            const query = `SELECT id, name, num_of_phases FROM recruitment_process WHERE company_id = $1 ORDER BY id LIMIT $2 OFFSET $3`;
+            const limit = 7;
+            const offset = (page - 1) * limit;
+            const values = [companyId, limit, offset];
+            let pool = poolConn.getReadPool();
             const { rows } = await pool.query(query, values);
             return rows;
         } catch (error) {
-            console.log('Error in: recruitment_processModel (getRecruitmentProcess)');
-            error.statusCode = 500;
-            error.message = 'Internal Database server error, ' + error.message;
+            console.log('Error in getRecruitmentProcess \n', error.message );
+            throw error;
         } 
     }
 
@@ -39,7 +28,7 @@ class recruitment_process {
                     WHERE recruitment_process_id = $1
                 ),
                 typeId AS (
-                    SELECT phase_num, p.name, p.type, p.deadline, r.assessment_id
+                    SELECT phase_num, p.name, r.type, r.deadline, r.assessment_id
                     FROM recruitmentId r
                     JOIN Phase_Type p
                     ON r.type = p.id
@@ -50,23 +39,19 @@ class recruitment_process {
                 ON assessment_id = id
                 order by t.phase_num;
             `;
-            pool = pool.getReadPool();
+            let pool = poolConn.getReadPool();
             const { rows } = await pool.query(query, [recruitmentProcessId]);
             return rows;
         } catch (error) {
-            console.log('Error in: recruitment_processModel (getRecruitmentProcessById)');
-            error.statusCode = 500;
-            error.message = 'Internal Database server error, ' + error.message;
+            console.log('Error in recruitment_processModel \n', error.message);
             throw error;
-        } finally {
-            pool.release();
         }
     }
 
     static async createRecruitmentProcess(companyId, processName, data) {
-        pool = pool.getWritePool();
+        let pool = poolConn.getWritePool();
         pool = await pool.connect();
-        pool = await pool.query('BEGIN');
+        await pool.query('BEGIN');
         try {
             const createProcessQuery = `
                 INSERT INTO Recruitment_Process (name, num_of_phases, company_id)
@@ -87,8 +72,8 @@ class recruitment_process {
             allErrors = allErrors.filter(errors => errors !== null);
             if (allErrors.length > 0) {
                 const error = new Error("Validation Error while creating recruitment process");
-                error.statusCode = 400;
-                error.details = allErrors;
+                error.status = 400;
+                error.msg = allErrors;
                 throw error;
             }
             for (let i = 0; i < data.length; i++) {
@@ -117,9 +102,7 @@ class recruitment_process {
             return { message: 'Recruitment process created successfully' };
         } catch (error) {
             await pool.query('ROLLBACK');
-            console.log('Error in: recruitment_processModel (createRecruitmentProcess)');
-            error.statusCode = 500;
-            error.message = 'Internal Database server error';
+            console.log('Error in createRecruitmentProcess');
             throw error;
         } finally {
             pool.release();
@@ -129,22 +112,29 @@ class recruitment_process {
     
     static async validateRecruitmentProcessData({ phaseType, deadline, assessmentId } ) {
         let getPhaseType = `select name FROM Phase_Type WHERE id = $1`;
-        let pool = pool.getReadPool();
+        let pool = poolConn.getReadPool(), errors = [];
         const { rows, rowCount } = await pool.query(getPhaseType, [phaseType]);
         if (rowCount == 0) {
             errors.push('Phase type not found, please provide a valid phase type');
         }
         if (rowCount > 0) {
-            if (rows[0].name === 'Assessment') {
+            if (rows[0].name === 'assessment') {
                 if (!deadline || !assessmentId) {
                     errors.push('Assessment phase must have a deadline and an assessment id');
+                }
+            }
+            else {
+                if (deadline || assessmentId) {
+                    errors.push('Only assessment phase should have a deadline and an assessment id');
                 }
             }
         }
         return errors;
     }
 
-    static async updateRecruitmentProcess(companyId, processId, data) {
+    static async updateRecruitmentProcess(companyId, processId, processName, data) {
+        let pool = poolConn.getWritePool();
+        pool = await pool.connect()
         try {
             const validationPromises = data.map(async (item) => {
                 const errors = await this.validateRecruitmentProcessData(item);
@@ -153,24 +143,27 @@ class recruitment_process {
                 }
                 return null;
             });
-
             let allErrors = await Promise.all(validationPromises);
             allErrors = allErrors.filter(errors => errors !== null);
-
             if (allErrors.length > 0) {
+                console.log("Validation Error while updating recruitment process");
                 const error = new Error("Validation Error while updating recruitment process");
-                error.statusCode = 400;
-                error.details = allErrors;
+                error.status = 400;
+                error.msg = allErrors;
                 throw error;
             }
-            let pool = pool.getWritePool();
-            pool = await pool.connect()
-            pool = await pool.query('BEGIN');
+            await pool.query('BEGIN');
+            const deletePhasesQuery = `DELETE FROM recruitment_phase WHERE recruitment_process_id = $1`;
+            await pool.query(deletePhasesQuery, [processId]);
+
+            const updateProcess = `UPDATE recruitment_process SET num_of_phases = $1, name = $2 WHERE id = $3`;
+            const values = [data.length, processName, processId];
+            await pool.query(updateProcess, values);
+
             for (let i = 0; i < data.length; i++) {
-                const updateQuery = `
-                    UPDATE Recruitment_Phase 
-                    SET name = $1, type = $2, deadline = $3, assessment_id = $4, phase_num = $5
-                    WHERE recruitment_process_id = $6;
+                const insertPhaseQuery = `
+                    INSERT INTO Recruitment_Phase (name, type, deadline, assessment_id, phase_num, recruitment_process_id)
+                    VALUES ($1, $2, $3, $4, $5, $6)
                 `;
                 const values = [
                     data[i].phaseName,
@@ -180,7 +173,7 @@ class recruitment_process {
                     data[i].phaseNumber,
                     processId,
                 ];
-                await pool.query(updateQuery, values);
+                await pool.query(insertPhaseQuery, values);
             }
             await pool.query('COMMIT');
             const processObject = {
@@ -194,9 +187,7 @@ class recruitment_process {
 
         } catch (error) {
                 await pool.query('ROLLBACK');
-                console.log('Error in: recruitment_processModel (updateRecruitmentProcess)');
-                error.statusCode = 500;
-                error.message = 'Internal Database server error';
+                console.log('Error in updateRecruitmentProcess');
                 throw error;
         } finally {
                 pool.release();
@@ -206,9 +197,9 @@ class recruitment_process {
 
     static async deleteRecruitmentProcess(companyId, processId) {
         try {
-            const deleteQuery = `DELETE FROM Recruitment_Process WHERE id = $1`;
+            const deleteQuery = `DELETE FROM recruitment_process WHERE id = $1`;
             const values = [processId];
-            pool = pool.getWritePool();
+            let pool = poolConn.getWritePool();
             await pool.query(deleteQuery, values);
             const processObject = {
                 "performed_by": "Company",
@@ -216,11 +207,10 @@ class recruitment_process {
                 "extra_data": null,
                 "action_type": "Delete new process",
             }
+            produce.produceLog(processObject);
             return { message: 'Recruitment process deleted successfully' };
         } catch (error) {
-            console.log('Error in: recruitment_processModel (deleteRecruitmentProcess)');
-            error.statusCode = 500;
-            error.message = 'Internal Database server error';
+            console.log('Error in deleteRecruitmentProcess');
             throw error;
         } 
     }
@@ -228,21 +218,19 @@ class recruitment_process {
 
     static getProcessById = async (processId) => {
         try {
-            const query = `SELECT company_id FROM Recruitment_Process WHERE id = $1`;
+            const query = `SELECT company_id FROM recruitment_process WHERE id = $1`;
             const values = [processId];
-            pool = pool.getReadPool();
+            let pool = poolConn.getReadPool();
             const { rows } = await pool.query(query, values);
             if (rows.length === 0) {
                 const error = new Error('Recruitment process not found');
-                error.statusCode = 404;
+                error.status = 404;
                 throw error;
             }
             return rows[0].company_id;
 
         } catch (error) {
-            console.log('Error in: authorizeRecruitmentProcess', error);
-            error.statusCode = error.statusCode || 500;
-            error.message = error.message ||'Internal server error';
+            console.log('Error in getProcessById');
             throw error;
         }
     }
