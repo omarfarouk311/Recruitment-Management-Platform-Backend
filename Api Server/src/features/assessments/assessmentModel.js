@@ -239,7 +239,7 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in deleteAssessmentModel", err.message)
-            throw new Error(err.message)
+            throw new Error("The assessment has been already assigned to recruitment procces,you can not delete it right now")
         }
     }
 
@@ -286,7 +286,7 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in saveAssessmentScoreModel", err.message)
-            throw new Error("Error while saving the assessment score in assessmentModel" )
+            throw new Error(err.message )
         }
     }
 
