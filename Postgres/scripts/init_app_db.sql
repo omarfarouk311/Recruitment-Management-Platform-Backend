@@ -190,6 +190,7 @@ CREATE TABLE Assessment (
 CREATE TABLE Assessment_Score (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
+  phase_num smallint NOT NULL
   phase_name text NOT NULL,
   score smallint NOT NULL,
   total_score smallint NOT NULL

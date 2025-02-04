@@ -2,7 +2,7 @@
 const assessmentsModel = require('./assessmentModel');
 
 module.exports.authorizeCompany=async(req,res,next)=>{
-    let assessmentId=req.params.id;
+    let assessmentId=parseInt(req.params.id);
 
     if(!assessmentId){
         return res.status(400).json({
@@ -32,7 +32,8 @@ module.exports.authorizeCompany=async(req,res,next)=>{
 
 module.exports.authorizeCompanyJob=async(req,res,next)=>{
     let companyId=req.body.companyId // will change to be taken from the token
-    let jobId=req.params.jobId
+    let jobId=parseInt(req.params.jobId)
+
 
     if(!jobId){
         return res.status(400).json({
@@ -40,8 +41,16 @@ module.exports.authorizeCompanyJob=async(req,res,next)=>{
             message: "Job Id is required"
         })
     }
-    let validate=await validateCompanyJob(jobId);// to check if company is authorized to access this job
-    if(!validate){
+    let validJob=await assessmentsModel.validJob(jobId) //check whether the job is there or not from beginning
+    if(!validJob){
+        return res.status(404).json({
+            success: false,
+            message: "Job not found"
+        })
+    }
+
+    let returnedCompanyId=await assessmentsModel.validateCompanyJob(jobId);// to check if company is authorized to access this job
+    if(returnedCompanyId!=companyId){
         return res.status(403).json({
             success: false,
             message: "You are not authorized to access this assessment"

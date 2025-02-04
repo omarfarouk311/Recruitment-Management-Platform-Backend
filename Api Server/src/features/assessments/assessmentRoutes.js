@@ -2,7 +2,7 @@ const express = require('express');
 const router= express.Router();
 const assessmentController = require('./assessmentController');
 const {assessmentBodyValidation}=require('./assessmentsValidation');
-const{authorizeCompany}=require('./assessmentAuthorization');
+const{authorizeCompany,authorizeCompanyJob}=require('./assessmentAuthorization');
 
 
 
@@ -19,7 +19,7 @@ router.route('/:id/job/:jobId')
         .post(assessmentController.compute_JobSeekerScore) // calculate score of jobseeker in the assessment  //verify token of jobseeker later
         
 router.route('/job/:jobId/jobSeeker/:jobSeekerId')
-        .get(assessmentController.get_JobSeekerScore) // get score of jobseeker in the assessment  //verify token of jobseeker later
+        .get(authorizeCompanyJob,assessmentController.get_JobSeekerScore) // get score of jobseeker in the assessment  //verify token of jobseeker later
 
 
 

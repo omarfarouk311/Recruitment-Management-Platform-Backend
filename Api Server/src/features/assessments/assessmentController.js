@@ -5,6 +5,7 @@ module.exports.add_AssessmentController = async (req, res) => {
    try{
     const assessmentData=req.body;
     assessmentData.companyId=req.body.companyId; // will change later to be taken from the token
+
    
    
     const assessment=await assessmentService.add_AssessmentService(assessmentData);
@@ -116,11 +117,8 @@ module.exports.compute_JobSeekerScore=async(req,res)=>{
         // console.log(jobSeekerId)
         // console.log(jobId)
 
-        const savedScore=await assessmentService.compute_JobSeekerScoreService(assessmentId,jobId,jobSeekerId,metaData);
-        if(!savedScore){
-            console.log("Error in compute_JobSeekerScore")
-            throw new Error("Failed to save the score in compute_JobSeekerScore")
-        }
+        await assessmentService.compute_JobSeekerScoreService(assessmentId,jobId,jobSeekerId,metaData);
+
 
         return res.status(200).json({
             success: true,
@@ -140,11 +138,15 @@ module.exports.get_JobSeekerScore=async(req,res)=>{
         let jobId=req.params.jobId;
         let jobSeekerId=req.params.jobSeekerId;
         const scoreData=await assessmentService.get_JobSeekerScoreService(jobId,jobSeekerId);
-        let returnedData = {
-            assessmentName: scoreData.phase_name,
-            AssessmentScore: scoreData.score,
-            numberOfQuestions: scoreData.total_score
-        };
+    
+        let returnedData=[]
+        scoreData.forEach((curObj)=>{
+             returnedData.push({
+                PhaseName: curObj.phase_name,
+                AssessmentScore: curObj.score,
+                numberOfQuestions: curObj.total_score})
+        })
+      
         return res.status(200).json({
             success: true,
             jobSeekerScore: returnedData

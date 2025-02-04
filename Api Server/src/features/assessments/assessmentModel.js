@@ -44,7 +44,7 @@ class assessmentsModel{
             const assessmentResult = await client.query(assessmentQuery,assessmentvalues); 
             const assessmentId = assessmentResult.rows[0].id;
             if(!assessmentId){
-                throw new Error("Failed to add new assessment in assessmentModel")
+                throw new Error()
             }
 
 
@@ -61,7 +61,7 @@ class assessmentsModel{
 
                 const questionId = questionResult.rows[0].id;
                 if(!questionId){
-                    throw new Error("Failed to add new questions in assessmentModel")
+                    throw new Error()
                 }
             })
 
@@ -71,7 +71,7 @@ class assessmentsModel{
         }catch(err){
             console.log("Error in addAssessmentModel", err.message)
             await client.query('ROLLBACK'); // rollback the transaction in case of error
-            throw new Error("Error while adding the assessment in assessmentModel" )
+            throw new Error("Error while adding the assessment" )
         }finally{
             client.release();  // release the connection to the pool
         }
@@ -91,7 +91,7 @@ class assessmentsModel{
             return assessments;
         }catch(err){
             console.log("Error in getAssessmentsModel", err.message)
-            throw new Error("Error while getting the assessments in assessmentModel" )
+            throw new Error("Error while getting the assessments" )
         }
     }
     
@@ -131,7 +131,9 @@ class assessmentsModel{
             const value=[assessmentId]
 
             const result=await replica_DB.query(assessmentDataQuery,value);
-
+            if(result.rowCount==0){
+                throw new Error("error while getting assessment")
+            }
             let returnedData={
                 assessmentInfo:{
                     name:result.rows[0].name,
@@ -149,7 +151,7 @@ class assessmentsModel{
             return returnedData
             }catch(err){
                 console.log("Error in getAssessmentByIdModel", err.message)
-                throw new Error("Error while getting the assessment by Id in assessmentModel" )
+                throw new Error(err.message)
             }
     }
 
@@ -214,7 +216,7 @@ class assessmentsModel{
         }catch(err){
             console.log("Error in updateAssessmentModel", err.message)
             await client.query('ROLLBACK'); // rollback the transaction in case of error
-            throw new Error("Error while updating the assessment in assessmentModel" )
+            throw new Error(err.message)
         }finally{
             client.release();
         }
@@ -230,28 +232,56 @@ class assessmentsModel{
 
             const result=await primary_DB.query(deleteQuery,value); // will delete the entery of table questions because we make it on delete cascade om the foreign key
             if(result.rowCount===0){
-                throw new Error("Failed to delete assessment in assessmentModel")
+                throw new Error("Failed to delete assessment")
             }
 
             return true;
 
         }catch(err){
             console.log("Error in deleteAssessmentModel", err.message)
-            throw new Error("Error while deleting the assessment in assessmentModel" )
+            throw new Error(err.message)
         }
     }
 
-    static async saveAssessmentScore(jobId,jobSeekerId,assessmentName,score,num_of_questions){
+    static async saveAssessmentScore(jobId,jobSeekerId,assessmentId,score,num_of_questions){
         try{
             const primary_DB=primaryPool.getWritePool();
-            const query=
-            `INSERT INTO Assessment_Score(job_id,seeker_id,phase_name,score,total_score)
-             values($1,$2,$3,$4,$5)`
-            const values=[jobId,jobSeekerId,assessmentName,score,num_of_questions]
-            const result=await primary_DB.query(query,values);
-            if(result.rowCount===0){
-                throw new Error("Failed to save the score in assessmentModel")
+            const query=        // to get phase num and phase name
+            `WITH getAssessment as(
+            SELECT id
+            FROM Assessment 
+            WHERE id=$1),
+
+            getJob as(
+            SELECT recruitment_process_id
+            FROM job
+            WHERE id=$2)
+            
+            SELECT recruitment_phase.phase_num as phase_num,recruitment_phase.name as phase_name
+            FROM getAssessment 
+            JOIN recruitment_phase ON getAssessment.id=recruitment_phase.assessment_id
+            JOIN getJob on getJob.recruitment_process_id=recruitment_phase.recruitment_process_id
+
+            `
+            const insertQuery=    // to insert in table assesment score
+            ` INSERT INTO assessment_score (job_id,seeker_id,phase_num,phase_name,score,total_score)
+              VALUES($1,$2,$3,$4,$5,$6)`
+
+
+            const queryValue=[assessmentId,jobId];
+            const returnedPhase=await primary_DB.query(query,queryValue)
+
+            if(returnedPhase.rowCount==0){
+                throw new Error("submition failedd,please try again")
             }
+
+            const insertValues=[jobId,jobSeekerId,returnedPhase.rows[0].phase_num,returnedPhase.rows[0].phase_name,score,num_of_questions]
+            const checkInsert=await primary_DB.query(insertQuery,insertValues)
+
+            if(checkInsert.rowCount==0){
+                throw new Error("submition failed,please try again")
+            }
+          
             return true;
 
         }catch(err){
@@ -272,7 +302,7 @@ class assessmentsModel{
             const values=[jobId,jobSeekerId]
 
             const result=await replica_DB.query(query,values);
-            return result.rows[0];
+            return result.rows;
 
         }catch(err){
             console.log("Error in getJobSeekerScoreModel", err.message)
@@ -304,26 +334,44 @@ class assessmentsModel{
 
     }
 
+    static async validJob(jobId){
+        let replica_DB=replicaPool.getReadPool();
+        try{
+
+            let query=
+            `SELECT id 
+            FROM job
+            WHERE id=$1
+            `
+            let value=[jobId]
+            let id=await replica_DB.query(query,value);
+            if(id.rowCount==0){
+                return false;
+            }
+            return true
+
+        }catch(err){
+            console.log("Error in validJobAssessmentModel", err.message)
+            throw new Error("Error while validating job in assessmentModel")
+        }
+    }
+
     static async validateCompanyJob(jobId){
         
         let replica_DB=replicaPool.getWritePool();
         try{
 
             const jobQuery=
-            `WITH job_data AS
+            `
             SELECT company_id
             FROM job
             WHERE id=$1
-
-            SELECT j.company_id
-            FROM Company C JOIN job_data j on C.id=j.company_id
-            WHERE j.company_id=$2
             `
-            const values=[jobId,companyId]
+            const values=[jobId]
 
             let companyId=await replica_DB.query(jobQuery,values)
-
-            return companyId
+            
+            return companyId.rows[0].company_id
 
         }catch(err){
             console.log("Error in validateCompanyJobModel", err.message)

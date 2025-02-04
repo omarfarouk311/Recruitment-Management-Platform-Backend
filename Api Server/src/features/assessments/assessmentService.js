@@ -9,7 +9,6 @@ module.exports.add_AssessmentService=async (assessmentData) => {
         const assessment=await assessmentsModel.save(assessmentData);
         if(!assessment){
             console.log("Error in addAssessmentService, assessment not added")
-            handleErrors("Assessment not added") 
         }
         return assessment;
 
@@ -18,18 +17,18 @@ module.exports.add_AssessmentService=async (assessmentData) => {
 module.exports.get_All_AssessmentsService=async (companyId,jobTitle) => {
         if(jobTitle){
             const assessments=await assessmentsModel.getAssessmentsByJobTitle(companyId,jobTitle);
-            if(!assessments){// more validation can be added here
-                console.log("Error in get_All_AssessmentsService, assessments not found")
-                handleErrors("assessments not found")  
-            }
+            // if(!assessments){
+            //     // console.log("Error in get_All_AssessmentsService, assessments not found")
+            //     handleErrors("No asssessment found")  
+            // }
             return assessments;
         }
         else{
             const assessments=await assessmentsModel.getAssessments(companyId);
-            if(!assessments){// more validation can be added here
-                console.log("Error in get_All_AssessmentsService, assessments not found")
-                handleErrors("assessments not found")  
-            }
+            // if(!assessments){// more validation can be added here
+            //     // console.log("Error in get_All_AssessmentsService, assessments not found")
+            //     handleErrors("No assessment found")  
+            // }
             return assessments;
         }
 }
@@ -38,10 +37,7 @@ module.exports.get_All_AssessmentsService=async (companyId,jobTitle) => {
 module.exports.get_AssessmentByIdService=async (assessmentId) => {
   
         const assessment=await assessmentsModel.getAssessmentById(assessmentId);
-        if(!assessment){
-            console.log("Error inget_AssessmentByIdService, assessments not found")
-            handleErrors("assessments not found")  
-        }
+    
         return assessment;
 }
 
@@ -52,21 +48,15 @@ module.exports.edit_AssessmentByIdService=async (assessmentId,assessmentData) =>
         assessmentData.numberOfQuestions=numOfQuestions;
 
         const updatedAssessment=await assessmentsModel.edit(assessmentId,assessmentData);
-        if(!updatedAssessment){
-            console.log("Error in update_AssessmentByIdService, assessment not Updated")
-            handleErrors("assessment not Updated")  
-        }
+
         return updatedAssessment;
        
 }
 
 module.exports.delete_AssessmentByIdService=async(assessmentId)=>{
 
-     let deletedAssessment=await assessmentsModel.delete(assessmentId);
-     if(!deletedAssessment){
-         console.log("Error in delete_AssessmentByIdService, assessment not deleted")
-         handleErrors("assessment not deleted")  
-     }
+     await assessmentsModel.delete(assessmentId);
+    
      return true;
 }
 
@@ -74,30 +64,28 @@ module.exports.delete_AssessmentByIdService=async(assessmentId)=>{
 module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerId,metaData)=>{
   
     let assessmentData=await assessmentsModel.getAssessmentById(assessmentId);
-    let assessmentName=assessmentData.assessmentInfo.name;
     let num_of_questions=assessmentData.assessmentInfo.numberOfQuestions
     let score=0;
+  
     assessmentData.questions.forEach((Obj)=>{    
         const question=Obj.question;  
         const correctAnswer=Obj.correctAnswers; 
 
         let jobSeekerObj=metaData.find((jobSeekerMetaData)=>{ 
-            jobSeekerMetaData.question==question
+            
+            return jobSeekerMetaData.question==question
         })
         
         const jobSeekerAnswer = jobSeekerObj ? jobSeekerObj.answers : [];
-
+       
         correctAnswer.sort();
         jobSeekerAnswer.sort();
         if(jobSeekerAnswer.length==correctAnswer.length&& correctAnswer.every((value, index) => value === jobSeekerAnswer[index])){
             score++;
         }
     })
-    let savedScore=await assessmentsModel.saveAssessmentScore(jobId,jobSeekerId,assessmentName,score,num_of_questions);
-    if(!savedScore){
-        console.log("Error in compute_JobSeekerScoreService, Assessment score not saved")
-        handleErrors("Assessment score not saved")  
-    }
+    let savedScore=await assessmentsModel.saveAssessmentScore(jobId,jobSeekerId,assessmentId,score,num_of_questions);
+
     return savedScore;
 }
 
