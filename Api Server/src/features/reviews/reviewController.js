@@ -9,8 +9,8 @@ exports.getReviews = async (req, res, next) => {
         res.status(200).json(reviews);
     }
     catch (err) {
-        err.statusCode = 500;
-        err.message = 'Internal server error';
+        err.status = 500;
+        err.msg = 'Internal server error';
         return next(err)
     }
 };
