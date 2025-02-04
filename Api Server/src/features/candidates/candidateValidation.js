@@ -45,7 +45,6 @@ const status = query("status", "Invalid status query parameter")
 
 exports.getCandidatesForJobValidator = [
     sortBy,
-    jobTitle,
     phaseType,
     candidateLocation,
     status,
