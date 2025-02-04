@@ -3,10 +3,12 @@ const router = express.Router();
 const candidateController = require('./candidateController');
 const candidateAuth = require('./candidateAuthorization');
 const candidateValidation = require('./candidateValidation');
+const  { handleValidationErrors } = require('../../common/util')
 
 router.get(
     '/job/:jobId', 
     candidateValidation.getCandidatesForJobValidator, 
+    handleValidationErrors,
     candidateAuth.authGetCandidatesForJob, 
     candidateController.getCandidatesForJob
 );
@@ -14,11 +16,13 @@ router.get(
 router.get(
     '/recruiter/', 
     candidateValidation.getCandidatesForRecruiterValidator, 
+    handleValidationErrors,
     candidateController.getCandidatesForRecruiter
 );
 
 router.patch('/assign-candidates', 
     candidateValidation.assignCandidatesToRecruiterValidator, 
+    handleValidationErrors,
     candidateAuth.authAssignCandidatesToRecruiter, 
     candidateController.assignCandidatesToRecruiter
 );
@@ -26,6 +30,7 @@ router.patch('/assign-candidates',
 router.post(
     '/make-decision', 
     candidateValidation.makeDecisionToCandidatesValidator,
+    handleValidationErrors,
     candidateAuth.authMakeDecisionToCandidates, 
     candidateController.MakeDecisionToCandidates
 );
@@ -33,6 +38,7 @@ router.post(
 router.patch(
     '/unassign-candidates', 
     candidateValidation.unassignCandidatesFromRecruiterValidator, 
+    handleValidationErrors,
     candidateAuth.authUnassignCandidatesToRecruiter, 
     candidateController.unassignCandidatesFromRecruiter
 );

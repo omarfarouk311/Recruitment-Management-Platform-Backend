@@ -21,4 +21,5 @@ module.exports = {
     candidate_status_accepted: 2,
     candidate_status_rejected: 3,
     pagination_limit: 10,
+    maxNameLength: 30,
 };

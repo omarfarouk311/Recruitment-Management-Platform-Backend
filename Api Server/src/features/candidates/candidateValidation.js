@@ -1,18 +1,18 @@
 const { check, param, body, query } = require("express-validator");
 const constants = require("../../../config/config");
-const {page} = require('../../common/util');
+const {validatePage} = require('../../common/util');
 
 const sortBy = query("sortBy", "invalid sortBy query parameter")
     .optional()
     .isInt()
     .custom((value, { req }) => {
         return value == 1 || value == -1;
-    }, "Invalid value for sortBy");
+    }, "Invalid value for sortBy").toInt();
 
 const simplified = query("simplified", "invalid simplified query parameter")
     .optional()
-    .isInt({ min: 0, max: 1 })
-    .withMessage("Value for simplified must be 0 or 1");
+    .isBoolean()
+    .withMessage("Value for simplified must be 0 or 1").toBoolean();
 
 const jobTitle = query("jobTitle", "invalid jobTitle query parameter")
     .optional()
@@ -22,7 +22,7 @@ const jobTitle = query("jobTitle", "invalid jobTitle query parameter")
 
 const phaseType = query("phaseType", "invalid phaseType query parameter")
     .optional()
-    .isInt({ min: 1 });
+    .isInt({ min: 1 }).toInt();
 
 const candidateLocation = query("candidateLocation", "invalid candidateLocation query parameter")
     .optional()
@@ -35,13 +35,13 @@ exports.getCandidatesForRecruiterValidator = [
     jobTitle,
     phaseType,
     candidateLocation,
-    page
+    validatePage()
 ];
 
 const status = query("status", "Invalid status query parameter")
     .optional()
     .isInt({ min: constants.candidate_status_pending, max: constants.candidate_status_rejected })
-    .withMessage(`Value for status must be between ${constants.candidate_status_pending} and ${constants.candidate_status_rejected}`);
+    .withMessage(`Value for status must be between ${constants.candidate_status_pending} and ${constants.candidate_status_rejected}`).toInt();
 
 exports.getCandidatesForJobValidator = [
     sortBy,
@@ -49,7 +49,7 @@ exports.getCandidatesForJobValidator = [
     phaseType,
     candidateLocation,
     status,
-    page
+    validatePage()
 ]
 
 
@@ -61,7 +61,7 @@ const candidates = body("candidates", "Invalid candidates property")
 
 const recruiterId = body("recruiterId", "Invalid recruiterId").isInt({ min: 1 });
 
-const jobId = body("jobId").isInt({ min: 1 });
+const jobId = body("jobId", "jobId must be positive integer.").isInt({ min: 1 }).toInt();
 
 
 exports.assignCandidatesToRecruiterValidator = [
@@ -75,7 +75,7 @@ exports.unassignCandidatesFromRecruiterValidator = [
     jobId
 ];
 
-const decision = body("decision", "Invalid decision property").isBoolean();
+const decision = body("decision", "Invalid decision property").isBoolean().toBoolean();
 
 exports.makeDecisionToCandidatesValidator = [
     candidates,

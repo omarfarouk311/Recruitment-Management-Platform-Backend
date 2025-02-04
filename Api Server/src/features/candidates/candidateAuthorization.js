@@ -25,8 +25,13 @@ exports.authAssignCandidatesToRecruiter = async (req, res, next) => {
             req.body.recruiterId, 
             req.userId
         );
-        if (!candidateFound || !recruiterFound) {
-            res.status(403).json({ message: 'Unauthorized Access!' });
+
+        if(!candidateFound) {
+            res.status(404).json({ message: 'Candidate not found!' });
+            return;
+        }
+        if (!recruiterFound) {
+            res.status(404).json({ message: 'Recruiter not found!' });
             return;
         }
         next();

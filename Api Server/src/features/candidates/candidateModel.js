@@ -294,7 +294,8 @@ class CandidateModel {
                     JOIN job ON candidates.job_id = job.id
                     JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id
                     JOIN company ON job.company_id = company.id
-                    LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.job_id = assessment.job_id AND candidates.phase = assessment.phase_num;
+                    LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.job_id = assessment.job_id AND candidates.phase = assessment.phase_num
+                    ON CONFLICT (seeker_id, job_id) DO NOTHING;
                 `, [seekerIds, jobId]);
 
                 await client.query(`
