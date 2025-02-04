@@ -242,7 +242,7 @@ CREATE TABLE Reviews (
   description text NOT NULL,
   rating smallint NOT NULL,
   role text NOT NULL,
-  created_at date NOT NULL
+  created_at timestamp NOT NULL
 );
 
 CREATE TABLE Report (

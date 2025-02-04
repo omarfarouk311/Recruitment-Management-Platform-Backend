@@ -1,13 +1,13 @@
 const { Router } = require('express');
-const reviewController = require('./reviewController');
-const reviewValidation = require('./reviewValidation');
+const logController = require('./logController');
+const logValidation = require('./logValidation');
 const { handleValidationErrors } = require('../../common/util');
 const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 
-router.route('/:companyId')
-    .get(reviewValidation.validateGetReviews, handleValidationErrors, reviewController.getReviews)
+router.route('/')
+    .get(logValidation.validateGetLogs, handleValidationErrors, logController.getLogs)
     .all(notAllowed);
 
 module.exports = router;
