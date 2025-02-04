@@ -36,6 +36,24 @@ exports.authAssignCandidatesToRecruiter = async (req, res, next) => {
     }
 }
 
+exports.authUnassignCandidatesToRecruiter = async (req, res, next) => {
+    try {
+        const candidateFound = await authQuerySets.candidatesBelongsToCompany(
+            req.body.jobId, 
+            req.body.candidates, 
+            req.userId
+        );
+        if (!candidateFound) {
+            res.status(403).json({ message: 'Unauthorized Access!' });
+            return;
+        }
+        next();
+    } catch (error) {
+        console.error("Error in authAssignCandidatesToRecruiter controller", error);
+        next(error);
+    }
+}
+
 exports.authMakeDecisionToCandidates = async (req, res, next) => {
     try {
         const found = await authQuerySets.candidatesBelongsToRecruiterOrCompany(

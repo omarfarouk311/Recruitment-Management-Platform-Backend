@@ -19,6 +19,7 @@ class CandidateModel {
                     job_seeker.country as candidate_country,
                     job_seeker.city as candidate_city,
                     recruiter.name as recruiter_name,
+                    assessment.score as score, assessment.total_score as total_score,
                     DENSE_RANK() OVER (ORDER BY similarity_score DESC) AS rank
                 FROM (
                     SELECT 
@@ -26,14 +27,14 @@ class CandidateModel {
                         seeker_id, phase, 
                         recruitment_process_id,
                         recruiter_id,
-                        similarity_score
+                        similarity_score, job_id
                     FROM candidates
                     WHERE candidates.job_id = $1
                 ) AS candidates
                 JOIN job_seeker ON candidates.seeker_id = job_seeker.id
                 JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id
-                LEFT JOIN recruiter ON candidates.recruiter_id = recruiter.id `;
-                /////////////// do not forget getting the score if the phase is assessment
+                LEFT JOIN recruiter ON candidates.recruiter_id = recruiter.id 
+                LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.phase = assessment.phase_num AND candidates.job_id = assessment.job_id `;
         }
         else {
             index += 3;
@@ -232,7 +233,7 @@ class CandidateModel {
                 if(updatedCandidates.length > 0) {
                     let deadline = new Date();
                     deadline.setDate(deadline.getDate() + results[0].deadline);
-                    
+                    let validSeekerIds = updatedCandidates.map((value) => value.seeker_id);
                     await client.query(`
                         UPDATE recruiter
                         SET assigned_candidates_cnt = assigned_candidates_cnt - (
@@ -240,14 +241,14 @@ class CandidateModel {
                             FROM candidates 
                             WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
                         )
-                    `, [updatedCandidates.map((value) => value.seeker_id), jobId]);
+                    `, [validSeekerIds, jobId]);
 
                     let update_query = `
                         UPDATE candidates
                         SET phase = phase + 1, phase_deadline = $3, recruiter_id = NULL
                         WHERE seeker_id = ANY($1) AND job_id = $2;
                     `
-                    await client.query(update_query, [seekerIds, jobId, deadline]);
+                    await client.query(update_query, [validSeekerIds, jobId, deadline]);
                 }
 
                 await client.query('COMMIT;');
@@ -263,7 +264,7 @@ class CandidateModel {
             try {
                 await client.query('BEGIN;');
                 // select the candidates and insert them to the histroy
-                let results = await client.query(`
+                await client.query(`
                     INSERT INTO 
                         candidate_history(
                             seeker_id, job_id, 
@@ -271,7 +272,7 @@ class CandidateModel {
                             job_title, country, 
                             city, remote, 
                             date_applied, score, 
-                            status, phase_type
+                            status, phase_type, total_score
                         )
                     SELECT
                         candidates.seeker_id as seeker_id, candidates.job_id as job_id,
@@ -279,8 +280,8 @@ class CandidateModel {
                         company.name as company_name, job.title as job_title,
                         job.country as country, job.city as city,
                         job.remote, date_applied,
-                        assessment.score as score, false, 
-                        rp.type as phase_type
+                        assessment.score as score, false as status, 
+                        rp.type as phase_type, assessment.total_score as total_score
                     FROM (
                         SELECT
                             date_applied, seeker_id, 
@@ -295,6 +296,17 @@ class CandidateModel {
                     JOIN company ON job.company_id = company.id
                     LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.job_id = assessment.job_id AND candidates.phase = assessment.phase_num;
                 `, [seekerIds, jobId]);
+
+                await client.query(`
+                    UPDATE recruiter
+                    SET assigned_candidates_cnt = assigned_candidates_cnt - (
+                        SELECT COUNT(*) 
+                        FROM candidates 
+                        WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
+                    )
+                `, [seekerIds, jobId]);
+
+
                 // delete candidates from candidates table
                 await client.query(`
                     DELETE FROM candidates
@@ -319,13 +331,15 @@ class CandidateModel {
             let result = await client.query(`
                 SELECT recruiter_id
                 FROM candidates
-                WHERE seeker_id = $1 AND job_id = $2
+                WHERE seeker_id = ANY($1) AND job_id = $2
                 FOR UPDATE;    
             `, [seekerIds, jobId]);
 
-            if (!result.rows.length) {
+            let recruiters = result.rows.map((value) => value.recruiter_id);
+            
+            if (!recruiters.length) {
                 let error = new Error();
-                error.msg = 'Candidate is already not assigned';
+                error.msg = 'Candidates are already not assigned';
                 error.status = 400;
                 throw error;
             }
@@ -333,14 +347,18 @@ class CandidateModel {
             await client.query(`
                 SELECT assigned_candidates_cnt
                 FROM recruiter
-                WHERE id = $1
+                WHERE id = ANY($1)
                 FOR UPDATE;    
-            `, [result.rows[0].recruiter_id]);
-            let assigned_candidates_cnt = (await client.query(`
+            `, [recruiters]);
+
+            let assigned_candidates_cnt = await client.query(`
                 UPDATE recruiter
-                SET assigned_candidates_cnt = assigned_candidates_cnt - 1
-                WHERE id = $1
-                RETURNING assigned_candidates_cnt;`, [result.rows[0].recruiter_id])).rows[0].assigned_candidates_cnt;
+                SET assigned_candidates_cnt = assigned_candidates_cnt - (
+                    SELECT COUNT(*) 
+                    FROM candidates 
+                    WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
+                )
+            `, [seekerIds, jobId]);
 
             await client.query(`
                 UPDATE candidates

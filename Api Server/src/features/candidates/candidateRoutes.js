@@ -32,8 +32,8 @@ router.post(
 
 router.patch(
     '/unassign-candidates', 
-    candidateValidation.assignCandidatesToRecruiterValidator, 
-    candidateAuth.authAssignCandidatesToRecruiter, 
+    candidateValidation.unassignCandidatesFromRecruiterValidator, 
+    candidateAuth.authUnassignCandidatesToRecruiter, 
     candidateController.unassignCandidatesFromRecruiter
 );
 

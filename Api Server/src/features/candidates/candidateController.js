@@ -46,6 +46,6 @@ exports.MakeDecisionToCandidates = async (req, res, next) => {
 };
 
 exports.unassignCandidatesFromRecruiter = async (req, res, next) => {
-    await candidateService.unassignCandidatesFromRecruiter(req.body.candidates);
+    await candidateService.unassignCandidatesFromRecruiter(req.body.candidates, req.body.jobId);
     res.status(200).json({ message: 'Candidates unassigned successfully' });
 };

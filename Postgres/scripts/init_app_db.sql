@@ -192,7 +192,8 @@ CREATE TABLE Assessment_Score (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
   phase_num smallint NOT NULL,
-  score smallint NOT NULL
+  score smallint NOT NULL,
+  total_score smallint NOT NULL,
 );
 
 CREATE TABLE Candidate_History (
@@ -203,6 +204,7 @@ CREATE TABLE Candidate_History (
   phase_type smallint NOT NULL,
   status BOOLEAN NOT NULL,
   score smallint,
+  total_score smallint,
   company_name text NOT NULL,
   date_applied date NOT NULL,
   country text,
