@@ -1,5 +1,5 @@
-const { check, validationResult, body, query } = require('express-validator');
-
+const { check, body, query } = require('express-validator');
+const { validatePage } = require('../../common/util');
 
 module.exports.validateCompanyId = (req, res, next) => {
     try {
@@ -18,7 +18,6 @@ module.exports.validateCompanyId = (req, res, next) => {
 const validateProcessId = () => {
     return check('processId')
         .exists().withMessage('process id is required')
-        .bail()
         .isInt().withMessage('process id must be a numeric value greater than 0')
         .toInt()
         .custom(value => {
@@ -47,7 +46,6 @@ const validateRecruitmentProcessBody = () => {
 const validateRecruitmentProcessPhaseNumber = () => {
     return body('phases.*.phaseNumber')
         .exists().withMessage('Phase number is required')
-        .bail()
         .isInt().withMessage('Phase number must be an integer greater than 0')
         .toInt()
         .custom(value => {
@@ -61,7 +59,6 @@ const validateRecruitmentProcessPhaseNumber = () => {
 const validateRecruitmentProcessPhaseName = () => {
     return body('phases.*.phaseName')
         .exists().withMessage('Phase name is required')
-        .bail()
         .trim()
         .isString().withMessage('Phase name must be a string')
         .isLength({ min: 4, max: 50 }).withMessage('Phase name must be a string with length between 4 and 50');
@@ -70,7 +67,6 @@ const validateRecruitmentProcessPhaseName = () => {
 const validateRecruitmentProcessPhaseType = () => {
     return body('phases.*.phaseType')
         .exists().withMessage('Phase type is required')
-        .bail()
         .isInt().withMessage('Phase type must be an integer greater than 0')
         .toInt()
         .custom(value => {
@@ -108,22 +104,6 @@ const validateRecruitmentProcessAssessmentId = () => {
 };
 
 
-
-const pagination = () => {
-    return [
-        query('page')
-            .optional()  
-            .isInt({ min: 1 }).withMessage('Page number must be a positive integer')
-            .toInt() 
-            .custom((value, { req }) => {
-                if (value === undefined) {
-                    req.query.page = 1;
-                }
-                return true;
-            }),
-    ];
-};
-
 const validateRecruitmentProcessId = [
     validateProcessId() 
 ];
@@ -138,13 +118,13 @@ const validateRecruitmentProcessData = [
     validateRecruitmentProcessAssessmentId()
 ];
 
-const validatePagination = [
-    pagination()
-];
 
+const paginationValidation = [
+    validatePage()
+];
 
 module.exports = {
     validateRecruitmentProcessData,
     validateRecruitmentProcessId,
-    validatePagination
+    paginationValidation
 }

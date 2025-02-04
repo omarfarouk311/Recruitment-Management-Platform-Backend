@@ -1,11 +1,9 @@
 const recruitment_processService = require('./recruitment_processService');
 
 
-
 module.exports.getRecruitmentProcess = async (req, res, next) => {
     try {
-        // parameter should be req.id
-        let companyId = 3; 
+        let companyId = req.userId
         const page = req.query.page || 1;
         const recruitment_process = await recruitment_processService.getRecruitmentProcess(companyId, page);
         if (!recruitment_process || recruitment_process.length === 0) {
@@ -18,10 +16,10 @@ module.exports.getRecruitmentProcess = async (req, res, next) => {
 } 
 
 
-module.exports.getRecruitmentProcessById = async (req, res, next) => {
+module.exports.getRecruitmentProcessDetails = async (req, res, next) => {
     const { processId } = req.params;
     try {
-        const recruitment_process = await recruitment_processService.getRecruitmentProcessById(processId);
+        const recruitment_process = await recruitment_processService.getRecruitmentProcessDetails(processId);
         res.status(200).json({ recruitment_process });
     }
     catch(error) {
@@ -34,7 +32,7 @@ module.exports.getRecruitmentProcessById = async (req, res, next) => {
 module.exports.updateRecruitmentProcess = async (req, res, next) => {
     const { processId } = req.params;
     const data = req.body.phases;
-    let companyId = req.id; companyId = 3;
+    let companyId = req.userId
     const processName = req.body.processName;
     try {
         const recruitment_process = await recruitment_processService.updateRecruitmentProcess(companyId, processId, processName, data);
@@ -48,7 +46,7 @@ module.exports.updateRecruitmentProcess = async (req, res, next) => {
 
 module.exports.CreateRecruitmentProcess = async (req, res, next) => {
     const data = req.body.phases;
-    let companyId = req.id; companyId = 2;
+    let companyId = req.userId;
     const processName = req.body.processName;
     
     try {
@@ -63,12 +61,22 @@ module.exports.CreateRecruitmentProcess = async (req, res, next) => {
 
 module.exports.deleteRecruitmentProcess = async (req, res, next) => {  
     const { processId } = req.params;
-    let companyId = req.id; companyId = 2;
+    let companyId = req.userId;
     try {
         const recruitment_process = await recruitment_processService.deleteRecruitmentProcess(companyId, processId);
         res.status(200).send(recruitment_process);
     } catch (error) {
         console.log("Error in deleteRecruitmentProcess in controller file with error msg");
+        next(error);
+    }
+}
+
+
+module.exports.getPhases = async (req, res, next) => {
+    try {
+        const phases = await recruitment_processService.getPhases();
+        res.status(200).json({ phases });
+    } catch (error) {
         next(error);
     }
 }

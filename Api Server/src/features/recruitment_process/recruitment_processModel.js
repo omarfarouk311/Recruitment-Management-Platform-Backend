@@ -1,5 +1,5 @@
 const produce = require('../../common/kafka');
-const poolConn = require('../../../config/db');
+const Pool = require('../../../config/db');
 
 
 class recruitment_process {
@@ -10,17 +10,17 @@ class recruitment_process {
             const limit = 7;
             const offset = (page - 1) * limit;
             const values = [companyId, limit, offset];
-            let pool = poolConn.getReadPool();
+            let pool = Pool.getReadPool();
             const { rows } = await pool.query(query, values);
             return rows;
         } catch (error) {
-            console.log('Error in getRecruitmentProcess \n', error.message );
+            console.log('Error in getRecruitmentProcess \n', error.message);
             throw error;
-        } 
+        }
     }
 
-    static async getRecruitmentProcessById(recruitmentProcessId) {
-        try {
+    static async getRecruitmentProcessDetails(recruitmentProcessId) {
+        try {            
             const query = `
                 WITH recruitmentId AS (
                     SELECT phase_num, name, type, deadline, assessment_id
@@ -39,7 +39,7 @@ class recruitment_process {
                 ON assessment_id = id
                 order by t.phase_num;
             `;
-            let pool = poolConn.getReadPool();
+            let pool = Pool.getReadPool();
             const { rows } = await pool.query(query, [recruitmentProcessId]);
             return rows;
         } catch (error) {
@@ -49,7 +49,7 @@ class recruitment_process {
     }
 
     static async createRecruitmentProcess(companyId, processName, data) {
-        let pool = poolConn.getWritePool();
+        let pool = Pool.getWritePool();
         pool = await pool.connect();
         await pool.query('BEGIN');
         try {
@@ -111,10 +111,10 @@ class recruitment_process {
         }
     }
 
-    
-    static async validateRecruitmentProcessData({ phaseName, phaseType, deadline, assessmentId } ) {
+
+    static async validateRecruitmentProcessData({ phaseName, phaseType, deadline, assessmentId }) {
         let getPhaseType = `select name FROM Phase_Type WHERE id = $1`;
-        let pool = poolConn.getReadPool(), errors = [];
+        let pool = Pool.getReadPool(), errors = [];
         const { rows, rowCount } = await pool.query(getPhaseType, [phaseType]);
         if (rowCount == 0) {
             errors.push('Phase type not found, please provide a valid phase type');
@@ -135,7 +135,7 @@ class recruitment_process {
     }
 
     static async updateRecruitmentProcess(companyId, processId, processName, data) {
-        let pool = poolConn.getWritePool();
+        let pool = Pool.getWritePool();
         pool = await pool.connect()
         try {
             const validationPromises = data.map(async (item) => {
@@ -188,20 +188,20 @@ class recruitment_process {
             return { message: 'Recruitment process updated successfully' };
 
         } catch (error) {
-                await pool.query('ROLLBACK');
-                console.log('Error in updateRecruitmentProcess');
-                throw error;
+            await pool.query('ROLLBACK');
+            console.log('Error in updateRecruitmentProcess');
+            throw error;
         } finally {
-                pool.release();
+            pool.release();
         }
-    
+
     }
 
     static async deleteRecruitmentProcess(companyId, processId) {
         try {
             const deleteQuery = `DELETE FROM recruitment_process WHERE id = $1`;
             const values = [processId];
-            let pool = poolConn.getWritePool();
+            let pool = Pool.getWritePool();
             await pool.query(deleteQuery, values);
             const processObject = {
                 "performed_by": "Company",
@@ -214,19 +214,20 @@ class recruitment_process {
         } catch (error) {
             console.log('Error in deleteRecruitmentProcess');
             throw error;
-        } 
+        }
     }
 
-
+    // for authorization
     static getProcessById = async (processId) => {
         try {
             const query = `SELECT company_id FROM recruitment_process WHERE id = $1`;
             const values = [processId];
-            let pool = poolConn.getReadPool();
+            let pool = Pool.getReadPool();
             const { rows } = await pool.query(query, values);
             if (rows.length === 0) {
-                const error = new Error('Recruitment process not found');
+                const error = new Error('Recruitment process not in database');
                 error.status = 404;
+                error.msg = 'Recruitment process not found';
                 throw error;
             }
             return rows[0].company_id;
@@ -236,7 +237,18 @@ class recruitment_process {
             throw error;
         }
     }
-    
+
+    static async getPhases() {
+        try {
+            const query = `SELECT id, name FROM phase_type`;
+            let pool = Pool.getReadPool();
+            const { rows } = await pool.query(query);
+            return rows;
+        } catch (error) {
+            console.log('Error in getPhases');
+            throw error;
+        }
+    }
 }
 
 module.exports = recruitment_process;
