@@ -71,21 +71,21 @@ module.exports.delete_AssessmentByIdService=async(assessmentId)=>{
 }
 
 
-module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerId,answers)=>{
+module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerId,metaData)=>{
+  
     let assessmentData=await assessmentsModel.getAssessmentById(assessmentId);
-    let correctAnswers=assessmentData.correct_answers;
-    let num_of_questions=assessmentData.num_of_questions
-    let assessmentName=assessmentData.name;
+    let assessmentName=assessmentData.assessmentInfo.name;
+    let num_of_questions=assessmentData.assessmentInfo.numberOfQuestions
     let score=0;
-    correctAnswers.forEach((correctAnswerObj)=>{    //const correctAnswers = [   { 1: [1, 2, 3] },   { 2: [1, 2, 3] }]
-        const questionId=Object.keys(correctAnswerObj)[0];   // get the question id
-        const correctAnswer=correctAnswerObj[questionId];   // get the correct answer of the question
+    assessmentData.questions.forEach((Obj)=>{    
+        const question=Obj.question;  
+        const correctAnswer=Obj.correctAnswers; 
 
-        let jobSeekerObj=answers.find((answerObj)=>{ 
-            Object.keys(answerObj)[0]==questionId
+        let jobSeekerObj=metaData.find((jobSeekerMetaData)=>{ 
+            jobSeekerMetaData.question==question
         })
         
-        const jobSeekerAnswer = jobSeekerObj ? jobSeekerObj[questionId] : [];
+        const jobSeekerAnswer = jobSeekerObj ? jobSeekerObj.answers : [];
 
         correctAnswer.sort();
         jobSeekerAnswer.sort();

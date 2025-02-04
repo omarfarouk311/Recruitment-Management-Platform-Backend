@@ -1,5 +1,5 @@
-const primaryPool=require('../config/db')
-const replicaPool=require('../config/db')
+const primaryPool=require('../../../config/db')
+const replicaPool=require('../../../config/db')
 
 class assessmentsModel{
      
@@ -16,20 +16,19 @@ class assessmentsModel{
     }
 
     static async save(assessmentData){
+        const primary_DB=primaryPool.getWritePool();
+        const client=await primary_DB.connect();  // to open a connection to the database and do not close it until the transaction is done
         
         try{
             
-            const primary_DB=primaryPool.getWritePool();
-            const client=primary_DB.connect();  // to open a connection to the database and do not close it until the transaction is done
             const assessmentQuery =`
-            INSERT INTO Assessment (company_id,name,asseessment_time,job_title,num_of_questions) 
-            VALUES(&1,&2,&3,&4,&5) RETURNING *`;
+            INSERT INTO Assessment (company_id,name,assessment_time,job_title,num_of_questions) 
+            VALUES($1,$2,$3,$4,$5) RETURNING *`;
           //  companyId,name,assessmentTime,jobTitle,numberOfQuestions
 
-            const questionsQuery = `
-            INSERT INTO Questions (assessment_id, question, answers, correct_answers) 
-            VALUES(&1,&2,&3,&4) RETURNING id`;
-           // assessmentId, questions, answers, correctAnswers
+            const Questionquery=
+            `INSERT INTO Questions (assessment_id,question,answers,correct_answers)
+             VALUES($1,$2,$3,$4) RETURNING *`
 
             let assessmentvalues=[
                 assessmentData.companyId,
@@ -40,7 +39,7 @@ class assessmentsModel{
 
 
  
-            client.query('BEGIN');  // begin the transaction
+            await client.query('BEGIN');  // begin the transaction
            
             const assessmentResult = await client.query(assessmentQuery,assessmentvalues); 
             const assessmentId = assessmentResult.rows[0].id;
@@ -48,17 +47,23 @@ class assessmentsModel{
                 throw new Error("Failed to add new assessment in assessmentModel")
             }
 
-            let questionsValues = [
-                assessmentId, // the foreign key from the assessment table
-                assessmentData.questions,
-                assessmentData.answers,
-                assessmentData.correctAnswers];
 
-            const questionResult=await client.query(questionsQuery,questionsValues)
-            const questionId = questionResult.rows[0].id;
-            if(!questionId){
-                throw new Error("Failed to add new questions in assessmentModel")
-            }
+            // console.log(assessmentData.questions)
+            // console.log(assessmentData.answers)
+            // console.log(assessmentData.correctAnswers)
+            assessmentData.metaData.forEach(async(Obj,index) => {
+                let question=Obj.questions;
+                let answers=Obj.answers;
+                let correctAnswers=Obj.correctAnswers;
+
+                const Questionvalues=[assessmentId,question,answers,correctAnswers]
+                const questionResult=await client.query(Questionquery,Questionvalues)
+
+                const questionId = questionResult.rows[0].id;
+                if(!questionId){
+                    throw new Error("Failed to add new questions in assessmentModel")
+                }
+            })
 
             await client.query('COMMIT');
             return assessmentResult.rows[0];
@@ -78,7 +83,7 @@ class assessmentsModel{
             const query=`
             SELECT * 
             FROM Assessment 
-            WHERE company_id=&1`;
+            WHERE company_id=$1`;
             const value=[companyId];
     
             const result=await replica_DB.query(query,value);
@@ -96,7 +101,7 @@ class assessmentsModel{
             const query=`
             SELECT * 
             FROM Assessment 
-            WHERE company_id=&1 AND job_title=&2`;
+            WHERE company_id=$1 AND job_title=$2`;
             const values=[companyId,jobTitle]
             const result=await replica_DB.query(query,values);
             const assessments=result.rows;
@@ -120,14 +125,28 @@ class assessmentsModel{
               FROM Assessment 
               WHERE id=$1 
             )
-            SELECT * 
+            SELECT assessment_data.name,assessment_data.assessment_time,assessment_data.job_title,assessment_data.num_of_questions,Questions.question,Questions.answers,Questions.correct_answers
             FROM assessment_data JOIN Questions ON assessment_data.id=Questions.assessment_id`;
 
             const value=[assessmentId]
 
             const result=await replica_DB.query(assessmentDataQuery,value);
-            const assessment=result.rows[0];
-            return assessment
+
+            let returnedData={
+                assessmentInfo:{
+                    name:result.rows[0].name,
+                    assessmentTime:result.rows[0].assessment_time,
+                    jobTitle:result.rows[0].job_title,
+                    numberOfQuestions:result.rows[0].num_of_questions
+                },
+                questions:result.rows.map(row=>({
+                    question:row.question,
+                    answers:row.answers,
+                    correctAnswers:row.correct_answers,
+                }))
+            }
+
+            return returnedData
             }catch(err){
                 console.log("Error in getAssessmentByIdModel", err.message)
                 throw new Error("Error while getting the assessment by Id in assessmentModel" )
@@ -135,13 +154,14 @@ class assessmentsModel{
     }
 
     static async edit(assessmentId,assessmentData){
+        const primary_DB=primaryPool.getWritePool();
+        const client=await primary_DB.connect();  
+        
         try{
-            const primary_DB=primaryPool.getWritePool();
-            const client=primary_DB.connect();  
 
-            const assessmentQuery =`
+            const updateAssessmentQuery =`
             UPDATE Assessment 
-            SET name=$1,asseessment_time=$2,job_title=$3,num_of_questions=$4 
+            SET name=$1,assessment_time=$2,job_title=$3,num_of_questions=$4 
             WHERE id=$5 RETURNING *`;
             const values=[
                 assessmentData.name,
@@ -150,28 +170,43 @@ class assessmentsModel{
                 assessmentData.numberOfQuestions,
                 assessmentId];
 
-            const questionsQuery = `
-            UPDATE Questions 
-            SET question=$1,answers=$2,correct_answers=$3 
-            WHERE assessment_id=$4 RETURNING *`;
-            const questionsValues = [
-                assessmentData.questions,
-                assessmentData.answers,
-                assessmentData.correctAnswers,
-                assessmentId];
+            const deleteQuestionsQuery = `
+            DELETE FROM Questions 
+            WHERE assessment_id=$1 RETURNING *`;
+            const deleteQuestionsValues = [assessmentId];
 
+            const insertQuestionsQuery=
+            `INSERT INTO Questions (assessment_id,question,answers,correct_answers)
+             VALUES($1,$2,$3,$4) RETURNING *`
 
-                client.query('BEGIN');  // begin the transaction
+            
+        
+            await client.query('BEGIN');  // begin the transaction
 
-            const assessmentResult = await client.query(assessmentQuery,values);
+            const assessmentResult = await client.query(updateAssessmentQuery,values);
             if(assessmentResult.rowCount===0){           // check if any rows have been updated or not
                 throw new Error("Failed to update assessment in assessmentModel")
             }
 
-            const questionResult=await client.query(questionsQuery,questionsValues)
-            if(questionResult.rowCount===0){
-                throw new Error("Failed to update questions in assessmentModel")
+            const deletedQuestions=await client.query(deleteQuestionsQuery,deleteQuestionsValues)
+            if(deletedQuestions.rowCount===0){
+                throw new Error("Failed to delete questions in assessmentModel")
             }
+
+            assessmentData.metaData.forEach(async(Obj) => {
+                let question=Obj.questions;
+                let answers=Obj.answers;
+                let correctAnswers=Obj.correctAnswers;
+
+                const Questionvalues=[assessmentId,question,answers,correctAnswers]
+                const questionResult=await client.query(insertQuestionsQuery,Questionvalues)
+
+                const questionId = questionResult.rows[0].id;
+                if(!questionId){
+                    throw new Error("Failed to add new questions in assessmentModel")
+                }
+            })
+
 
             await client.query('COMMIT');
             return assessmentResult.rows[0];
@@ -190,7 +225,7 @@ class assessmentsModel{
         try{
             const primary_DB=primaryPool.getWritePool();
 
-            let deleteQuery=`DELETE FROM Assessment WHERE id=&1`;
+            let deleteQuery=`DELETE FROM Assessment WHERE id=$1`;
             let value=[assessmentID]
 
             const result=await primary_DB.query(deleteQuery,value); // will delete the entery of table questions because we make it on delete cascade om the foreign key
@@ -208,10 +243,10 @@ class assessmentsModel{
 
     static async saveAssessmentScore(jobId,jobSeekerId,assessmentName,score,num_of_questions){
         try{
-            primary_DB=primaryPool.getWritePool();
+            const primary_DB=primaryPool.getWritePool();
             const query=
             `INSERT INTO Assessment_Score(job_id,seeker_id,phase_name,score,total_score)
-             values(&1,&2,&3,&4,&5)`
+             values($1,$2,$3,$4,$5)`
             const values=[jobId,jobSeekerId,assessmentName,score,num_of_questions]
             const result=await primary_DB.query(query,values);
             if(result.rowCount===0){
@@ -232,7 +267,7 @@ class assessmentsModel{
             const query=
             `SELECT phase_name,score,total_score
             FROM Assessment_Score
-            WHERE job_id=&1 AND seeker_id=&2`
+            WHERE job_id=$1 AND seeker_id=$2`
     
             const values=[jobId,jobSeekerId]
 
@@ -245,10 +280,34 @@ class assessmentsModel{
         }
     }
 
-    static async validateCompanyJob(companyId,jobId){
+    static async validateCompanyAssessment(assessmentId){
+        let replica_DB=replicaPool.getWritePool();
+        
         try{
-            let primary_DB=primaryPool.getWritePool();
-            let client=primary_DB.connect();
+
+            let query=
+            `SELECT company_id
+            FROM Assessment
+            WHERE id=$1`
+
+            let values=[assessmentId]
+            let companyId=await replica_DB.query(query,values)
+            if(companyId.rowCount==0){
+                return null;
+            }
+            return companyId.rows[0].company_id
+          
+        }catch(err){
+            console.log("Error in validateCompanyAssessmentModel", err.message)
+            throw new Error("Error while validating the company assessment in assessmentModel" )
+        }
+
+    }
+
+    static async validateCompanyJob(jobId){
+        
+        let replica_DB=replicaPool.getWritePool();
+        try{
 
             const jobQuery=
             `WITH job_data AS
@@ -261,20 +320,14 @@ class assessmentsModel{
             WHERE j.company_id=$2
             `
             const values=[jobId,companyId]
-            client.query('BEGIN')
 
-            let companyId=await client.query(jobQuery,values)
-
-            client.query('COMMIT')
+            let companyId=await replica_DB.query(jobQuery,values)
 
             return companyId
 
         }catch(err){
             console.log("Error in validateCompanyJobModel", err.message)
-            client.query('ROLLBACK')
             throw new Error("Error while validating the company job in assessmentModel" )
-        }finally{
-            client.release();
         }
 
     }

@@ -4,9 +4,9 @@ const assessmentService=require('./assessmentService');
 module.exports.add_AssessmentController = async (req, res) => {
    try{
     const assessmentData=req.body;
-    assessmentData.companyId=req.params.id; // will change later to be taken from the token
+    assessmentData.companyId=req.body.companyId; // will change later to be taken from the token
    
-
+   
     const assessment=await assessmentService.add_AssessmentService(assessmentData);
     
     return res.status(201).json({
@@ -110,9 +110,13 @@ module.exports.compute_JobSeekerScore=async(req,res)=>{
         let assessmentId=req.params.id;
         let jobId=req.params.jobId;
         let jobSeekerId=req.body.jobSeekerId // will change later to be taken from the token
-        let answers=req.body.answers;
+        let metaData=req.body.metaData;
+        // console.log(metaData)
+        // console.log(assessmentId)
+        // console.log(jobSeekerId)
+        // console.log(jobId)
 
-        const savedScore=await assessmentService.compute_JobSeekerScoreService(assessmentId,jobId,jobSeekerId,answers);
+        const savedScore=await assessmentService.compute_JobSeekerScoreService(assessmentId,jobId,jobSeekerId,metaData);
         if(!savedScore){
             console.log("Error in compute_JobSeekerScore")
             throw new Error("Failed to save the score in compute_JobSeekerScore")
