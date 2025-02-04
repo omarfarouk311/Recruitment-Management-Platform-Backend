@@ -28,3 +28,17 @@ exports.getCompanyLocations = async (req, res, next) => {
         return next(err);
     }
 };
+
+exports.getCompanyIndustries = async (req, res, next) => {
+    const { companyId } = req.params;
+
+    try {
+        const result = await companyService.getCompanyIndustries(companyId);
+        return res.status(200).json(result);
+    }
+    catch (err) {
+        err.status = 500;
+        err.msg = 'Internal server error';
+        return next(err);
+    }
+};

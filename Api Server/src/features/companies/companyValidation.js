@@ -9,4 +9,4 @@ const validateCompanyId = () => checkCompanyId('companyId')
     .withMessage("Invalid Company ID")
     .toInt();
 
-exports.validateGetCompanyData = validateCompanyId();
+exports.validateCompanyId = validateCompanyId();

@@ -6,11 +6,15 @@ const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/:companyId')
-    .get(companyValidation.validateGetCompanyData, handleValidationErrors, companyController.getCompanyData)
+    .get(companyValidation.validateCompanyId, handleValidationErrors, companyController.getCompanyData)
     .all(notAllowed);
 
 router.route('/:companyId/locations')
-    .get(companyValidation.validateGetCompanyData, handleValidationErrors, companyController.getCompanyLocations)
+    .get(companyValidation.validateCompanyId, handleValidationErrors, companyController.getCompanyLocations)
+    .all(notAllowed);
+
+router.route('/:companyId/industries')
+    .get(companyValidation.validateCompanyId, handleValidationErrors, companyController.getCompanyIndustries)
     .all(notAllowed);
 
 module.exports = router;

@@ -9,3 +9,8 @@ exports.getCompanyLocations = async (companyId) => {
     const result = await companyModel.getCompanyLocations(companyId);
     return result;
 };
+
+exports.getCompanyIndustries = async (companyId) => {
+    const result = await companyModel.getCompanyIndustries(companyId);
+    return result;
+};

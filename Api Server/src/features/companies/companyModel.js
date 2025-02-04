@@ -80,6 +80,23 @@ class Company {
         const { rows } = await pool.query(query, values)
         return rows
     }
+
+    static async getCompanyIndustries(companyId) {
+        const pool = getReadPool();
+        const values = [companyId];
+        let index = 1;
+
+        let query =
+            `
+            select i.name as industry
+            from Company_Industry c
+            join industry i on c.industry_id = i.id
+            where company_id = $${index}
+            `;
+
+        const { rows } = await pool.query(query, values)
+        return rows
+    }
 }
 
 module.exports = Company;
