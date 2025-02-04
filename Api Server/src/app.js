@@ -1,6 +1,7 @@
 process.env.TZ = 'UTC';
 const express = require('express');
 const { port } = require('../config/config');
+const candidateRoutes = require('./features/candidates/candidateRoutes');
 const reviewRoutes = require('./features/reviews/reviewRoutes');
 const logRoutes = require('./features/logs/logRoutes');
 const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware');
@@ -10,6 +11,9 @@ app.use(express.json());
 
 app.use('/company', recruitment_processRoutes);
 
+app.use(express.json());
+
+app.use('/candidates', candidateRoutes);
 app.use('/reviews', reviewRoutes);
 
 app.use('/logs', logRoutes);
