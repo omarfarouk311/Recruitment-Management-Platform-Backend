@@ -1,7 +1,9 @@
 const { getReadPool } = require('../../../config/db');
 
 class Review {
-    constructor({ companyId, title, description, rating, role, createdAt }) {
+    constructor({ id, creatorId, companyId, title, description, rating, role, createdAt }) {
+        this.id = id;
+        this.creatorId = creatorId;
         this.companyId = companyId;
         this.title = title;
         this.description = description;
@@ -12,16 +14,19 @@ class Review {
 
     static async getReviews(companyId, filters, limit = 5) {
         const pool = getReadPool();
-        // base query
-        let query = `select company_id as "companyId", title, description, rating, role, created_at as "createdAt" from reviews where company_id = $1`;
         const values = [companyId];
-        let index = 2;
+        let index = 1;
+
+        // base query
+        let query =
+            `select company_id as "companyId", title, description, rating, role, created_at as "createdAt"
+            from reviews
+            where company_id = $${index++}`;
 
         //specific rating & up
         if (filters.rating) {
-            query += ` and rating >= $${index}`;
+            query += ` and rating >= $${index++}`;
             values.push(filters.rating);
-            index++;
         }
 
         //sorting
@@ -46,12 +51,11 @@ class Review {
         }
 
         // pagination
-        query += ` limit $${index} offset $${index + 1}`;
+        query += ` limit $${index++} offset $${index++}`;
         values.push(limit, (filters.page - 1) * limit);
-        index += 2;
 
-        const result = await pool.query(query, values);
-        return result.rows;
+        const { rows } = await pool.query(query, values);
+        return rows;
     }
 
 }

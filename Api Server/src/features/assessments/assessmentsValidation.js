@@ -1,18 +1,8 @@
 const { query } = require('express');
-const { check,param, body,validationResult } = require('express-validator');
+const { check, body,validationResult } = require('express-validator');
 
 
 
-module.exports.checkResults=(req,res,next)=>{
-    const errors=validationResult(req);
-    if(!errors.isEmpty()){
-        return res.status(400).json({
-            success: false,
-            errors: errors.array()
-        })
-    }
-    next();
-}
 
 const validateName=()=>{
     return  body('name').not().isEmpty().withMessage('Name is required').bail().isLength({min:3})
@@ -35,7 +25,8 @@ const validateMetaData=()=>{
 }
 
 const validateId=(parm)=>{
-    return param(parm).not().isEmpty().withMessage('id has to passed in req').
+   
+    return check(parm).not().isEmpty().withMessage('id has to passed in req').
     isInt().toInt()
 }
 

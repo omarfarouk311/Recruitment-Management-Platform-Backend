@@ -1,7 +1,7 @@
 const assessmentService=require('./assessmentService');
 
 
-module.exports.add_AssessmentController = async (req, res) => {
+module.exports.add_AssessmentController = async (req, res,next) => {
    try{
     const assessmentData=req.body;
     assessmentData.companyId=req.body.companyId; // will change later to be taken from the token
@@ -16,15 +16,12 @@ module.exports.add_AssessmentController = async (req, res) => {
         message:"Assessment added successfully"
     })
     }catch(err){
-        console.log("Error in addAssessmentController", err.message) // may be changed later to be handled by error handler function
-         return res.status(500).json({
-              success: false,
-              message: err.message
-        })
+        console.log("Error in addAssessmentController", err.message)
+        next(err)
    } 
 }
 
-module.exports.get_All_AssessmentController=async(req,res)=>{
+module.exports.get_All_AssessmentController=async(req,res,next)=>{
     try{
         let {jobTitle}=req.query;
         let companyId=req.body.companyId; // will change later to be taken from the token
@@ -35,16 +32,13 @@ module.exports.get_All_AssessmentController=async(req,res)=>{
         })
     }
     catch(err){
-        console.log("Error in getAssessmentController", err.message) // may be changed later to be handled by error handler function
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        })
+        console.log("Error in getAssessmentController", err.message) 
+        next(err)
     }
 
 }
 
-module.exports.get_AssessmentByIdController=async(req,res)=>{
+module.exports.get_AssessmentByIdController=async(req,res,next)=>{
     try{
         let assessmentId=req.params.id;
         const assessment=await assessmentService.get_AssessmentByIdService(assessmentId);
@@ -54,17 +48,14 @@ module.exports.get_AssessmentByIdController=async(req,res)=>{
         })
     }
     catch(err){
-        console.log("Error in getAssessmentByIdController", err.message) // may be changed later to be handled by error handler function
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        })
+        console.log("Error in getAssessmentByIdController", err.message) 
+        next(err)
     }
 
 }
 
 
-module.exports.edit_AssessmentByIdController=async(req,res)=>{
+module.exports.edit_AssessmentByIdController=async(req,res,next)=>{
     try{
         let assessmentId=req.params.id;
         const updatedAssessmentData=req.body;
@@ -77,16 +68,13 @@ module.exports.edit_AssessmentByIdController=async(req,res)=>{
         })
 
     }catch(err){
-        console.log("Error in updateAssessmentByIdController", err.message) // may be changed later to be handled by error handler function
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        })
+        console.log("Error in updateAssessmentByIdController", err.message) 
+        next(err)
     }
 }
 
 
-module.exports.delete_AssessmentByIdController=async(req,res)=>{
+module.exports.delete_AssessmentByIdController=async(req,res,next)=>{
     try{
 
         let assessmentId=req.params.id;
@@ -97,16 +85,13 @@ module.exports.delete_AssessmentByIdController=async(req,res)=>{
         })
 
     }catch(err){
-        console.log("Error in deleteAssessmentByIdController", err.message) // may be changed later to be handled by error handler function
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        })
+        console.log("Error in deleteAssessmentByIdController", err.message) 
+        next(err)
     }
 }
 
 
-module.exports.compute_JobSeekerScore=async(req,res)=>{
+module.exports.compute_JobSeekerScore=async(req,res,next)=>{
     try{
         let assessmentId=req.params.id;
         let jobId=req.params.jobId;
@@ -125,15 +110,12 @@ module.exports.compute_JobSeekerScore=async(req,res)=>{
             message: "submitted successfully"
         })
     }catch(err){
-        console.log("Error in compute_JobSeekerScore", err.message) // may be changed later to be handled by error handler function
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        })
+        console.log("Error in compute_JobSeekerScore", err.message) 
+        next(err)
     }
 }
 
-module.exports.get_JobSeekerScore=async(req,res)=>{
+module.exports.get_JobSeekerScore=async(req,res,next)=>{
     try{
         let jobId=req.params.jobId;
         let jobSeekerId=req.params.jobSeekerId;
@@ -152,11 +134,8 @@ module.exports.get_JobSeekerScore=async(req,res)=>{
             jobSeekerScore: returnedData
         })
     }catch(err){
-        console.log("Error in get_JobSeekerScore", err.message) // may be changed later to be handled by error handler function
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        })
+        console.log("Error in get_JobSeekerScore", err.message) 
+        next(err)
     }
 
 

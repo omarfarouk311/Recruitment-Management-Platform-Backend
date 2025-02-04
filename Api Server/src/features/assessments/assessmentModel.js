@@ -71,7 +71,10 @@ class assessmentsModel{
         }catch(err){
             console.log("Error in addAssessmentModel", err.message)
             await client.query('ROLLBACK'); // rollback the transaction in case of error
-            throw new Error("Error while adding the assessment" )
+            err.msg="error during saving the assessment,please try again"
+            err.status=500
+            throw err;
+            
         }finally{
             client.release();  // release the connection to the pool
         }
@@ -151,7 +154,9 @@ class assessmentsModel{
             return returnedData
             }catch(err){
                 console.log("Error in getAssessmentByIdModel", err.message)
-                throw new Error(err.message)
+                err.msg=err.message;
+                err.status=500
+                throw new Error(err)
             }
     }
 
@@ -216,7 +221,8 @@ class assessmentsModel{
         }catch(err){
             console.log("Error in updateAssessmentModel", err.message)
             await client.query('ROLLBACK'); // rollback the transaction in case of error
-            throw new Error(err.message)
+            err.msg="Failed to edit assessment,try again"
+            throw new Error(err)
         }finally{
             client.release();
         }
@@ -227,6 +233,21 @@ class assessmentsModel{
         try{
             const primary_DB=primaryPool.getWritePool();
 
+            let CheckQuery=`
+            SELECT recruitment_process_id
+            FROM recruitment_phase
+            WHERE assessment_id=$1
+            `
+            let CheckValue=[assessmentID]
+            let CheckResult=await primary_DB.query(CheckQuery,CheckValue);
+          
+            if(CheckResult.rowCount>0){
+              
+                let err=new Error();
+                err.msg="The assessment has been already assigned to recruitment process,you can not delete it right now";
+                err.status=400;
+                throw err;
+            }
             let deleteQuery=`DELETE FROM Assessment WHERE id=$1`;
             let value=[assessmentID]
 
@@ -239,7 +260,7 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in deleteAssessmentModel", err.message)
-            throw new Error("The assessment has been already assigned to recruitment procces,you can not delete it right now")
+            throw err
         }
     }
 
@@ -286,7 +307,9 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in saveAssessmentScoreModel", err.message)
-            throw new Error(err.message )
+            err.msg=err.message;
+            err.status=500
+            throw err
         }
     }
 
@@ -306,7 +329,7 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in getJobSeekerScoreModel", err.message)
-            throw new Error("Error while getting the job seeker score in assessmentModel" )
+            throw err
         }
     }
 
@@ -329,7 +352,7 @@ class assessmentsModel{
           
         }catch(err){
             console.log("Error in validateCompanyAssessmentModel", err.message)
-            throw new Error("Error while validating the company assessment in assessmentModel" )
+            throw err
         }
 
     }
@@ -352,7 +375,7 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in validJobAssessmentModel", err.message)
-            throw new Error("Error while validating job in assessmentModel")
+            throw err
         }
     }
 
@@ -375,7 +398,7 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in validateCompanyJobModel", err.message)
-            throw new Error("Error while validating the company job in assessmentModel" )
+            throw err
         }
 
     }

@@ -7,9 +7,6 @@ module.exports.add_AssessmentService=async (assessmentData) => {
         assessmentData.numberOfQuestions=numOfQuestions;
 
         const assessment=await assessmentsModel.save(assessmentData);
-        if(!assessment){
-            console.log("Error in addAssessmentService, assessment not added")
-        }
         return assessment;
 
 }
@@ -17,18 +14,10 @@ module.exports.add_AssessmentService=async (assessmentData) => {
 module.exports.get_All_AssessmentsService=async (companyId,jobTitle) => {
         if(jobTitle){
             const assessments=await assessmentsModel.getAssessmentsByJobTitle(companyId,jobTitle);
-            // if(!assessments){
-            //     // console.log("Error in get_All_AssessmentsService, assessments not found")
-            //     handleErrors("No asssessment found")  
-            // }
             return assessments;
         }
         else{
             const assessments=await assessmentsModel.getAssessments(companyId);
-            // if(!assessments){// more validation can be added here
-            //     // console.log("Error in get_All_AssessmentsService, assessments not found")
-            //     handleErrors("No assessment found")  
-            // }
             return assessments;
         }
 }
@@ -92,15 +81,7 @@ module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerI
 module.exports.get_JobSeekerScoreService=async(jobId,jobSeekerId)=>{
 
     let jobSeekerScore=await assessmentsModel.getJobSeekerScore(jobId,jobSeekerId);
-    if(!jobSeekerScore){    // in authorization will check of company have this job id and here if the database return nothing then that means no jobseeker with this id
-        console.log("Error in get_JobSeekerScoreService, JobSeeker score not found")
-        handleErrors("JobSeeker score not found")  
-    }
     return jobSeekerScore
 
 }
 
-
-const handleErrors=(msg)=>{
-     throw new Error(msg); // will be caught by controllers
-}

@@ -9,8 +9,10 @@ exports.produceLog = async (data) => {
             topic: logs_topic,
             messages: [
                 {
-                    ...data,
-                    createdAt
+                   value: JSON.stringify({
+                        ...data,
+                        createdAt,
+                    })
                 }
             ],
         });

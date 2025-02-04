@@ -9,7 +9,7 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Job_Seeker (
-  id serial PRIMARY KEY,
+  id int PRIMARY KEY,
   phone_number TEXT NOT NULL UNIQUE,
   date_of_birth DATE NOT NULL,
   gender BOOLEAN NOT NULL,
@@ -19,19 +19,19 @@ CREATE TABLE Job_Seeker (
 );
 
 CREATE TABLE Recruiter (
-  id serial PRIMARY KEY ,
+  id int PRIMARY KEY ,
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL
 );
 
 CREATE TABLE Company (
-  id serial PRIMARY KEY,
+  id int PRIMARY KEY,
   overview TEXT NOT NULL,
   type BOOLEAN NOT NULL,
   founded_on DATE NOT NULL,
   company_size INTEGER NOT NULL,
-  rating float NOT NULL,
+  rating smallint NOT NULL,
   name TEXT NOT NULL
 );
 
@@ -89,7 +89,8 @@ CREATE TABLE Candidates (
   phase_deadline TIMESTAMP,
   template_id INTEGER,
   placeholders_params JSON,
-  recruitment_process_id int NOT NULL
+  recruitment_process_id int NOT NULL,
+  PRIMARY KEY (job_id, seeker_id)
 );
 
 CREATE TABLE Job (
@@ -201,12 +202,14 @@ CREATE TABLE Candidate_History (
   job_id int,
   job_title text NOT NULL,
   phase_name text NOT NULL,
+  phase_type smallint NOT NULL,
   status BOOLEAN NOT NULL,
   score smallint,
+  total_score smallint,
   company_name text NOT NULL,
   date_applied date NOT NULL,
-  country text NOT NULL,
-  city text NOT NULL,
+  country text,
+  city text,
   remote BOOLEAN NOT NULL,
   PRIMARY KEY (seeker_id, job_id)
 );
@@ -239,12 +242,14 @@ CREATE TABLE Recommendations (
 CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FROM (1) TO (10001);
 
 CREATE TABLE Reviews (
+  id serial PRIMARY KEY,
+  creator_id int,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
   rating smallint NOT NULL,
   role text NOT NULL,
-  created_at date NOT NULL
+  created_at timestamp NOT NULL
 );
 
 CREATE TABLE Report (
@@ -278,13 +283,15 @@ CREATE INDEX ON Job USING GIST (title gist_trgm_ops);
 
 CREATE INDEX ON Company USING GIST (name gist_trgm_ops);
 
-CREATE INDEX ON Candidate_History (seeker_id, status);
+CREATE INDEX ON Candidate_History (status);
 
-CREATE INDEX ON Candidate_History (seeker_id, company_name);
+CREATE INDEX ON Candidate_History (company_name);
 
-CREATE INDEX ON Candidate_History (seeker_id, remote);
+CREATE INDEX ON Candidate_History (remote);
 
-CREATE INDEX ON Candidate_History (seeker_id, country, city);
+CREATE INDEX ON Candidate_History (country, city);
+
+CREATE INDEX ON Candidate_History (job_id)
 
 CREATE INDEX ON Company (company_size);
 
@@ -298,9 +305,7 @@ CREATE INDEX ON Company_Location (company_id);
 
 CREATE INDEX candidates_recruiter_id_status_index ON Candidates (recruiter_id, phase);
 
-CREATE INDEX candidates_seeker_id_status_index ON Candidates (seeker_id, phase);
-
-CREATE INDEX candidates_job_id_status_index ON Candidates (job_id, phase);
+CREATE INDEX candidates_seeker_id_status_index ON Candidates (phase);
 
 CREATE INDEX candidates_last_status_update_index ON Candidates (last_status_update);
 
@@ -346,9 +351,15 @@ CREATE INDEX ON Logs (company_id, performed_by);
 
 CREATE INDEX ON Logs (company_id, created_at);
 
+CREATE INDEX ON Recruitment_Phase (type);
+
+ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE NO ACTION;
+
+ALTER TABLE Candidate_History ADD FOREIGN KEY (phase_type) REFERENCES Phase_Type (id) ON DELETE SET NULL;
 
 ALTER TABLE Job_Seeker ADD FOREIGN KEY (id) REFERENCES Users (id) ON DELETE CASCADE;
 
