@@ -7,6 +7,7 @@ const logRoutes = require('./features/logs/logRoutes');
 const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware');
 const recruitment_processRoutes = require('./features/recruitment_process/recruitment_processRoute');
 const assessmentRoutes = require('./features/assessments/assessmentRoutes');
+const recruiterRoutes = require('./features/recruiters/recruiterRoutes');
 const app = express();
 
 
@@ -17,7 +18,7 @@ app.use('/assessments',assessmentRoutes)
 app.use('/company', recruitment_processRoutes);
 app.use('/candidates', candidateRoutes);
 app.use('/reviews', reviewRoutes);
-
+app.use('/recruiters',recruiterRoutes)
 app.use('/logs', logRoutes);
 
 app.use(notFound);
