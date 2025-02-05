@@ -3,9 +3,9 @@ const recruitment_processService = require('./recruitment_processService');
 
 module.exports.getRecruitmentProcess = async (req, res, next) => {
     try {
-        let companyId = req.userId
-        const page = req.query.page || 1;
-        const recruitment_process = await recruitment_processService.getRecruitmentProcess(companyId, page);
+        let companyId = req.userId || 3;
+        const query = req.query;
+        const recruitment_process = await recruitment_processService.getRecruitmentProcess(companyId, query);
         if (!recruitment_process || recruitment_process.length === 0) {
             return res.status(200).json({ message: 'No recruitment process in the current page' });
         }
@@ -32,7 +32,7 @@ module.exports.getRecruitmentProcessDetails = async (req, res, next) => {
 module.exports.updateRecruitmentProcess = async (req, res, next) => {
     const { processId } = req.params;
     const data = req.body.phases;
-    let companyId = req.userId
+    let companyId = req.userId || 3;
     const processName = req.body.processName;
     try {
         const recruitment_process = await recruitment_processService.updateRecruitmentProcess(companyId, processId, processName, data);
@@ -46,7 +46,7 @@ module.exports.updateRecruitmentProcess = async (req, res, next) => {
 
 module.exports.CreateRecruitmentProcess = async (req, res, next) => {
     const data = req.body.phases;
-    let companyId = req.userId || 1;
+    let companyId = req.userId || 3;
     const processName = req.body.processName;
     
     try {

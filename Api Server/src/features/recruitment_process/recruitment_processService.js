@@ -2,8 +2,8 @@
 const recruitment_processModel = require('./recruitment_processModel');
 
 
-module.exports.getRecruitmentProcess = async (companyId, page) => {
-        const recruitment_process = await recruitment_processModel.getRecruitmentProcess(companyId, page);
+module.exports.getRecruitmentProcess = async (companyId, query) => {
+        const recruitment_process = await recruitment_processModel.getRecruitmentProcess(companyId, query);
         return recruitment_process;
 }
 

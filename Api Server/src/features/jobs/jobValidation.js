@@ -13,11 +13,19 @@ const descriptionValidation = () => body('jobDescription')
     .isLength({ min: 5, max: 500 }).withMessage('Description must be between 10 and 500 characters');
 
 const skillsValidation = () => body('skills')
+    .custom((skills) => {
+        const skillIds = skills.map(skill => skill.skillId);
+        const hasDuplicates = new Set(skillIds).size !== skillIds.length;
+        if (hasDuplicates) {
+            throw new Error('Skill IDs must be unique');
+        }
+        return true;
+    })
     .isArray().withMessage('Phases must be an array');
 
 const skillIdValidation = () => body('skills.*.skillId')
     .exists().withMessage('Skill ID is required')
-    .isInt({ min: 1 }).withMessage('Skill ID must be an integer greater than 0')
+    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Skill ID must be an integer greater than 0')
     .toInt()
 
 const importanceValidation = () => body('skills.*.importance')
@@ -51,11 +59,6 @@ const industryIdValidation = () => body('industryId')
     .exists().withMessage('industry ID is required')
     .isInt({ min: 1 }).withMessage('industry ID must be an integer greater than 0')
     .toInt();
-
-const deadLineValidation = () => body('deadline')
-    .exists().withMessage('deadline is required')
-    .isDate().withMessage('deadline must be a date')
-    .toDate();
 
 
 const jobsQueryValidate = [
@@ -97,7 +100,7 @@ const jobsQueryValidate = [
 const jobIdValidation = [
     check('id')
         .exists().withMessage('Job ID is required')
-        .isInt({ min: 1 }).withMessage('Job ID must be an integer greater than 0')
+        .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Job ID must be an integer greater than 0')
         .toInt()
 ]
 
@@ -111,8 +114,7 @@ const newJobValidation = [
     countryValidation(),
     cityValidation(),
     remoteValidation(),
-    industryIdValidation(),
-    deadLineValidation()
+    industryIdValidation()
 ]
 
 module.exports = {

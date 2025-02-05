@@ -4,12 +4,17 @@ const Pool = require('../../../config/db');
 
 class recruitment_process {
 
-    static async getRecruitmentProcess(companyId, page) {
+    static async getRecruitmentProcess(companyId, queryPagination) {
         try {
-            const query = `SELECT id, name, num_of_phases FROM recruitment_process WHERE company_id = $1 ORDER BY id LIMIT $2 OFFSET $3`;
-            const limit = 7;
-            const offset = (page - 1) * limit;
-            const values = [companyId, limit, offset];
+            let { page, limit } = queryPagination;
+            let query = `SELECT id, name, num_of_phases FROM recruitment_process WHERE company_id = $1 ORDER BY id`;
+            let values = [companyId]
+            if (limit) {
+                const offset = (page - 1) * limit;
+                values.push(limit);
+                values.push(offset);
+                query += ' LIMIT $2 OFFSET $3'
+            }    
             let pool = Pool.getReadPool();
             const { rows } = await pool.query(query, values);
             return rows;
@@ -49,7 +54,6 @@ class recruitment_process {
     }
 
     static async createRecruitmentProcess(companyId, processName, data) {
-        console.log("here")
         let pool = Pool.getWritePool();
         pool = await pool.connect();
         await pool.query('BEGIN');

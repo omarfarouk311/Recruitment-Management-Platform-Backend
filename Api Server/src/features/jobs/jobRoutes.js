@@ -3,14 +3,21 @@ const router = express.Router();
 const jobValidation = require('./jobValidation')
 const jobController = require('./jobController')
 const { handleValidationErrors } = require('../../common/util')
+const { jobOfCompanyAuthorization, deleteUpdateJobAuthorization } = require('./jobAuthorization')
+
 //Todo: Add Authentication Middleware
 
-router.route('/')
-        .post(jobValidation.newJobValidation, handleValidationErrors, jobController.createJob)
-        .get(jobValidation.jobsQueryValidate, handleValidationErrors, jobController.getAllJobs)
+// jobs possess by company
+router.route('/company')
+        .get(jobValidation.jobsQueryValidate, handleValidationErrors, jobOfCompanyAuthorization, jobController.getAllCompanyJobs)
+
+router.post('/', handleValidationErrors, jobOfCompanyAuthorization, jobController.createJob)
+        
 
 router.route('/:id')
-        .get(jobValidation.jobIdValidation, handleValidationErrors, jobController.getJobById)
+        .get(jobValidation.jobIdValidation, handleValidationErrors, jobController.getJobDetailsById)
+        .delete(jobValidation.jobIdValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.deleteJobById)
+        .put(jobValidation.jobIdValidation.handleValidationErrors, deleteUpdateJobAuthorization, jobController.updateJobById)
 
 
 

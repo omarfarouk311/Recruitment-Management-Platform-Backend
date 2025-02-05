@@ -22,4 +22,9 @@ module.exports = {
     candidate_status_rejected: 3,
     pagination_limit: 10,
     maxNameLength: 30,
+    role: {
+        jobSeeker: 'jobSeeker',
+        company: 'company',
+        recruiter: 'recruiter'
+    }
 };

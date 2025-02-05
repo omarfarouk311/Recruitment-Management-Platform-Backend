@@ -1,22 +1,39 @@
 const recruitment_processModel = require('./recruitment_processModel');
+const { role } = require('../../../config/config')
 
 
-module.exports.authorizeRecruitmentProcess = async (req, res, next) => {
-    let companyId = req.userId;
+
+module.exports.RecruitmenProcessesAuthorization = async (req, res, next) => {
+    req.userRole = 'recruiter';
+    if (req.userRole == role.jobSeeker || req.userRole == role.recruiter) {
+        const error = new Error('You are not authorized to access this recruitment process');
+        error.status = 403;
+        error.msg = 'Authorization Error';
+        next(error);
+    }
+    next();
+}
+
+module.exports.RecruitmenProcessDetailsAuthorization = async (req, res, next) => {
+    req.userRole = 'recruiter';
+    const companyId = req.userId || 2;
     const recruitmentProcessId = req.params.processId;
+    if (req.userRole == role.jobSeeker || req.userRole == role.recruiter) {
+        const error = new Error('You are not authorized to access this recruitment process');
+        error.status = 403;
+        error.msg = 'Authorization Error';
+        next(error);
+    }
     try {
-        const retrievedCompanyId = await recruitment_processModel.getProcessById(recruitmentProcessId);
-        if (retrievedCompanyId !== companyId) {
+        const company_id = await recruitment_processModel.getProcessById(recruitmentProcessId);
+        if (companyId != company_id) {
             const error = new Error('You are not authorized to access this recruitment process');
             error.status = 403;
             error.msg = 'Authorization Error';
             throw error;
-
         }
-       next();
-    }
-    catch (error) {
-        console.log('Error in: authorizeRecruitmentProcess', error);
-        next(error);
+        next();
+    } catch (err) {
+        next(err);
     }
 }

@@ -4,10 +4,21 @@ const Kafka = require('../../common/kafka')
 
 class jobModel {
 
+
     static async createJob(companyId, jobData) {
         let client = await Pool.getWritePool().connect();
+        let readClient = await Pool.getReadPool().connect();
         let index = 1;
+      
         try {
+            const doesRecruitmentExist = `select 1 FROM recruitment_process WHERE id = $1 AND company_id = $2 ;`
+            const { rowCount } = await readClient.query(doesRecruitmentExist, [jobData.processId, companyId]);
+            if (rowCount == 0) {
+                const err = new Error('invalid recruitment process id');
+                err.msg = 'Recruitment process id is not associated with the company';
+                err.status = 403;
+                throw err;
+            }
             const date = new Date();
             await client.query('BEGIN');
             const query = `
@@ -49,11 +60,11 @@ class jobModel {
     }
 
 
-    static async getAllJobs(companyId, filters) {
+    static async getAllCompanyJobs(companyId, filters) {
         let client = await Pool.getReadPool().connect();
         try {
             let index = 1;
-            let query = `SELECT title, country, city, CURRENT_DATE - created_at as days_ago
+            let query = `SELECT id, title, country, city, CURRENT_DATE - created_at as days_ago
                         FROM job
                         WHERE company_id = $${index++}`;
         
@@ -78,7 +89,7 @@ class jobModel {
         }
     }
 
-    static async getJobById(jobId) {
+    static async getJobDetailsById(jobId) {
         let client = await Pool.getReadPool().connect();
         try {
             const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
@@ -114,6 +125,76 @@ class jobModel {
             return rows[0];
         } catch (err) {
             console.log('Error in getJobById')
+            throw err;
+        }
+    }
+
+    static async deleteJobById(jobId) {
+        let client = await Pool.getReadPool().connect();
+        try {
+            const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
+            const { rowCount } = await client.query(isExistQuery, [jobId]);
+            if (rowCount == 0) {
+                const err = new Error('Job id is not in database');
+                err.msg = 'Job not found';
+                err.status = 404;
+                throw err;
+            }
+            client = await Pool.getWritePool().connect();
+            const query = `DELETE FROM job WHERE id = $1;`
+            const values = [jobId];
+            await client.query(query, values);
+            return { message: 'Job deleted successfully' };
+        } catch (err) {
+            console.log('Error in deleteJobById')
+            throw err;
+        }
+    }
+
+    static async updateJobById(companyId, jobId, jobData) {
+        let client = await Pool.getWritePool().connect();
+        try {
+            await client.query('BEGIN');
+            const deleteQuery = `DELETE FROM job WHERE id = $1`;
+            const values = [jobId];
+            await client.query(deleteQuery, values);
+            
+          
+        } catch (err) {
+            
+        }
+    }
+
+
+    // for Authorization //
+    static async getJobById(jobId) {
+        let client = await Pool.getReadPool().connect();
+        try {
+            const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
+            const { rowCount } = await client.query(isExistQuery, [jobId]);
+            if (rowCount == 0) {
+                const err = new Error('Job id is not in database');
+                err.msg = 'Job not found';
+                err.status = 404;
+                throw err;
+            }
+            const query = `SELECT company_id FROM job WHERE id = $1;`
+            const values = [jobId];
+            const { rows } = await client.query(query, values);
+            return rows[0].company_id;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    static async getCompanyOfRecruiter(recruiterId) {
+        let client = await Pool.getReadPool().connect();
+        try {
+            const query = `SELECT company_id FROM recruiter WHERE id = $1;`
+            const values = [recruiterId];
+            const { rows } = await client.query(query, values);
+            return rows[0].company_id;
+        } catch (err) {
             throw err;
         }
     }

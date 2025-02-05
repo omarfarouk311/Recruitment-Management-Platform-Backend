@@ -120,7 +120,17 @@ const validateRecruitmentProcessData = [
 
 
 const paginationValidation = [
-    validatePage()
+    validatePage(),
+    query('limit')
+        .optional()
+        .isInt().withMessage('Limit must be an integer')
+        .toInt()
+        .custom(value => {
+            if (value < 1) {
+                throw new Error('Limit must be greater than 0');
+            }
+            return true;
+        })
 ];
 
 module.exports = {
