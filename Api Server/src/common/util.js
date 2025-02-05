@@ -1,6 +1,6 @@
 const { validationResult, query } = require('express-validator');
 
-exports.validatePage = () => query('page')
+exports.validatePage = () =>  query('page')
     .trim()
     .notEmpty()
     .withMessage('page parameter must be passed as a query parameter')

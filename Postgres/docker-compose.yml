@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 5432:5432
     container_name: master
     volumes:
       - ./master/data:/var/lib/postgresql/data
@@ -14,6 +16,7 @@ services:
       - internal-net
     env_file:
       - .env
+
 
   standby1:
     build:
@@ -29,6 +32,10 @@ services:
       - master
     env_file:
       - .env
+    ports:
+      - "5433:5432"
+
+
 
   standby2:
     build:
@@ -44,6 +51,8 @@ services:
       - master
     env_file:
       - .env
+    ports:
+      - "5434:5432"
 
 networks:
   internal-net:
