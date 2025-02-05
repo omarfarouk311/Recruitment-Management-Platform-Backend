@@ -91,11 +91,116 @@ class Company {
             select i.name as industry
             from Company_Industry c
             join industry i on c.industry_id = i.id
-            where company_id = $${index}
+            where c.company_id = $${index}
             `;
 
         const { rows } = await pool.query(query, values)
         return rows
+    }
+
+    static async getCompanyJobs(companyId, filters, userRole, limit = 6) {
+        const pool = getReadPool();
+        const values = [companyId];
+        let index = 1;
+
+        // job seeker isn't allowed to see the closed jobs
+        let query =
+            `
+            select j.id, j.company_id as "companyId", j.title, j.country, j.city, j.created_at as "createdAt", c.rating as "companyRating"
+            from (
+                select id, company_id, title, country, city, created_at, industry_id
+                from job
+                where company_id = $${index++} ${userRole === 'jobSeeker' ? 'and closed = false' : ''} ${filters.remote ? 'and remote = true' : ''}
+            ) j
+            join company c on j.company_id = c.id
+            `;
+
+        // industry filter
+        if (filters.industry) {
+            query +=
+                ` 
+                join (
+                    select id, name
+                    from industry
+                    where name = $${index++}
+                ) i on j.industry_id = i.id
+                `;
+            values.push(filters.industry);
+        }
+
+        // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
+        if (!Object.keys(filters).includes('sortByDate')) {
+            query += ' order by j.id';
+        }
+        else {
+            if (filters.sortByDate === 1) {
+                query += ' order by j.created_at';
+            }
+
+            else if (filters.sortByDate === -1) {
+                query += ' order by j.created_at desc';
+            }
+        }
+
+        //pagination
+        query += ` limit $${index++} offset $${index++}`;
+        values.push(limit, (filters.page - 1) * limit);
+
+        const { rows } = await pool.query(query, values);
+        return rows;
+    }
+
+    static async getCompanyJobsSimplified(companyId, filters, userRole, limit = 5) {
+        const pool = getReadPool();
+        const values = [companyId];
+        let index = 1;
+
+        // job seeker isn't allowed to see the closed jobs
+        let query =
+            `select id, title, country, city, created_at as "createdAt"
+            from job
+            where company_id = $${index++} ${userRole === 'jobSeeker' ? 'and closed = false' : ''}
+            `;
+
+        // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
+        if (!Object.keys(filters).includes('sortByDate')) {
+            query += ' order by id';
+        }
+        else {
+            if (filters.sortByDate === 1) {
+                query += ' order by created_at';
+            }
+            else if (filters.sortByDate === -1) {
+                query += ' order by created_at desc';
+            }
+        }
+
+        //pagination
+        query += ` limit $${index++} offset $${index++}`;
+        values.push(limit, (filters.page - 1) * limit);
+
+        const { rows } = await pool.query(query, values);
+        return rows;
+    }
+
+    static async getCompanyJobsFilterBar(companyId, userRole) {
+        const pool = getReadPool();
+        const values = [companyId];
+        let index = 1;
+
+        // job seeker isn't allowed to see the closed jobs
+        let query =
+            `
+            select id, title
+            from job
+            where company_id = $${index++} ${userRole === 'jobSeeker' ? 'and closed = false' : ''}
+            `;
+
+        // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
+        query += ' order by id';
+
+        const { rows } = await pool.query(query, values);
+        return rows;
     }
 }
 

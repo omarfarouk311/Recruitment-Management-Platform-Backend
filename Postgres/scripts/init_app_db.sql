@@ -4,8 +4,7 @@ CREATE EXTENSION vector;
 CREATE TABLE Users (
   id serial PRIMARY KEY NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  password TEXT NOT NULL
 );
 
 CREATE TABLE Job_Seeker (
@@ -15,24 +14,27 @@ CREATE TABLE Job_Seeker (
   gender BOOLEAN NOT NULL,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Recruiter (
   id int PRIMARY KEY ,
   company_id int,
   name TEXT NOT NULL,
-  assigned_candidates_cnt smallint NOT NULL
+  assigned_candidates_cnt smallint NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Company (
   id int PRIMARY KEY,
   overview TEXT NOT NULL,
   type BOOLEAN NOT NULL,
-  founded_in DATE NOT NULL,
+  founded_in SMALLINT NOT NULL,
   size int NOT NULL,
   rating real NOT NULL,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Company_Industry (
@@ -97,10 +99,10 @@ CREATE TABLE Job (
   id serial PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
-  created_at date NOT NULL,
+  created_at TIMESTAMP NOT NULL,
   recruitment_process_id int,
   company_id int,
-  field TEXT NOT NULL,
+  industry_id smallint NOT NULL,
   country TEXT,
   city TEXT,
   remote BOOLEAN NOT NULL,
@@ -145,7 +147,7 @@ CREATE TABLE CV_Embedding (
 
 CREATE TABLE Industry (
   id smallserial PRIMARY KEY,
-  name text NOT NULL
+  name text UNIQUE NOT NULL
 );
 
 CREATE TABLE Job_Offer_Template (
@@ -313,8 +315,6 @@ CREATE INDEX ON Job (country, city);
 
 CREATE INDEX ON Job (remote);
 
-CREATE INDEX ON Job (field);
-
 CREATE INDEX ON Job (created_at);
 
 CREATE INDEX ON Job (company_id);
@@ -334,6 +334,8 @@ CREATE INDEX ON Reviews (company_id);
 CREATE INDEX ON Reviews (rating);
 
 CREATE INDEX ON Reviews (created_at);
+
+CREATE INDEX ON Reviews (creator_id);
 
 CREATE INDEX ON Report (seeker_id);
 
@@ -384,6 +386,8 @@ ALTER TABLE Candidates ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recru
 ALTER TABLE Job ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recruitment_Process (id) ON DELETE SET NULL;
 
 ALTER TABLE Job ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE SET NULL;
+
+ALTER TABLE Job ADD FOREIGN KEY (industry_id) REFERENCES Industry (id) ON DELETE CASCADE;
 
 ALTER TABLE Job_Embedding ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 

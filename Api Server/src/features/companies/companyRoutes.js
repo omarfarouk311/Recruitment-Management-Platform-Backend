@@ -17,4 +17,8 @@ router.route('/:companyId/industries')
     .get(companyValidation.validateCompanyId, handleValidationErrors, companyController.getCompanyIndustries)
     .all(notAllowed);
 
+router.route('/:companyId/jobs')
+    .get(companyValidation.validateGetCompanyJobs, handleValidationErrors, companyController.getCompanyJobs)
+    .all(notAllowed);
+
 module.exports = router;

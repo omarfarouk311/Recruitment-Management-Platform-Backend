@@ -3,7 +3,7 @@ const { validationResult, query } = require('express-validator');
 exports.validatePage = () => query('page')
     .trim()
     .notEmpty()
-    .withMessage("Page number must be passed as a query patameter")
+    .withMessage('page parameter must be passed as a query parameter')
     .isInt({ min: 1, allow_leading_zeroes: false })
     .withMessage("Invalid page number, it must be a positive number")
     .toInt();

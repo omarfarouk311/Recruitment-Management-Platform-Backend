@@ -1,5 +1,11 @@
 const companyService = require('./companyService');
 
+function passError(err, next) {
+    err.status = 500;
+    err.msg = 'Internal server error';
+    next(err);
+}
+
 exports.getCompanyData = async (req, res, next) => {
     const { companyId } = req.params;
 
@@ -9,9 +15,7 @@ exports.getCompanyData = async (req, res, next) => {
         return res.status(200).json(result);
     }
     catch (err) {
-        err.status = 500;
-        err.msg = 'Internal server error';
-        return next(err);
+        passError(err, next);
     }
 };
 
@@ -23,9 +27,7 @@ exports.getCompanyLocations = async (req, res, next) => {
         return res.status(200).json(result);
     }
     catch (err) {
-        err.status = 500;
-        err.msg = 'Internal server error';
-        return next(err);
+        passError(err, next);
     }
 };
 
@@ -37,8 +39,20 @@ exports.getCompanyIndustries = async (req, res, next) => {
         return res.status(200).json(result);
     }
     catch (err) {
-        err.status = 500;
-        err.msg = 'Internal server error';
-        return next(err);
+        passError(err, next);
+    }
+};
+
+exports.getCompanyJobs = async (req, res, next) => {
+    const { companyId } = req.params;
+    const filters = req.query;
+    const { userRole } = req
+
+    try {
+        const result = await companyService.getCompanyJobs(companyId, filters, userRole);
+        return res.status(200).json(result);
+    }
+    catch (err) {
+        passError(err, next);
     }
 };
