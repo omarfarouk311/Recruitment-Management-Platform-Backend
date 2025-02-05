@@ -49,6 +49,7 @@ class recruitment_process {
     }
 
     static async createRecruitmentProcess(companyId, processName, data) {
+        console.log("here")
         let pool = Pool.getWritePool();
         pool = await pool.connect();
         await pool.query('BEGIN');
@@ -98,7 +99,7 @@ class recruitment_process {
                 "performed_by": "Company",
                 "company_id": companyId,
                 "extra_data": null,
-                "action_type": "Create new process",
+                "action_type": "Recruitment process",
             }
             produce.produceLog(processObject);
             return { message: 'Recruitment process created successfully' };

@@ -9,14 +9,14 @@ const { handleValidationErrors, validatePage } = require('../../common/util');
 
 // Todo: Add authentication middleware
 
-router.get('/recruitment_process/phases', recruitment_processController.getPhases);
+router.get('/phases', recruitment_processController.getPhases);
 
-router.route('/recruitment_process')
+router.route('/')
         .get(paginationValidation, handleValidationErrors, recruitment_processController.getRecruitmentProcess)
         .post(validateRecruitmentProcessData, handleValidationErrors, recruitment_processController.CreateRecruitmentProcess)
         .all(notAllowed);
 
-router.route('/recruitment_process/:processId')
+router.route('/:processId')
         .get(validateRecruitmentProcessId, handleValidationErrors, authorizeRecruitmentProcess,
                 recruitment_processController.getRecruitmentProcessDetails)
         .put(validateRecruitmentProcessId, validateRecruitmentProcessData, handleValidationErrors,

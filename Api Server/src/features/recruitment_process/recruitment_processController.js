@@ -46,7 +46,7 @@ module.exports.updateRecruitmentProcess = async (req, res, next) => {
 
 module.exports.CreateRecruitmentProcess = async (req, res, next) => {
     const data = req.body.phases;
-    let companyId = req.userId;
+    let companyId = req.userId || 1;
     const processName = req.body.processName;
     
     try {

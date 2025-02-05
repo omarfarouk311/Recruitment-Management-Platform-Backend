@@ -50,7 +50,8 @@ CREATE TABLE Company_Location (
 CREATE TABLE Job_Skill (
   job_id int,
   skill_id int,
-  PRIMARY KEY (job_id, skill_id)
+  PRIMARY KEY (job_id, skill_id),
+  importance smallint NOT NULL
 );
 
 CREATE TABLE Skills (
@@ -100,7 +101,7 @@ CREATE TABLE Job (
   created_at date NOT NULL,
   recruitment_process_id int,
   company_id int,
-  field TEXT NOT NULL,
+  industry_id smallint NOT NULL,
   country TEXT,
   city TEXT,
   remote BOOLEAN NOT NULL,
@@ -192,8 +193,9 @@ CREATE TABLE Assessment_Score (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
   phase_num smallint NOT NULL,
+  phase_name text NOT NULL,
   score smallint NOT NULL,
-  total_score smallint NOT NULL,
+  total_score smallint NOT NULL
 );
 
 CREATE TABLE Candidate_History (
@@ -290,7 +292,7 @@ CREATE INDEX ON Candidate_History (remote);
 
 CREATE INDEX ON Candidate_History (country, city);
 
-CREATE INDEX ON Candidate_History (job_id)
+CREATE INDEX ON Candidate_History (job_id);
 
 CREATE INDEX ON Company (company_size);
 
@@ -316,9 +318,11 @@ CREATE INDEX ON Job (country, city);
 
 CREATE INDEX ON Job (remote);
 
-CREATE INDEX ON Job (field);
+CREATE INDEX ON Job (industry_id);
 
 CREATE INDEX ON Job (created_at);
+
+CREATE INDEX ON Job (title);
 
 CREATE INDEX ON Job (company_id);
 
@@ -340,7 +344,7 @@ CREATE INDEX ON Reviews (created_at);
 
 CREATE INDEX ON Report (seeker_id);
 
-CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_num);
+CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_name);
 
 CREATE INDEX ON Logs (company_id);
 
@@ -352,7 +356,7 @@ CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
 
-ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+-- ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
@@ -393,6 +397,8 @@ ALTER TABLE Candidates ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recru
 ALTER TABLE Job ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recruitment_Process (id) ON DELETE SET NULL;
 
 ALTER TABLE Job ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE SET NULL;
+
+ALTER TABLE Job ADD FOREIGN KEY (industry_id) REFERENCES Industry (id) ON DELETE SET NULL;
 
 ALTER TABLE Job_Embedding ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 
@@ -453,3 +459,4 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
 
 -- Grant sequence usage for app users
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
+
