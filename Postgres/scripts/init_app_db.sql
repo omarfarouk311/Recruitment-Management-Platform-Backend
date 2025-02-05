@@ -22,7 +22,8 @@ CREATE TABLE Recruiter (
   id int PRIMARY KEY ,
   company_id int,
   name TEXT NOT NULL,
-  assigned_candidates_cnt smallint NOT NULL
+  assigned_candidates_cnt smallint NOT NULL,
+  department text NOT NULL, --still want to index it
 );
 
 CREATE TABLE Company (
@@ -291,7 +292,7 @@ CREATE INDEX ON Candidate_History (remote);
 
 CREATE INDEX ON Candidate_History (country, city);
 
-CREATE INDEX ON Candidate_History (job_id)
+CREATE INDEX ON Candidate_History (job_id);
 
 CREATE INDEX ON Company (company_size);
 

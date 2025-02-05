@@ -1,20 +1,28 @@
 
 const express = require('express');
 const router=express();
+const {handleValidationErrors}=require('../../common/util')
 
 const recruiterController=require('./recruiterController');
 const {authorizeCompanyRecruiter}=require('./recruiterAuthorization')
+const {validateParams,validateRecruiterId}=require('./recruiterValidation')
 
 
+router.route('/')   //localhost:3000/recruiters/?recruiter="" & department="" & sorted=""&page=""
+        .get(validateParams,
+            handleValidationErrors,
+            recruiterController.getRecruitersContoller)
+        .post(recruiterController.sendInvitationController)
 
-router.route('/:companyId')  //companyId will be taken from token later and route will be /  //localhost:3000/recruiters/companyId?recruiter="" & department="" & sorted=""&page=""
-        .get(recruiterController.getRecruitersContoller)
-
-router.route('/:recruiterId/company/:companyId')  // companyId will be taken from token later and route will be /:recruiterId
-        .delete(authorizeCompanyRecruiter,recruiterController.deleteRecruiterController)
+router.route('/:recruiterId')  
+        .delete(validateRecruiterId,
+                handleValidationErrors,
+                authorizeCompanyRecruiter,
+                recruiterController.deleteRecruiterController)
         
 
-
+router.route('/invitation')
+        .post(recruiterController.sendInvitationController)
 
 
 

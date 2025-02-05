@@ -45,7 +45,7 @@ class RecruiterModel {
        let offset=(page-1)*limit
        query+=` offset ${offset} limit ${limit}`
 
-    
+       console.log(query)
        let queryResult=await replica_DB.query(query,values)
        let result=queryResult.rows
        return result
@@ -87,6 +87,66 @@ class RecruiterModel {
         }finally{
             client.release()
         }
+    }
+
+    static async getRecruiterById(recruiterId){
+
+        const replica_DB=replicaPool.getReadPool();
+        try{
+            let query=
+            `SELECT company_id
+            FROM Recruiter
+            WHERE id=$1`
+
+            let queryValue=[recruiterId]
+
+            let queryResult=await replica_DB.query(query,queryValue)
+            if(queryResult.rowCount==0){
+                return false
+            }
+            return result.rows[0]
+
+
+        }catch(err){
+            console.log('err in deleteRecruiter model',err.message)
+            throw err;
+        }
+
+
+    }
+    static async sendInvitation(email,department,deadline,companyId){
+        const primary_DB=primaryPool.getWritePool()
+        try{
+
+            let currentDate=new Date().getDate()
+            let query=
+            `WITH usr as(
+             SELECT id as id
+             FROM Users
+             WHERE email=$1
+            )
+            
+            INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline)
+            VALUES ((SELECT COALESCE(id, NULL) FROM usr), $2, $3, $4, $5)
+            RETURNING id
+            `
+            let recruiterValue=[email,companyId,department,currentDate,deadline]
+
+            let result=await primary_DB.query(query,recruiterValue)
+            if(result.rowCount==0){
+                let err=new Error();
+                err.msg="invitation has not sent successfully ,please try again"
+                err.status=500;
+                throw err;
+            }
+            
+           return true;
+
+        }catch(err){
+            console.log('err in sendInvitation model',err.message)
+            throw err;
+        }
+        
     }
 }
 

@@ -35,9 +35,7 @@ module.exports.edit_AssessmentByIdService=async (assessmentId,assessmentData) =>
 
         let numOfQuestions=assessmentData.metaData.length;
         assessmentData.numberOfQuestions=numOfQuestions;
-
         const updatedAssessment=await assessmentsModel.edit(assessmentId,assessmentData);
-
         return updatedAssessment;
        
 }

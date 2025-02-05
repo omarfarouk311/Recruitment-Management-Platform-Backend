@@ -12,3 +12,7 @@ module.exports.getRecruitersService=async(companyId,recruiter,department,sorted,
 module.exports.deleteRecruiterService=async(companyId,recruiterId)=>{
     return await recruiterModel.deleteRecruiter(companyId,recruiterId)
 }
+
+module.exports.sendInvitationService=async(email,department,deadline,companyId)=>{
+    return await recruiterModel.sendInvitation(email,department,deadline,companyId)
+}

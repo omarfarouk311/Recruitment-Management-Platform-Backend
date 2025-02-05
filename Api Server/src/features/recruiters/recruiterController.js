@@ -5,7 +5,7 @@ const config = require('../../../config/config');
 module.exports.getRecruitersContoller = async (req, res, next) => {  
 
    try{
-     let companyId=req.params.companyId
+     let companyId=req.body.companyId
      let {recruiter,department,sorted,page}=req.query
      let limit=config.pagination_limit
 
@@ -24,6 +24,7 @@ module.exports.deleteRecruiterController=async(req,res,next)=>{
     try{
         let recruiterId=req.params.recruiterId
 
+
         await recruiterService.deleteRecruiterService(recruiterId)
 
         return res.status(200).json({
@@ -37,4 +38,22 @@ module.exports.deleteRecruiterController=async(req,res,next)=>{
     }
 
 
+}
+
+module.exports.sendInvitationController=async(req,res,next)=>{
+
+    try{
+        console.log(req.body)
+        const {email,department,deadline,companyId}=req.body  //companyId will be taken by token later
+     
+        await recruiterService.sendInvitationService(email,department,deadline,companyId)
+        res.status(200).json({
+            success:true,
+            message:"Invitation sent successfully"
+        })
+
+    }catch(err){
+        console.log('err in sendInvitationController',err.message)
+        next(err)
+    }
 }
