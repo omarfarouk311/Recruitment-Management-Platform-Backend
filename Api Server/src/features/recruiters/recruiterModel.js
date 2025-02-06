@@ -60,11 +60,12 @@ class RecruiterModel {
         const client=await primary_DB.connect()
         try{
            
-            let deleteQuery=
-            `DELETE FROM recruiter
+            let updateRecruiterQuery=
+            `UPDATE Recruiter
+            SET company_id=NULL, department=NULL, assigned_candidates_cnt=0
             WHERE id=$1`
 
-            let deleteQuesryValue=[recruiterId]
+            let updateRecruiterValue=[recruiterId]
 
             let updateCandidateTable=
             `UPDATE Candidates
@@ -75,13 +76,14 @@ class RecruiterModel {
 
             await client.query('BEGIN')
 
-            await client.query(deleteQuery,deleteQuesryValue)
+            await client.query(updateRecruiterQuery,updateRecruiterValue)
             await client.query(updateCandidateTable,updateQueryValue)
 
             await client.query('COMMIT')
             return true;
 
         }catch(err){
+            client.query('ROLLBACK')
             console.log("err in delete recruiter model",err.message)
             throw err;
         }finally{
@@ -104,7 +106,7 @@ class RecruiterModel {
             if(queryResult.rowCount==0){
                 return false
             }
-            return result.rows[0]
+            return queryResult.rows[0]
 
 
         }catch(err){
@@ -118,7 +120,7 @@ class RecruiterModel {
         const primary_DB=primaryPool.getWritePool()
         try{
 
-            let currentDate=new Date().getDate()
+            let currentDate=new Date()
             let query=
             `WITH usr as(
              SELECT id as id
@@ -128,7 +130,7 @@ class RecruiterModel {
             
             INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline)
             VALUES ((SELECT COALESCE(id, NULL) FROM usr), $2, $3, $4, $5)
-            RETURNING id
+            RETURNING recruiter_id
             `
             let recruiterValue=[email,companyId,department,currentDate,deadline]
 

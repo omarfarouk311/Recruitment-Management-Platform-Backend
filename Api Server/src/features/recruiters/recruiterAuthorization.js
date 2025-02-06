@@ -3,7 +3,7 @@ const recruiterModel=require('./recruiterModel')
 module.exports.authorizeCompanyRecruiter=async(req,res,next)=>{  //check if company has authority to delete recruiter
 
     try{
-        let companyId=req.body.companyId // from token later
+        let companyId=req.userId // from token later
         let recruiterId=req.params.recruiterId;
 
         let checkRecruiter=await recruiterModel.getRecruiterById(recruiterId) // see if recruiter exists in this company

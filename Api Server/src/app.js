@@ -18,7 +18,7 @@ app.use('/assessments',assessmentRoutes)
 app.use('/company', recruitment_processRoutes);
 app.use('/candidates', candidateRoutes);
 app.use('/reviews', reviewRoutes);
-app.use('/recruiters',recruiterRoutes)
+app.use('/recruiters', (req, res, next) => { req.userId=1; next(); }, recruiterRoutes)
 app.use('/logs', logRoutes);
 
 app.use(notFound);

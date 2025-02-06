@@ -23,7 +23,7 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-  department text NOT NULL, --still want to index it
+  department text, --still want to index it
 );
 
 CREATE TABLE Company (
@@ -192,7 +192,7 @@ CREATE TABLE Assessment (
 CREATE TABLE Assessment_Score (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
-  phase_num smallint NOT NULL
+  phase_num smallint NOT NULL,
   phase_name text NOT NULL,
   score smallint NOT NULL,
   total_score smallint NOT NULL
@@ -354,7 +354,7 @@ CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
 
-ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 

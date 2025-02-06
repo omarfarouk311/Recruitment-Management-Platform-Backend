@@ -5,7 +5,7 @@ const config = require('../../../config/config');
 module.exports.getRecruitersContoller = async (req, res, next) => {  
 
    try{
-     let companyId=req.body.companyId
+     let companyId=req.userId
      let {recruiter,department,sorted,page}=req.query
      let limit=config.pagination_limit
 
@@ -44,9 +44,9 @@ module.exports.sendInvitationController=async(req,res,next)=>{
 
     try{
         console.log(req.body)
-        const {email,department,deadline,companyId}=req.body  //companyId will be taken by token later
+        const {email,department,deadline}=req.body  //companyId will be taken by token later
      
-        await recruiterService.sendInvitationService(email,department,deadline,companyId)
+        await recruiterService.sendInvitationService(email,department,deadline,req.userId)
         res.status(200).json({
             success:true,
             message:"Invitation sent successfully"

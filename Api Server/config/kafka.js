@@ -8,7 +8,11 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 const connetProducer = async () => {
-  await producer.connect();
+  try {
+    await producer.connect();
+  } catch(error) {
+    console.error(error)
+  }
 }
 
 connetProducer();

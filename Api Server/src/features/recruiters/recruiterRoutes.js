@@ -12,7 +12,6 @@ router.route('/')   //localhost:3000/recruiters/?recruiter="" & department="" & 
         .get(validateParams,
             handleValidationErrors,
             recruiterController.getRecruitersContoller)
-        .post(recruiterController.sendInvitationController)
 
 router.route('/:recruiterId')  
         .delete(validateRecruiterId,
