@@ -4,8 +4,7 @@ CREATE EXTENSION vector;
 CREATE TABLE Users (
   id serial PRIMARY KEY NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  password TEXT NOT NULL
 );
 
 CREATE TABLE Job_Seeker (
@@ -15,24 +14,31 @@ CREATE TABLE Job_Seeker (
   gender BOOLEAN NOT NULL,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Recruiter (
   id int PRIMARY KEY ,
   company_id int,
   name TEXT NOT NULL,
-  assigned_candidates_cnt smallint NOT NULL
+  assigned_candidates_cnt smallint NOT NULL,
+<<<<<<< HEAD
+  has_image BOOLEAN NOT NULL
+=======
+  department text, --still want to index it
+>>>>>>> features/recruiters
 );
 
 CREATE TABLE Company (
   id int PRIMARY KEY,
   overview TEXT NOT NULL,
   type BOOLEAN NOT NULL,
-  founded_on DATE NOT NULL,
-  company_size INTEGER NOT NULL,
-  rating smallint NOT NULL,
-  name TEXT NOT NULL
+  founded_in SMALLINT NOT NULL,
+  size int NOT NULL,
+  rating real NOT NULL,
+  name TEXT NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Company_Industry (
@@ -44,7 +50,8 @@ CREATE TABLE Company_Industry (
 CREATE TABLE Company_Location (
   company_id int,
   country TEXT NOT NULL,
-  city TEXT NOT NULL
+  city TEXT NOT NULL,
+  PRIMARY KEY (company_id, country, city)
 );
 
 CREATE TABLE Job_Skill (
@@ -98,7 +105,7 @@ CREATE TABLE Job (
   id serial PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
-  created_at date NOT NULL,
+  created_at TIMESTAMP NOT NULL,
   recruitment_process_id int,
   company_id int,
   industry_id smallint NOT NULL,
@@ -146,7 +153,7 @@ CREATE TABLE CV_Embedding (
 
 CREATE TABLE Industry (
   id smallserial PRIMARY KEY,
-  name text NOT NULL
+  name text UNIQUE NOT NULL
 );
 
 CREATE TABLE Job_Offer_Template (
@@ -244,7 +251,7 @@ CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FRO
 
 CREATE TABLE Reviews (
   id serial PRIMARY KEY,
-  creator_id int,
+  creator_id int NOT NULL,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
@@ -294,7 +301,7 @@ CREATE INDEX ON Candidate_History (country, city);
 
 CREATE INDEX ON Candidate_History (job_id);
 
-CREATE INDEX ON Company (company_size);
+CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (type);
 
@@ -342,6 +349,8 @@ CREATE INDEX ON Reviews (rating);
 
 CREATE INDEX ON Reviews (created_at);
 
+CREATE INDEX ON Reviews (creator_id);
+
 CREATE INDEX ON Report (seeker_id);
 
 CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_name);
@@ -356,7 +365,7 @@ CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
 
--- ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
@@ -398,7 +407,7 @@ ALTER TABLE Job ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recruitment_
 
 ALTER TABLE Job ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE SET NULL;
 
-ALTER TABLE Job ADD FOREIGN KEY (industry_id) REFERENCES Industry (id) ON DELETE SET NULL;
+ALTER TABLE Job ADD FOREIGN KEY (industry_id) REFERENCES Industry (id) ON DELETE CASCADE;
 
 ALTER TABLE Job_Embedding ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 
@@ -425,6 +434,8 @@ ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (job_id) REFERENCES Job (id)
 ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Reviews ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE CASCADE;
+
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Report ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 

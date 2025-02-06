@@ -8,7 +8,6 @@ exports.getCandidatesForJob = async (req, res, next) => {
                 candidateLocation: req.query.candidateLocation,
                 phaseType: req.query.phaseType,
                 status: req.query.status,
-                jobTitle: req.query.jobTitle,
             },
             req.query.sortBy,
             req.query.page
