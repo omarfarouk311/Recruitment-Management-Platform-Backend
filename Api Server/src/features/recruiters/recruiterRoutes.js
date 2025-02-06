@@ -4,8 +4,8 @@ const router=express();
 const {handleValidationErrors}=require('../../common/util')
 
 const recruiterController=require('./recruiterController');
-const {authorizeCompanyRecruiter}=require('./recruiterAuthorization')
-const {validateParams,validateRecruiterId}=require('./recruiterValidation')
+const {authorizeCompanyRecruiter,authorizeInvitationData}=require('./recruiterAuthorization')
+const {validateParams,validateRecruiterId,validateInvitationData}=require('./recruiterValidation')
 
 
 router.route('/')   //localhost:3000/recruiters/?recruiter="" & department="" & sorted=""&page=""
@@ -21,8 +21,12 @@ router.route('/:recruiterId')
         
 
 router.route('/invitation')
-        .post(recruiterController.sendInvitationController)
+        .post(validateInvitationData,
+              handleValidationErrors,
+              authorizeInvitationData,
+              recruiterController.sendInvitationController)
 
-
+router.route('/departments')
+        .get(recruiterController.getUniquetDepartmentsController)
 
 module.exports=router

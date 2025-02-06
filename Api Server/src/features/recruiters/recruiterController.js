@@ -43,8 +43,8 @@ module.exports.deleteRecruiterController=async(req,res,next)=>{
 module.exports.sendInvitationController=async(req,res,next)=>{
 
     try{
-        console.log(req.body)
-        const {email,department,deadline}=req.body  //companyId will be taken by token later
+        
+        const {email,department,deadline}=req.body 
      
         await recruiterService.sendInvitationService(email,department,deadline,req.userId)
         res.status(200).json({
@@ -54,6 +54,20 @@ module.exports.sendInvitationController=async(req,res,next)=>{
 
     }catch(err){
         console.log('err in sendInvitationController',err.message)
+        next(err)
+    }
+}
+
+module.exports.getUniquetDepartmentsController=async(req,res,next)=>{
+    try{
+        let result=await recruiterService.getUniquetDepartmentsService(req.userId)
+        res.status(200).json({
+            success:true,
+            departments:result
+        })
+
+    }catch(err){
+        console.log("err in getUniquetDepartmentsController")
         next(err)
     }
 }

@@ -21,6 +21,26 @@ const validateId=()=>{
 }
 
 
+
+const validateEmail=()=>{
+    return body('email').notEmpty().withMessage('Email is required').bail().isEmail().withMessage('Email is not valid')
+}
+
+const validateDepartmentInvitation=()=>{
+    return body('department').notEmpty().withMessage('department is required in req body')
+}
+
+const validateDate=()=>{
+    return body('deadline').notEmpty().withMessage('deadline is required in req body').isDate().withMessage('deadline should be valid date')
+}
+
+
+module.exports.validateInvitationData=[
+    validateEmail(),
+    validateDepartmentInvitation(),
+    validateDate()
+]
+
 module.exports.validateRecruiterId=[
   validateId()
 ]

@@ -35,10 +35,10 @@ class RecruiterModel {
          values.push(department)
         }
       
-        if(sorted==1){
+        if(sorted==1|| sorted==NULL){
             query+=` ORDER BY assigned_candidates_cnt ASC` 
         }
-        if(sorted==2){
+        if(sorted==-1){
             query+=` ORDER BY assigned_candidates_cnt DESC`
         }
         
@@ -149,6 +149,49 @@ class RecruiterModel {
             throw err;
         }
         
+    }
+    static async getRecruiterByEmail(email){
+        const replica_DB=replicaPool.getReadPool()
+        try{
+            let query=
+            `WITH usr as(
+            SELECT id as id
+            FROM Users
+            WHERE email=$1)
+            
+            SELECT Recruiter.id
+            FROM usr 
+            JOIN Recruiter
+            on usr.id=Recruiter.id
+            `
+
+            let queryValue=[email]
+
+            let queryResult=await replica_DB.query(query,queryValue)
+            return queryResult.rowCount;
+        }catch(err){
+            console.log('err in getRecruiterByEmail model',err.message)
+            throw err;
+        }
+    }
+
+    static async getUniqueDepartments(companyId){
+        let replica_DB=await replicaPool.getReadPool()
+        try{
+
+            let query=
+            `SELECT DISTINCT department
+            FROM Recruiter
+            WHERE company_id=$1`
+
+            let queryValue=[companyId]
+            let departments=await replica_DB.query(query,queryValue)
+            return departments.rows
+
+        }catch(err){
+            console.log('err in getUniqueDepartments model',err.message)
+            throw err;
+        }
     }
 }
 

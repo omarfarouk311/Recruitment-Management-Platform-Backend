@@ -2,9 +2,9 @@ const recruiterModel=require('./recruiterModel')
 
 
 module.exports.getRecruitersService=async(companyId,recruiter,department,sorted,page,limit)=>{
-    //1 sort by assigned cnt asc
-    //2 sort by assigned cnt desc
-    // no sorted passes then do not order by
+    //1 or null sort by assigned cnt asc
+    //-1 sort by assigned cnt desc
+    
    let result=await recruiterModel.getRecruiters(companyId,recruiter,department,sorted,page,limit)
    return result
 }
@@ -15,4 +15,8 @@ module.exports.deleteRecruiterService=async(companyId,recruiterId)=>{
 
 module.exports.sendInvitationService=async(email,department,deadline,companyId)=>{
     return await recruiterModel.sendInvitation(email,department,deadline,companyId)
+}
+
+module.exports.getUniquetDepartmentsService=async(companyId)=>{
+    return await recruiterModel.getUniqueDepartments(companyId)
 }
