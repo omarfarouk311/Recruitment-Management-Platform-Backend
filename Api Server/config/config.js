@@ -24,4 +24,18 @@ module.exports = {
     candidate_status_rejected: 3,
     pagination_limit: 10,
     maxNameLength: 30,
+    minNameLength: 1,
+    maxOverviewLength: 500,
+    minOverviewLength: 1,
+    minYear: 1800,
+    minCompanySize: 1,
+    maxCompanySize: 100000000,
+    minIndustryLength: 1,
+    maxIndustryLength: 50,
+    minLocationLength: 1,
+    maxLocationLength: 50,
+    minIndustriesArrayLength: 1,
+    maxIndustriesArrayLength: 300,
+    minLocationsArrayLength: 1,
+    maxLocationsArrayLength: 300
 };

@@ -11,10 +11,12 @@ exports.getCompanyData = async (req, res, next) => {
 
     try {
         const result = await companyService.getCompanyData(companyId);
-        if (!result.length) return res.status(404).json({ message: 'Company not found' });
-        return res.status(200).json(result);
+        return res.status(200).json(result[0]);
     }
     catch (err) {
+        if(err.msg) {
+            return next(err);
+        }
         passError(err, next);
     }
 };
@@ -46,13 +48,28 @@ exports.getCompanyIndustries = async (req, res, next) => {
 exports.getCompanyJobs = async (req, res, next) => {
     const { companyId } = req.params;
     const filters = req.query;
-    const { userRole } = req
+    const { userRole } = req;
 
     try {
         const result = await companyService.getCompanyJobs(companyId, filters, userRole);
         return res.status(200).json(result);
     }
     catch (err) {
+        passError(err, next);
+    }
+};
+
+exports.updateCompanyData = async (req, res, next) => {
+    const { userId: companyId, body: data } = req;
+
+    try {
+        await companyService.updateCompanyData(companyId, data);
+        res.status(204).send();
+    }
+    catch (err) {
+        if (err.msg) {
+            return next(err);
+        }
         passError(err, next);
     }
 };

@@ -33,8 +33,7 @@ CREATE TABLE Company (
   founded_in SMALLINT NOT NULL,
   size int NOT NULL,
   rating real NOT NULL,
-  name TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  name TEXT NOT NULL
 );
 
 CREATE TABLE Company_Industry (
@@ -58,7 +57,7 @@ CREATE TABLE Job_Skill (
 
 CREATE TABLE Skills (
   id serial PRIMARY KEY,
-  name TEXT NOT NULL
+  name TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE Education (

@@ -25,4 +25,5 @@ async function checkBucketExistence() {
     else console.log('cv-bucket already exists');
 }
 
-module.exports = checkBucketExistence;
+exports.minioConnect = checkBucketExistence;
+exports.client = minioClient;
