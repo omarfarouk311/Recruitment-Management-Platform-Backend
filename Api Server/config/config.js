@@ -26,5 +26,19 @@ module.exports = {
         jobSeeker: 'jobSeeker',
         company: 'company',
         recruiter: 'recruiter'
+    },
+    action_types: {
+        move_candidate: 1,
+        create_template: 2,
+        remove_recruiter: 3,
+        add_recruiter: 4,
+        create_assessment: 5,
+        remove_assessment: 6,
+        create_recruitement_process: 7,
+        remove_recruitement_process: 8,
+        assign_candidate: 9,
+        unassign_candidate: 10,
+        create_job: 11,
+        close_job: 12
     }
 };
