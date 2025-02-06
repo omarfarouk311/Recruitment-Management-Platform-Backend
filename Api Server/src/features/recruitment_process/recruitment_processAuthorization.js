@@ -4,7 +4,6 @@ const { role } = require('../../../config/config')
 
 
 module.exports.RecruitmenProcessesAuthorization = async (req, res, next) => {
-    req.userRole = 'recruiter';
     if (req.userRole == role.jobSeeker || req.userRole == role.recruiter) {
         const error = new Error('You are not authorized to access this recruitment process');
         error.status = 403;
@@ -15,7 +14,6 @@ module.exports.RecruitmenProcessesAuthorization = async (req, res, next) => {
 }
 
 module.exports.RecruitmenProcessDetailsAuthorization = async (req, res, next) => {
-    req.userRole = 'recruiter';
     const companyId = req.userId || 2;
     const recruitmentProcessId = req.params.processId;
     if (req.userRole == role.jobSeeker || req.userRole == role.recruiter) {
@@ -25,7 +23,7 @@ module.exports.RecruitmenProcessDetailsAuthorization = async (req, res, next) =>
         next(error);
     }
     try {
-        const company_id = await recruitment_processModel.getProcessById(recruitmentProcessId);
+        const company_id = await recruitment_processModel.getCompanyIdOfProcess(recruitmentProcessId);
         if (companyId != company_id) {
             const error = new Error('You are not authorized to access this recruitment process');
             error.status = 403;

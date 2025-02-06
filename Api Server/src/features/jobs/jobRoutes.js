@@ -11,13 +11,13 @@ const { jobOfCompanyAuthorization, deleteUpdateJobAuthorization } = require('./j
 router.route('/company')
         .get(jobValidation.jobsQueryValidate, handleValidationErrors, jobOfCompanyAuthorization, jobController.getAllCompanyJobs)
 
-router.post('/', handleValidationErrors, jobOfCompanyAuthorization, jobController.createJob)
+router.post('/', jobValidation.newJobValidation, handleValidationErrors, jobOfCompanyAuthorization, jobController.createJob)
         
 
 router.route('/:id')
         .get(jobValidation.jobIdValidation, handleValidationErrors, jobController.getJobDetailsById)
         .delete(jobValidation.jobIdValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.deleteJobById)
-        .put(jobValidation.jobIdValidation.handleValidationErrors, deleteUpdateJobAuthorization, jobController.updateJobById)
+        .put(jobValidation.jobIdValidation, jobValidation.newJobValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.updateJobById)
 
 
 

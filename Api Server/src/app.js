@@ -8,9 +8,17 @@ const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware'
 const recruitment_processRoutes = require('./features/recruitment_process/recruitment_processRoute');
 const jobRoutes = require('./features/jobs/jobRoutes')
 const app = express();
+const { role } = require('../config/config')
 
+app.use((req, res, next) => {
+    req.userId = 1;
+    req.userRole = role.company;
+    next()
+})
 
 app.use(express.json());
+
+
 
 app.use('/jobs', jobRoutes)
 app.use('/recruitment_processes', recruitment_processRoutes);

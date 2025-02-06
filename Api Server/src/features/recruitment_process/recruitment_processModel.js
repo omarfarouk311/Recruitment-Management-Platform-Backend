@@ -223,7 +223,7 @@ class recruitment_process {
     }
 
     // for authorization
-    static getProcessById = async (processId) => {
+    static getCompanyIdOfProcess = async (processId) => {
         try {
             const query = `SELECT company_id FROM recruitment_process WHERE id = $1`;
             const values = [processId];

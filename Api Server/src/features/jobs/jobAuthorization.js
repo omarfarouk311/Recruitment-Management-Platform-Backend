@@ -10,6 +10,7 @@ module.exports.jobOfCompanyAuthorization = async (req, res, next) => {
             error.msg = 'Authorization Error';
             throw error;
         }
+        next()
     } catch (err) {
         next(err);
     }
@@ -17,7 +18,7 @@ module.exports.jobOfCompanyAuthorization = async (req, res, next) => {
 
 
 module.exports.deleteUpdateJobAuthorization = async (req, res, next) => {
-    let id = req.userId || 1;
+    let id = req.userId 
     const jobId = req.params.id;
     try {
         if (req.userRole == role.jobSeeker || req.userRole == role.recruiter) {
@@ -26,7 +27,7 @@ module.exports.deleteUpdateJobAuthorization = async (req, res, next) => {
             error.msg = 'Authorization Error';
             throw error;
         }
-        const company_id = await jobModel.getJobById(jobId);
+        const company_id = await jobModel.getCompanyIdOfJob(jobId);
         if (company_id != id) {
             const error = new Error('You are not authorized to access this job');
             error.status = 403;

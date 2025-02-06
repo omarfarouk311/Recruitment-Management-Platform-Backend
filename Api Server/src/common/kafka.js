@@ -1,18 +1,18 @@
 const producer = require('../../config/kafka');
 const { logs_topic } = require('../../config/config');
 
-exports.produceLog = async (data) => {
+exports.produce = async (data, topicName) => {
     const createdAt = new Date();
-
+    let sendData = data;
+    if (topicName == logs_topic) {
+        sendData = { ...data, createdAt };
+    }
     try {
         await producer.send({
-            topic: logs_topic,
+            topic: topicName,
             messages: [
                 {
-                   value: JSON.stringify({
-                        ...data,
-                        createdAt,
-                    })
+                   value: JSON.stringify({ sendData })
                 }
             ],
         });

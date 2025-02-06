@@ -70,8 +70,14 @@ const jobsQueryValidate = [
             }
             return true;
         })
-        .isInt({ min: 0, max: 1 }).withMessage('Sort must be 0 (asc) or 1 (desc)')
-        .toInt(),
+        .isInt({ min: -1, max: 1 }).withMessage('Sort must be -1 (desc) or 1 (asc)')
+        .toInt()
+        .custom((value) => {
+            if (![1, -1].includes(value)) {
+                throw new Error('Sort must be -1 (desc) or 1 (asc)');
+            }
+            return true;
+        }),
 
     query('title')
         .optional()
@@ -82,6 +88,7 @@ const jobsQueryValidate = [
             return true;
         })
         .isString().withMessage('Title must be a string')
+        .trim()
         .notEmpty().withMessage('Title cannot be empty'),
 
     query()
