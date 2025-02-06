@@ -14,7 +14,7 @@ const { role } = require('../config/config')
 const app = express();
 
 
-
+// for testing
 app.use((req, res, next) => {
     req.userId = 1;
     req.userRole = role.company;
@@ -27,10 +27,10 @@ app.use('/assessments',assessmentRoutes)
 
 
 app.use('/jobs', jobRoutes)
-app.use('/recruitment_processes', recruitment_processRoutes);
+app.use('/recruitment_processes',recruitment_processRoutes);
 app.use('/candidates', candidateRoutes);
 app.use('/reviews', reviewRoutes);
-app.use('/recruiters', (req, res, next) => { req.userId=1; next(); }, recruiterRoutes)
+app.use('/recruiters', recruiterRoutes)
 app.use('/logs', logRoutes);
 
 app.use('/companies', companyRoutes);

@@ -9,7 +9,8 @@ module.exports.authorizeCompany=async(req,res,next)=>{
         if(!assessmentId){
             throw err;
         }
-        let companyId=req.body.companyId // will change to be taken from the token
+        // let companyId=req.body.companyId // will change to be taken from the token
+        let companyId=req.userId
         let returnCompanyId=await assessmentsModel.validateCompanyAssessment(assessmentId);
       
         if(!returnCompanyId){
@@ -38,7 +39,7 @@ module.exports.authorizeCompany=async(req,res,next)=>{
 module.exports.authorizeCompanyJob=async(req,res,next)=>{
 
     try{
-        let companyId=req.body.companyId // will change to be taken from the token
+        let companyId=req.userId 
         let jobId=parseInt(req.params.jobId)
 
 
@@ -56,6 +57,7 @@ module.exports.authorizeCompanyJob=async(req,res,next)=>{
         }
 
         let returnedCompanyId=await assessmentsModel.validateCompanyJob(jobId);// to check if company is authorized to access this job
+        console.log(returnedCompanyId,req.userId)
         if(returnedCompanyId!=companyId){
             let err=new Error()
             err.status=404;
