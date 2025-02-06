@@ -6,6 +6,14 @@ const kafka = new Kafka({
 })
 
 const producer = kafka.producer();
-await producer.connect();
 
+const connetProducer = async () => {
+  try {
+    await producer.connect();
+  } catch(error) {
+    console.error(error)
+  }
+}
+
+connetProducer();
 module.exports = producer;

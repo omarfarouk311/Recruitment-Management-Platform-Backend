@@ -15,6 +15,7 @@ services:
     env_file:
       - .env
 
+
   standby1:
     build:
       context: .
@@ -29,6 +30,10 @@ services:
       - master
     env_file:
       - .env
+    ports:
+      - "5433:5432"
+
+
 
   standby2:
     build:
@@ -44,6 +49,8 @@ services:
       - master
     env_file:
       - .env
+    ports:
+      - "5434:5432"
 
 networks:
   internal-net:

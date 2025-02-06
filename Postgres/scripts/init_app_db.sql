@@ -4,8 +4,7 @@ CREATE EXTENSION vector;
 CREATE TABLE Users (
   id serial PRIMARY KEY NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  password TEXT NOT NULL
 );
 
 CREATE TABLE Job_Seeker (
@@ -15,24 +14,31 @@ CREATE TABLE Job_Seeker (
   gender BOOLEAN NOT NULL,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Recruiter (
   id int PRIMARY KEY ,
   company_id int,
   name TEXT NOT NULL,
-  assigned_candidates_cnt smallint NOT NULL
+  assigned_candidates_cnt smallint NOT NULL,
+<<<<<<< HEAD
+  has_image BOOLEAN NOT NULL
+=======
+  department text, --still want to index it
+>>>>>>> features/recruiters
 );
 
 CREATE TABLE Company (
   id int PRIMARY KEY,
   overview TEXT NOT NULL,
   type BOOLEAN NOT NULL,
-  founded_on DATE NOT NULL,
-  company_size INTEGER NOT NULL,
-  rating smallint NOT NULL,
-  name TEXT NOT NULL
+  founded_in SMALLINT NOT NULL,
+  size int NOT NULL,
+  rating real NOT NULL,
+  name TEXT NOT NULL,
+  has_image BOOLEAN NOT NULL
 );
 
 CREATE TABLE Company_Industry (
@@ -44,13 +50,15 @@ CREATE TABLE Company_Industry (
 CREATE TABLE Company_Location (
   company_id int,
   country TEXT NOT NULL,
-  city TEXT NOT NULL
+  city TEXT NOT NULL,
+  PRIMARY KEY (company_id, country, city)
 );
 
 CREATE TABLE Job_Skill (
   job_id int,
   skill_id int,
-  PRIMARY KEY (job_id, skill_id)
+  PRIMARY KEY (job_id, skill_id),
+  importance smallint NOT NULL
 );
 
 CREATE TABLE Skills (
@@ -97,10 +105,10 @@ CREATE TABLE Job (
   id serial PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
-  created_at date NOT NULL,
+  created_at TIMESTAMP NOT NULL,
   recruitment_process_id int,
   company_id int,
-  field TEXT NOT NULL,
+  industry_id smallint NOT NULL,
   country TEXT,
   city TEXT,
   remote BOOLEAN NOT NULL,
@@ -145,7 +153,7 @@ CREATE TABLE CV_Embedding (
 
 CREATE TABLE Industry (
   id smallserial PRIMARY KEY,
-  name text NOT NULL
+  name text UNIQUE NOT NULL
 );
 
 CREATE TABLE Job_Offer_Template (
@@ -192,7 +200,9 @@ CREATE TABLE Assessment_Score (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
   phase_num smallint NOT NULL,
-  score smallint NOT NULL
+  phase_name text NOT NULL,
+  score smallint NOT NULL,
+  total_score smallint NOT NULL
 );
 
 CREATE TABLE Candidate_History (
@@ -200,12 +210,14 @@ CREATE TABLE Candidate_History (
   job_id int,
   job_title text NOT NULL,
   phase_name text NOT NULL,
+  phase_type smallint NOT NULL,
   status BOOLEAN NOT NULL,
   score smallint,
+  total_score smallint,
   company_name text NOT NULL,
   date_applied date NOT NULL,
-  country text NOT NULL,
-  city text NOT NULL,
+  country text,
+  city text,
   remote BOOLEAN NOT NULL,
   PRIMARY KEY (seeker_id, job_id)
 );
@@ -239,13 +251,13 @@ CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FRO
 
 CREATE TABLE Reviews (
   id serial PRIMARY KEY,
-  user_id int,
+  creator_id int NOT NULL,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
   rating smallint NOT NULL,
   role text NOT NULL,
-  created_at date NOT NULL
+  created_at timestamp NOT NULL
 );
 
 CREATE TABLE Report (
@@ -279,15 +291,17 @@ CREATE INDEX ON Job USING GIST (title gist_trgm_ops);
 
 CREATE INDEX ON Company USING GIST (name gist_trgm_ops);
 
-CREATE INDEX ON Candidate_History (seeker_id, status);
+CREATE INDEX ON Candidate_History (status);
 
-CREATE INDEX ON Candidate_History (seeker_id, company_name);
+CREATE INDEX ON Candidate_History (company_name);
 
-CREATE INDEX ON Candidate_History (seeker_id, remote);
+CREATE INDEX ON Candidate_History (remote);
 
-CREATE INDEX ON Candidate_History (seeker_id, country, city);
+CREATE INDEX ON Candidate_History (country, city);
 
-CREATE INDEX ON Company (company_size);
+CREATE INDEX ON Candidate_History (job_id);
+
+CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (type);
 
@@ -311,9 +325,11 @@ CREATE INDEX ON Job (country, city);
 
 CREATE INDEX ON Job (remote);
 
-CREATE INDEX ON Job (field);
+CREATE INDEX ON Job (industry_id);
 
 CREATE INDEX ON Job (created_at);
+
+CREATE INDEX ON Job (title);
 
 CREATE INDEX ON Job (company_id);
 
@@ -333,9 +349,11 @@ CREATE INDEX ON Reviews (rating);
 
 CREATE INDEX ON Reviews (created_at);
 
+CREATE INDEX ON Reviews (creator_id);
+
 CREATE INDEX ON Report (seeker_id);
 
-CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_num);
+CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_name);
 
 CREATE INDEX ON Logs (company_id);
 
@@ -347,11 +365,13 @@ CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
 
-ALTER TABLE Reviews ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE NO ACTION;
+
+ALTER TABLE Candidate_History ADD FOREIGN KEY (phase_type) REFERENCES Phase_Type (id) ON DELETE SET NULL;
 
 ALTER TABLE Job_Seeker ADD FOREIGN KEY (id) REFERENCES Users (id) ON DELETE CASCADE;
 
@@ -387,6 +407,8 @@ ALTER TABLE Job ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recruitment_
 
 ALTER TABLE Job ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE SET NULL;
 
+ALTER TABLE Job ADD FOREIGN KEY (industry_id) REFERENCES Industry (id) ON DELETE CASCADE;
+
 ALTER TABLE Job_Embedding ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 
 ALTER TABLE Job_Offer_Template ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE CASCADE;
@@ -412,6 +434,8 @@ ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (job_id) REFERENCES Job (id)
 ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Reviews ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE CASCADE;
+
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Report ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 
@@ -446,3 +470,4 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
 
 -- Grant sequence usage for app users
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
+

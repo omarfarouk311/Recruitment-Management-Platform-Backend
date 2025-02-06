@@ -8,7 +8,7 @@ module.exports = {
     db_user_password: process.env.DB_USER_PASSWORD,
     db_port: process.env.DB_PORT,
     db_name: process.env.DB_NAME,
-    port: process.env.PORT || 80,
+    port: process.env.PORT || 3000,
     logs_topic: process.env.KAFKA_LOGS,
     cv_parsing_topic: process.env.KAFKA_CV_PARSING,
     job_parsing_topic: process.env.KAFKA_JOB_PARSING,
@@ -20,5 +20,11 @@ module.exports = {
     candidate_status_pending: 1,
     candidate_status_accepted: 2,
     candidate_status_rejected: 3,
-    pagination_limit: process.env.PAGINATION_LIMIT || 5,
+    pagination_limit: 10,
+    maxNameLength: 30,
+    role: {
+        jobSeeker: 'jobSeeker',
+        company: 'company',
+        recruiter: 'recruiter'
+    }
 };
