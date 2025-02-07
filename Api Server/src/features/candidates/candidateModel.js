@@ -206,7 +206,7 @@ class CandidateModel {
                         rph.name as next_phase_name,
                         rp.num_of_phases as num_of_phases,
                         candidates.seeker_id as seeker_id,
-                        candidates.phase as phase_num, rph.deadline as deadline,
+                        candidates.phase as phase_num, rph.deadline as deadline
                     FROM (
                         SELECT 
                             phase, seeker_id,
@@ -226,14 +226,14 @@ class CandidateModel {
                         inLastPhase.push(result.seeker_id);
                         return undefined;
                     }
-                    return {seeker_id: result.seeker_id, next_phase_name: result.next_phase_name, phase_num: result.phase_num};
+                    return {seekerId: result.seeker_id, nextPhaseName: result.next_phase_name, phase_num: result.phase_num};
                 });
                 updatedCandidates = updatedCandidates.filter((value) => value != undefined);
 
                 if(updatedCandidates.length > 0) {
                     let deadline = new Date();
                     deadline.setDate(deadline.getDate() + results[0].deadline);
-                    let validSeekerIds = updatedCandidates.map((value) => value.seeker_id);
+                    let validSeekerIds = updatedCandidates.map((value) => value.seekerId);
                     await client.query(`
                         UPDATE recruiter
                         SET assigned_candidates_cnt = assigned_candidates_cnt - (
@@ -339,7 +339,7 @@ class CandidateModel {
             
             let recruiters = result.rows.map((value) => value.recruiter_id);
             seekerIds = result.rows.map((value) => value.seeker_id);
-
+            
             if (!result.rows.length) {
                 let error = new Error();
                 error.msg = 'Candidates are already not assigned';
@@ -360,8 +360,9 @@ class CandidateModel {
                     SELECT COUNT(*) 
                     FROM candidates 
                     WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
-                )
+                ) RETURNING assigned_candidates_cnt;
             `, [seekerIds, jobId]);
+            assigned_candidates_cnt = assigned_candidates_cnt.rows[0].assigned_candidates_cnt;
 
             await client.query(`
                 UPDATE candidates
@@ -401,16 +402,15 @@ class CandidateModel {
 
     static async getRecruitementPhases(jobId) {
         let results = await ReadPool().query(`
-            SELECT JSON_AGG(
-                JSON_BUILD_OBJECT(
-                    phase_num, name,
-                ),
+            SELECT JSON_OBJECT_AGG(
+                    phase_num, rp.name
+            ) AS phases
             FROM job
-            JOIN recruitment_phases rp ON rp.recruitment_process_id = job.recruitment_process_id
+            JOIN recruitment_phase rp ON rp.recruitment_process_id = job.recruitment_process_id
             WHERE job.id = $1
-            GROUP BY job.id;
         `, [jobId]);
-        return results.rows[0];
+        
+        return results.rows[0].phases;
     }
 }
 
