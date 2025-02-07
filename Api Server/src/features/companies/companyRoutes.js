@@ -2,12 +2,12 @@ const { Router } = require('express');
 const companyController = require('./companyController');
 const companyValidation = require('./companyValidation');
 const { authorizeUpdateCompanyData } = require('./companyAuthorization')
-const { handleValidationErrors } = require('../../common/util');
+const { handleValidationErrors, multipartParser } = require('../../common/util');
 const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/profile')
-    .put(authorizeUpdateCompanyData, companyValidation.validateUpdateCompanyData, handleValidationErrors,
+    .put(authorizeUpdateCompanyData, multipartParser('image'), companyValidation.validateUpdateCompanyData, handleValidationErrors,
         companyController.updateCompanyData)
     .all(notAllowed);
 

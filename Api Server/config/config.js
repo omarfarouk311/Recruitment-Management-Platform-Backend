@@ -37,5 +37,7 @@ module.exports = {
     minIndustriesArrayLength: 1,
     maxIndustriesArrayLength: 300,
     minLocationsArrayLength: 1,
-    maxLocationsArrayLength: 300
+    maxLocationsArrayLength: 300,
+    imagesBucketName: 'images-bucket',
+    cvsBucketName: 'cvs-bucket'
 };

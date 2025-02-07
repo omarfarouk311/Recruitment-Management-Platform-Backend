@@ -1,5 +1,5 @@
 const { Client } = require('minio');
-const { minio_user, minio_password } = require('./config');
+const { minio_user, minio_password, imagesBucketName, cvsBucketName } = require('./config');
 
 const minioClient = new Client({
     endPoint: 'object-store',
@@ -10,19 +10,17 @@ const minioClient = new Client({
 });
 
 async function checkBucketExistence() {
-    const bucket1 = 'profile-photo-bucket'
-    const bucket2 = 'cv-bucket'
-    const exists = await Promise.all([minioClient.bucketExists(bucket1), minioClient.bucketExists(bucket2)]);
+    const exists = await Promise.all([minioClient.bucketExists(imagesBucketName), minioClient.bucketExists(cvsBucketName)]);
     if (!exists[0]) {
-        await minioClient.makeBucket(bucket1);
-        console.log('profile-photo-bucket created successfully');
+        await minioClient.makeBucket(imagesBucketName);
+        console.log(`${imagesBucketName} created successfully`);
     }
-    else console.log('profile-photo-bucket already exists');
+    else console.log(`${imagesBucketName} already exists`);
     if (!exists[1]) {
-        await minioClient.makeBucket(bucket2);
-        console.log('cv-bucket created successfully');
+        await minioClient.makeBucket(cvsBucketName);
+        console.log(`${cvsBucketName} created successfully`);
     }
-    else console.log('cv-bucket already exists');
+    else console.log(`${cvsBucketName} already exists`);
 }
 
 exports.minioConnect = checkBucketExistence;
