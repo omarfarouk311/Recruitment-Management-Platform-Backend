@@ -151,3 +151,9 @@ exports.multipartParser = (mediaType) => {
         }
     }
 };
+
+exports.getPhotoService = async (bucketName, objectName) => {
+    const { metaData, size } = await client.statObject(bucketName, objectName);
+    const stream = await client.getObject(bucketName, objectName);
+    return { metaData, size, stream };
+};

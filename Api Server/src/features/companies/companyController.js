@@ -1,4 +1,6 @@
 const companyService = require('./companyService');
+const { getPhotoService } = require('../../common/util');
+const { imagesBucketName } = require('../../../config/config');
 
 function passError(err, next) {
     err.status = 500;
@@ -79,15 +81,10 @@ exports.getCompanyPhoto = async (req, res, next) => {
 
     try {
         const {
-            stat: {
-                metaData: {
-                    'content-type': contentType,
-                    filename: fileName
-                },
-                size
-            },
+            metaData: { 'content-type': contentType, filename: fileName },
+            size,
             stream
-        } = await companyService.getCompanyPhoto(companyId);
+        } = await getPhotoService(imagesBucketName, `company${companyId}`);
 
         res.header({
             'Content-Type': contentType,
