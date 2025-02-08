@@ -14,7 +14,7 @@ exports.getCompanyData = async (req, res, next) => {
         return res.status(200).json(result[0]);
     }
     catch (err) {
-        if(err.msg) {
+        if (err.msg) {
             return next(err);
         }
         passError(err, next);
@@ -68,6 +68,41 @@ exports.updateCompanyData = async (req, res, next) => {
     }
     catch (err) {
         if (err.msg) {
+            return next(err);
+        }
+        passError(err, next);
+    }
+};
+
+exports.getCompanyPhoto = async (req, res, next) => {
+    const { companyId } = req.params;
+
+    try {
+        const {
+            stat: {
+                metaData: {
+                    'content-type': contentType,
+                    filename: fileName
+                },
+                size
+            },
+            stream
+        } = await companyService.getCompanyPhoto(companyId);
+
+        res.header({
+            'Content-Type': contentType,
+            'Content-Length': size,
+            'Content-Disposition': `inline; filename = ${fileName}`
+        });
+
+        stream.on('error', (err) => passError(err, next));
+
+        stream.pipe(res);
+    }
+    catch (err) {
+        if (err.code === 'NotFound') {
+            err.msg = 'Company photo not found';
+            err.status = 404;
             return next(err);
         }
         passError(err, next);

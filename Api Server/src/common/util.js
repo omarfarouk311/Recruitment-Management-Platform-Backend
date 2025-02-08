@@ -62,7 +62,7 @@ exports.multipartParser = (mediaType) => {
                 const { mimeType, filename } = info;
                 const metadata = {
                     'content-type': mimeType,
-                    fileName: filename
+                    filename
                 };
 
                 // image

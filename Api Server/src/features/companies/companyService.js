@@ -1,4 +1,6 @@
 const companyModel = require('./companyModel');
+const { client } = require('../../../config/MinIO');
+const { imagesBucketName } = require('../../../config/config');
 
 exports.getCompanyData = async (companyId) => {
     const result = await companyModel.getCompanyData(companyId);
@@ -29,4 +31,11 @@ exports.getCompanyJobs = async (companyId, filters, userRole) => {
 
 exports.updateCompanyData = async (companyId, data) => {
     await companyModel.updateCompanyData(companyId, data);
+};
+
+exports.getCompanyPhoto = async (companyId) => {
+    const objectName = `company${companyId}`;
+    const stat = await client.statObject(imagesBucketName, objectName);
+    const stream = await client.getObject(imagesBucketName, objectName);
+    return { stat, stream };
 };
