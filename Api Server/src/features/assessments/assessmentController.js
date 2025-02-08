@@ -4,7 +4,8 @@ const assessmentService=require('./assessmentService');
 module.exports.add_AssessmentController = async (req, res,next) => {
    try{
     const assessmentData=req.body;
-    assessmentData.companyId=req.body.companyId; // will change later to be taken from the token
+    // assessmentData.companyId=req.body.companyId; // will change later to be taken from the token
+    assessmentData.companyId=req.userId
 
    
    
@@ -24,7 +25,8 @@ module.exports.add_AssessmentController = async (req, res,next) => {
 module.exports.get_All_AssessmentController=async(req,res,next)=>{
     try{
         let {jobTitle}=req.query;
-        let companyId=req.body.companyId; // will change later to be taken from the token
+        // let companyId=req.body.companyId; // will change later to be taken from the token
+        let companyId=req.userId
         const assessments=await assessmentService.get_All_AssessmentsService(companyId,jobTitle);
         return res.status(200).json({
             success: true,
@@ -95,7 +97,8 @@ module.exports.compute_JobSeekerScore=async(req,res,next)=>{
     try{
         let assessmentId=req.params.id;
         let jobId=req.params.jobId;
-        let jobSeekerId=req.body.jobSeekerId // will change later to be taken from the token
+        // let jobSeekerId=req.body.jobSeekerId // will change later to be taken from the token
+        let jobSeekerId=req.userId
         let metaData=req.body.metaData;
         // console.log(metaData)
         // console.log(assessmentId)

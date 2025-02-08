@@ -31,6 +31,10 @@ class Logs {
             values.push(filters.date, endDate);
         }
 
+        // ensure that rows maintain the same order if no sorting filter is applied
+        query += ' order by id desc';
+
+        // pagination
         query += ` limit $${index++} offset $${index++}`
         values.push(limit, (filters.page - 1) * limit);
 

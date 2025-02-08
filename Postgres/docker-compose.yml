@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: master
+    ports:
+      - "5432:5432"
     volumes:
       - ./master/data:/var/lib/postgresql/data
       - ./scripts/create_users.sql:/docker-entrypoint-initdb.d/create_users.sql
