@@ -4,26 +4,9 @@ const { asc_order, desc_order, cv_parsing_topic, logs_topic } = require('../../.
 
 class jobModel {
 
-    static async buildSkillsDictionary(skills) {
-        console.log("INNN")
-        const skillMap = {};
-        let client = await Pool.getReadPool().connect();
-        for (const skill of skills) {
-            const { rows } = await client.query('SELECT name FROM skills WHERE id = $1', [skill.skillId]);
-            skillMap[skill.skillId] = rows[0].name;
-        }
-        const skillDictionary = {};
-        for (const skill of skills) {
-            const name = skillMap[skill.skillId];
-            skillDictionary[name] = skill.importance;
-        }
-
-        this.produceToKafka(skillDictionary, cv_parsing_topic)
-        return;
-    };
 
     static async produceToKafka(processObject, topicName) {
-        Kafka.produce(processObject, topicName);
+        await Kafka.produce(processObject, topicName);
         return;
     }
 
@@ -59,16 +42,16 @@ class jobModel {
                 await client.query(query2, values2);
             }
 
-
-            await client.query('COMMIT');
             const processObject = {
                 "performed_by": "Company",
                 "company_id": companyId,
                 "extra_data": null,
                 "action_type": "create job",
             }
-            this.buildSkillsDictionary(jobData.skills)
-            this.produceToKafka(processObject, logs_topic)
+            await this.produceToKafka({ jobId }, cv_parsing_topic)
+            await this.produceToKafka(processObject, logs_topic)
+            await client.query('COMMIT');
+            console.log('Ack from kafka')
             return { message: 'Job added successfully' };
             
         } catch (err) {
@@ -150,7 +133,7 @@ class jobModel {
         }
     }
 
-    static async deleteJobById(jobId) {
+    static async deleteJobById(companyId, jobId) {
         let client = await Pool.getReadPool().connect();
         try {
             client = await Pool.getWritePool().connect();
@@ -163,7 +146,8 @@ class jobModel {
                 "extra_data": null,
                 "action_type": "delete job",
             }
-            this.produceToKafka(processObject, logs_topic)
+            await this.produceToKafka(processObject, logs_topic)
+            console.log('Ack from kafka')
             return { message: 'Job deleted successfully' };
         } catch (err) {
             console.log('Error in deleteJobById')
@@ -204,15 +188,17 @@ class jobModel {
                 const values3 = [jobId, jobData.skills[i].skillId, jobData.skills[i].importance];
                 await client.query(query3, values3);
             }
-            await client.query('COMMIT');
+         
             const processObject = {
                 "performed_by": "Company",
                 "company_id": companyId,
                 "extra_data": null,
                 "action_type": "update job",
             }
-            this.buildSkillsDictionary(jobData.skills)
-            this.produceToKafka(processObject, logs_topic)
+            await this.produceToKafka({ jobId }, cv_parsing_topic)
+            await this.produceToKafka(processObject, logs_topic)
+            await client.query('COMMIT');
+            console.log('Ack from kafka')
             return { message: 'Job updated successfully' };
         } catch (err) {
             client.query("ROLLBACK");

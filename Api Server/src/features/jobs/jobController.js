@@ -38,8 +38,9 @@ module.exports.getJobDetailsById = async (req, res, next) => {
 
 module.exports.deleteJobById = async (req, res, next) => {
     const jobId = req.params.id;
+    const companyId = req.userId;
     try {
-        const msg = await jobService.deleteJobById(jobId);
+        const msg = await jobService.deleteJobById(companyId, jobId);
         res.status(200).json(msg);
     } catch (err) {
         next(err);

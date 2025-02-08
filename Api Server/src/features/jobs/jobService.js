@@ -16,8 +16,8 @@ module.exports.getJobDetailsById = async (jobId) => {
     return job
 }
 
-module.exports.deleteJobById = async (jobId) => {
-    const response = await jobModel.deleteJobById(jobId)
+module.exports.deleteJobById = async (companyId, jobId) => {
+    const response = await jobModel.deleteJobById(companyId, jobId)
     return response
 }
 
