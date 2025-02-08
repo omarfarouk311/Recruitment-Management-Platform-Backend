@@ -15,6 +15,7 @@ module.exports = {
     cv_embedding: process.env.KAFKA_CV_EMBEDDING_GENERATION,
     job_embedding_topic: process.env.KAFKA_JOB_EMBEDDING_GENERATION,
     profile_embedding_topic: process.env.KAFKA_PROFILE_EMBEDDING_GENERATION,
+    brokers: [process.env.KAFKA_BROKER1, process.env.KAFKA_BROKER2],
     minio_user: process.env.MINIO_USER,
     minio_password: process.env.MINIO_PASSWORD,
     desc_order: -1,

@@ -271,7 +271,7 @@ CREATE TABLE Action (
 );
 
 CREATE TABLE Logs (
-  id bytea PRIMARY KEY,
+  id uuid PRIMARY KEY,
   performed_by text NOT NULL,
   company_id int NOT NULL,
   created_at timestamp NOT NULL,
