@@ -31,7 +31,7 @@ class Review {
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         if (!Object.keys(filters).some(value => value === 'sortByDate' || value === 'sortByRating')) {
-            query += ' order by id';
+            query += ' order by id desc';
         }
 
         //rating asc

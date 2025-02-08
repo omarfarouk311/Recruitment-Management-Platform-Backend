@@ -136,7 +136,7 @@ class Company {
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         if (!Object.keys(filters).includes('sortByDate')) {
-            query += ' order by j.id';
+            query += ' order by j.id desc';
         }
         else {
             if (filters.sortByDate === 1) {
@@ -170,7 +170,7 @@ class Company {
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         if (!Object.keys(filters).includes('sortByDate')) {
-            query += ' order by id';
+            query += ' order by id desc';
         }
         else {
             if (filters.sortByDate === 1) {
@@ -203,7 +203,7 @@ class Company {
             `;
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
-        query += ' order by id';
+        query += ' order by id desc';
 
         const { rows } = await pool.query(query, values);
         return rows;
