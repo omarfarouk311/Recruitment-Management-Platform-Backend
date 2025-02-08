@@ -1,4 +1,4 @@
-const { getReadPool } = require('../../../config/db');
+const { getReadPool, getWritePool } = require('../../../config/db');
 
 class Company {
     constructor({ id, overview, type, foundedIn, size, rating, name }) {
@@ -62,6 +62,12 @@ class Company {
             `;
 
         const { rows } = await pool.query(query, values);
+        if (!rows.length) {
+            const err = new Error('Company not found while retrieving company data');
+            err.msg = 'Company not found';
+            err.status = 404;
+            throw err;
+        }
         return rows;
     }
 
@@ -201,6 +207,63 @@ class Company {
 
         const { rows } = await pool.query(query, values);
         return rows;
+    }
+
+    static async updateCompanyData(companyId, { overview, type, foundedIn, size, name, locations, industries }) {
+        const pool = getWritePool();
+        const client = await pool.connect();
+
+        try {
+            // delete current locations and industries
+            await client.query('delete from Company_Industry where company_id = $1', [companyId]);
+            await client.query('delete from Company_Location where company_id = $1', [companyId]);
+
+            // update company info
+            let values = [companyId, overview, type, foundedIn, size, name];
+            let index = 2;
+            const updateQuery =
+                `update company
+                set overview = $${index++}, type = $${index++}, founded_in = $${index++}, size = $${index++}, name = $${index++}
+                where id = $1
+                `;
+            await client.query(updateQuery, values);
+
+            // insert new industries
+            const insertIndustries =
+                `
+                insert into Company_Industry
+                select $1, id
+                from industry
+                where name = any ($2)
+                `;
+            const { rowCount } = await client.query(insertIndustries, [companyId, industries]);
+            if (rowCount < industries.length) {
+                await client.query('rollback');
+                const err = new Error('Invalid industries array');
+                err.msg = 'one or more of the industries not found';
+                err.status = 400;
+                throw err;
+            }
+
+            // insert new locations
+            values = [companyId];
+            index = 2;
+            let insertLocations = 'insert into Company_Location (company_id, country, city) values';
+            locations.forEach(({ country, city }, i) => {
+                insertLocations += `($1, $${index++}, $${index++})` + (i < locations.length - 1 ? ',' : '');
+                values.push(country, city);
+            });
+            await client.query(insertLocations, values);
+
+            await client.query('commit');
+        }
+        catch (err) {
+            await client.query('rollback');
+            throw err;
+        }
+        finally {
+            client.release();
+        }
     }
 }
 
