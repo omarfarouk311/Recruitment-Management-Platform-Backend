@@ -13,7 +13,6 @@ exports.validatePage = () => query('page')
 
 exports.handleValidationErrors = (req, res, next) => {
     const err = validationResult(req);
-
     if (!err.isEmpty()) {
         err.validationErrors = Object.values(err.mapped()).map(({ msg }) => msg);
         err.msg = 'Validation Error';

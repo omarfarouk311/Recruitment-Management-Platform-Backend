@@ -1,6 +1,8 @@
 const Pool = require('../../../config/db')
 const Kafka = require('../../common/kafka')
-const { asc_order, desc_order, cv_parsing_topic, logs_topic } = require('../../../config/config')
+const { asc_order, desc_order, cv_parsing_topic, logs_topic, create_job, action_types } = require('../../../config/config')
+const { v6: uuid } = require('uuid');
+
 
 class jobModel {
 
@@ -41,12 +43,15 @@ class jobModel {
                 const values2 = [jobId, jobData.skills[i].skillId, jobData.skills[i].importance];
                 await client.query(query2, values2);
             }
-
+            const query3 = `SELECT name FROM company WHERE id = $1`;
+            const result = await client.query(query3, [companyId]);
+            const companyName = result.rows[0].name;
             const processObject = {
-                "performed_by": "Company",
-                "company_id": companyId,
-                "extra_data": null,
-                "action_type": "create job",
+                id: uuid(),
+                performed_by: companyName,
+                company_id: companyId,
+                extra_data: null,
+                action_type: action_types.create_job
             }
             await this.produceToKafka({ jobId }, cv_parsing_topic)
             await this.produceToKafka(processObject, logs_topic)
@@ -140,11 +145,15 @@ class jobModel {
             const query = `DELETE FROM job WHERE id = $1;`
             const values = [jobId];
             await client.query(query, values);
+            const query2 = `SELECT name FROM company WHERE id = $1`;
+            const result = await client.query(query2, [companyId]);
+            const companyName = result.rows[0].name;
             const processObject = {
-                "performed_by": "Company",
-                "company_id": companyId,
-                "extra_data": null,
-                "action_type": "delete job",
+                id: uuid(),
+                performed_by: companyName,
+                company_id: companyId,
+                extra_data: null,
+                action_type: action_types.close_job
             }
             await this.produceToKafka(processObject, logs_topic)
             console.log('Ack from kafka')
@@ -189,11 +198,15 @@ class jobModel {
                 await client.query(query3, values3);
             }
          
+            const query4 = `SELECT name FROM company WHERE id = $1`;
+            const result = await client.query(query4, [companyId]);
+            const companyName = result.rows[0].name;
             const processObject = {
-                "performed_by": "Company",
-                "company_id": companyId,
-                "extra_data": null,
-                "action_type": "update job",
+                id: uuid(),
+                performed_by: companyName,
+                company_id: companyId,
+                extra_data: null,
+                action_type: action_types.update_job
             }
             await this.produceToKafka({ jobId }, cv_parsing_topic)
             await this.produceToKafka(processObject, logs_topic)

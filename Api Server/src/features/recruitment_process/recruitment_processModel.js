@@ -1,6 +1,7 @@
 const produce = require('../../common/kafka');
 const Pool = require('../../../config/db');
-const { logs_topic } = require('../../../config/config')
+const { logs_topic, action_types } = require('../../../config/config')
+const { v6: uuid } = require('uuid');
 
 
 class recruitment_process {
@@ -98,11 +99,15 @@ class recruitment_process {
                 ];
                 await pool.query(insertPhaseQuery, values);
             }
+            const query = `SELECT name FROM company WHERE id = $1`;
+            const result = await pool.query(query, [companyId]);
+            const companyName = result.rows[0].name;
             const processObject = {
-                "performed_by": "Company",
-                "company_id": companyId,
-                "extra_data": null,
-                "action_type": "Recruitment process",
+                id: uuid(),
+                performed_by: companyName,
+                company_id: companyId,
+                extra_data: null,
+                action_type: action_types.create_recruitement_process
             }
             await produce.produce(processObject, logs_topic);
             await pool.query('COMMIT');
@@ -183,11 +188,15 @@ class recruitment_process {
                 await pool.query(insertPhaseQuery, values);
             }
 
+            const query = `SELECT name FROM company WHERE id = $1`;
+            const result = await pool.query(query, [companyId]);
+            const companyName = result.rows[0].name;
             const processObject = {
-                "performed_by": "Company",
-                "company_id": companyId,
-                "extra_data": null,
-                "action_type": "Update new process",
+                id: uuid(),
+                performed_by: companyName,
+                company_id: companyId,
+                extra_data: null,
+                action_type: action_types.update_recruitment_process
             }
             await produce.produce(processObject, logs_topic);
 
@@ -210,11 +219,15 @@ class recruitment_process {
             const values = [processId];
             let pool = Pool.getWritePool();
             await pool.query(deleteQuery, values);
+            const query = `SELECT name FROM company WHERE id = $1`;
+            const result = await pool.query(query, [companyId]);
+            const companyName = result.rows[0].name;
             const processObject = {
-                "performed_by": "Company",
-                "company_id": companyId,
-                "extra_data": null,
-                "action_type": "Delete new process",
+                id: uuid(),
+                performed_by: companyName,
+                company_id: companyId,
+                extra_data: null,
+                action_type: action_types.remove_recruitement_process
             }
             await produce.produce(processObject, logs_topic);
             return { message: 'Recruitment process deleted successfully' };

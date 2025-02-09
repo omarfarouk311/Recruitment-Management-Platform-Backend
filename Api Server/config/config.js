@@ -42,7 +42,9 @@ module.exports = {
         assign_candidate: 9,
         unassign_candidate: 10,
         create_job: 11,
-        close_job: 12
+        close_job: 12,
+        update_job: 13,
+        update_recruitment_process: 14
     },
     minNameLength: 1,
     maxOverviewLength: 500,

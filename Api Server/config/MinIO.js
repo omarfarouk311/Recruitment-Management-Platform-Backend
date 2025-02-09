@@ -10,18 +10,23 @@ const minioClient = new Client({
 });
 
 async function checkBucketExistence() {
-    const exists = await Promise.all([minioClient.bucketExists(imagesBucketName), minioClient.bucketExists(cvsBucketName)]);
-    if (!exists[0]) {
-        await minioClient.makeBucket(imagesBucketName);
-        console.log(`${imagesBucketName} created successfully`);
+    try {
+        const exists = await Promise.all([minioClient.bucketExists(imagesBucketName), minioClient.bucketExists(cvsBucketName)]);
+        if (!exists[0]) {
+            await minioClient.makeBucket(imagesBucketName);
+            console.log(`${imagesBucketName} created successfully`);
+        }
+        else console.log(`${imagesBucketName} already exists`);
+        if (!exists[1]) {
+            await minioClient.makeBucket(cvsBucketName);
+            console.log(`${cvsBucketName} created successfully`);
+        }
+        else console.log(`${cvsBucketName} already exists`);
+    } catch (err) {
+        
     }
-    else console.log(`${imagesBucketName} already exists`);
-    if (!exists[1]) {
-        await minioClient.makeBucket(cvsBucketName);
-        console.log(`${cvsBucketName} created successfully`);
-    }
-    else console.log(`${cvsBucketName} already exists`);
 }
 
 exports.minioConnect = checkBucketExistence;
 exports.client = minioClient;
+
