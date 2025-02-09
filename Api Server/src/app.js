@@ -11,6 +11,7 @@ const recruitment_processRoutes = require('./features/recruitment_process/recrui
 const assessmentRoutes = require('./features/assessments/assessmentRoutes');
 const recruiterRoutes = require('./features/recruiters/recruiterRoutes');
 const jobRoutes = require('./features/jobs/jobRoutes')
+const invitationRoutes = require('./features/invitations/invitationRoutes');
 const { role } = require('../config/config')
 const app = express();
 
@@ -19,9 +20,9 @@ minioConnect();
 // for testing
 app.use((req, res, next) => {
     req.userId = 1;
-    req.userRole = role.company;
-    next()
-})
+    req.userRole = role.recruiter;
+    next();
+});
 
 app.use(express.json());
 
@@ -33,6 +34,7 @@ app.use('/reviews', reviewRoutes);
 app.use('/recruiters', recruiterRoutes)
 app.use('/logs', logRoutes);
 app.use('/companies', companyRoutes);
+app.use('/invitations', invitationRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);

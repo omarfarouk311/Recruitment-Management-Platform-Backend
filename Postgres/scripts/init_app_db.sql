@@ -23,8 +23,8 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-  has_image BOOLEAN NOT NULL
-  department text, --still want to index it
+  has_image BOOLEAN NOT NULL,
+  department text --still want to index it
 );
 
 CREATE TABLE Company (
@@ -76,8 +76,9 @@ CREATE TABLE Company_Invitations (
   recruiter_id int,
   company_id int,
   department text NOT NULL,
-  created_at date NOT NULL,
+  created_at TIMESTAMP NOT NULL,
   deadline TIMESTAMP NOT NULL,
+  status SMALLINT NOT NULL,
   PRIMARY KEY (recruiter_id, company_id)
 );
 
