@@ -183,8 +183,8 @@ class CandidateModel {
                 SET assigned_candidates_cnt = $1
                 WHERE id = $2;`, [assigned_candidates_cnt, recruiterId]);
 
-            await client.query('COMMIT;');
-            return {assigned_candidates_cnt: assigned_candidates_cnt, updated_candidates: updated_candidates.rows};
+            
+            return {assigned_candidates_cnt: assigned_candidates_cnt, updated_candidates: updated_candidates.rows, client: client};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
@@ -251,8 +251,8 @@ class CandidateModel {
                     await client.query(update_query, [validSeekerIds, jobId, deadline]);
                 }
 
-                await client.query('COMMIT;');
-                return {invalidCandidates: inLastPhase, updatedCandidates: updatedCandidates}
+                
+                return {invalidCandidates: inLastPhase, updatedCandidates: updatedCandidates, client: client}
             } catch(error) {
                 await client.query('ROLLBACK;');
                 throw error;
@@ -315,8 +315,8 @@ class CandidateModel {
                     RETURNING seeker_id, phase_num, 0 as decision;
                 `, [seekerIds, jobId]);
 
-                await client.query('COMMIT;');
-                return res;
+                
+                return {res: res, client: client};
             } catch (error) {
                 await client.query('ROLLBACK;');
                 throw error;
@@ -360,9 +360,9 @@ class CandidateModel {
                     SELECT COUNT(*) 
                     FROM candidates 
                     WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
-                ) RETURNING assigned_candidates_cnt;
+                ) RETURNING assigned_candidates_cnt, recruiter.name as recruiter_name;
             `, [seekerIds, jobId]);
-            assigned_candidates_cnt = assigned_candidates_cnt.rows[0].assigned_candidates_cnt;
+            let {assigned_candidates_count , recruiter_name} = assigned_candidates_cnt.rows[0];
 
             await client.query(`
                 UPDATE candidates
@@ -370,8 +370,8 @@ class CandidateModel {
                 WHERE seeker_id = ANY($1) AND job_id = $2;
             `, [seekerIds, jobId]);
 
-            await client.query('COMMIT;');
-            return {assigned_candidates_cnt: assigned_candidates_cnt, seekerIds: seekerIds};
+            
+            return {assigned_candidates_cnt: assigned_candidates_count, recruiter_name: recruiter_name, seekerIds: seekerIds, client: client};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
