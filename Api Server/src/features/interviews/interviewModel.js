@@ -66,6 +66,55 @@ class interview {
             throw err;
         }
     }
+
+    static async modifyInterviewDate(jobId, seekedId, timestamp, client) {
+        try {
+            const query = `
+                UPDATE candidates
+                SET phase_deadline = $1, last_status_update = $2
+                WHERE job_id = $3 AND seeker_id = $4;
+            `;
+            await client.query(query, [timestamp, new Date(), jobId, seekedId]);
+
+            return;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    static async getRecruiterNameAndCompanyId(recruiterId) {
+        let client = Pool.getReadPool();
+        try {
+            const query = `SELECT name, company_id FROM recruiter WHERE id = $1;`
+            const values = [recruiterId];
+            const { rows } = await client.query(query, values);
+            return rows[0];
+        } catch (err) {
+            throw err;
+        }
+    }
+
+
+
+    // for authentication
+
+    // to check if the authenticated recruiter has access to the interview or not
+    static async getRecruiterId(jobId, seekerId) {
+        let client = Pool.getReadPool();
+        const query = ` SELECT recruiter_id 
+                        FROM candidates
+                        WHERE job_id = $1 AND seeker_id = $2;
+                    `
+        const { rows, rowCount } = await client.query(query, [jobId, seekerId]);
+        if (rowCount == 0) {
+            const error = new Error('Job id and seeker id are incorrect');
+            error.msg = 'Invalid job id or seeker id';
+            error.status = 404;
+            throw error;
+        }
+     
+        return rows[0].recruiter_id;
+    }
 }
 
 module.exports = interview;

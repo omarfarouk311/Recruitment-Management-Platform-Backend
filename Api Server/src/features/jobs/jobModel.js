@@ -9,14 +9,13 @@ class jobModel {
 
 
     static async createJob(client, companyId, jobData) {
-        let readClient = await Pool.getReadPool().connect();
         let index = 1;
 
         try {
             const doesRecruitmentExist = `
             SELECT 1 FROM recruitment_process WHERE id = $1 AND company_id = $2;
         `;
-            const { rowCount } = await readClient.query(doesRecruitmentExist, [jobData.processId, companyId]);
+            const { rowCount } = await client.query(doesRecruitmentExist, [jobData.processId, companyId]);
 
             if (rowCount === 0) {
                 const err = new Error('Invalid recruitment process ID');
@@ -49,15 +48,13 @@ class jobModel {
         } catch (err) {
             console.error('Error in createJob:', err);
             throw err;
-        } finally {
-            readClient.release();
-        }
+        } 
     }
 
 
 
     static async getAllCompanyJobs(companyId, filters) {
-        let client = await Pool.getReadPool().connect();
+        let client = Pool.getReadPool();
         try {
             let index = 1;
             let query = `SELECT id, title, country, city, CURRENT_DATE - created_at as days_ago
@@ -86,7 +83,7 @@ class jobModel {
     }
 
     static async getJobDetailsById(jobId) {
-        let client = await Pool.getReadPool().connect();
+        let client = Pool.getReadPool();
         try {
             const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
             const { rowCount } = await client.query(isExistQuery, [jobId]);
@@ -188,7 +185,7 @@ class jobModel {
 
     
     static async getCompanyName(companyId) {
-        let client = await Pool.getReadPool().connect();
+        let client = Pool.getReadPool();
         try {
             const query = `SELECT name FROM company WHERE id = $1;`
             const values = [companyId];
@@ -201,7 +198,7 @@ class jobModel {
 
     // for Authorization //
     static async getCompanyIdOfJob(jobId) {
-        let client = await Pool.getReadPool().connect();
+        let client = Pool.getReadPool();
         try {
             const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
             const { rowCount } = await client.query(isExistQuery, [jobId]);

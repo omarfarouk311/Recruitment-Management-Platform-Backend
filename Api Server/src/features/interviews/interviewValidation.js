@@ -1,4 +1,4 @@
-const { query } = require('express-validator');
+const { query, param, body } = require('express-validator');
 
 
 const interviewQueryParametersValidation = [
@@ -43,6 +43,30 @@ const interviewQueryParametersValidation = [
         })
 ];
 
+
+const validateJobId = () => param('jobId')
+    .exists().withMessage('job id is required')
+    .isInt({ min: 1 }).withMessage('job id must be an integer greater than 0')
+    .toInt();
+
+const validateSeekerId = () => param('jobId')
+    .exists().withMessage('seeker id is required')
+    .isInt({ min: 1 }).withMessage('seeker id must be an integer greater than 0')
+    .toInt();
+
+const validateDate = () => body('timestamp')
+    .notEmpty().withMessage('Timestamp is required')
+    .custom((value) => {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            throw new Error('Invalid timestamp');
+        }
+        return true;
+    })
+
 module.exports = {
-    interviewQueryParametersValidation
+    interviewQueryParametersValidation,
+    validateJobId,
+    validateSeekerId,
+    validateDate
 }

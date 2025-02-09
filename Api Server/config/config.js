@@ -44,7 +44,8 @@ module.exports = {
         create_job: 11,
         close_job: 12,
         update_job: 13,
-        update_recruitment_process: 14
+        update_recruitment_process: 14,
+        modify_interview_date: 15
     },
     minNameLength: 1,
     maxOverviewLength: 500,
