@@ -16,7 +16,7 @@ module.exports = {
     job_embedding_topic: process.env.KAFKA_JOB_EMBEDDING_GENERATION,
     profile_embedding_topic: process.env.KAFKA_PROFILE_EMBEDDING_GENERATION,
     desc_order: -1,
-    asc_order: 1,
+    asc_order: 1, 
     candidate_status_pending: 1,
     candidate_status_accepted: 2,
     candidate_status_rejected: 3,
@@ -39,6 +39,8 @@ module.exports = {
         assign_candidate: 9,
         unassign_candidate: 10,
         create_job: 11,
-        close_job: 12
+        close_job: 12,
+        remove_template: 13,
+        update_template: 14
     }
 };

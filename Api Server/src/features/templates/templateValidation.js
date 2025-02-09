@@ -1,23 +1,22 @@
-const { body } = require('express-validator');
+const { body,param } = require('express-validator');
 
 // Helper function to validate placeholders
 function validatePlaceholders(value) {
     const placeholderPattern = /\{\{([^{}]+)\}\}/g; // Matches {{placeholder}}
     const placeholders = value.match(placeholderPattern);
 
-    if (!placeholders || placeholders.length === 0) {
-        throw new Error('Description must include at least one placeholder enclosed in {{}}');
-    }
 
     for (const placeholder of placeholders) {
         const content = placeholder.slice(2, -2).trim(); // Extract content inside {{ }}
-        if (!/^[a-zA-Z\s]+$/.test(content)) {
-            throw new Error(`Placeholder ${placeholder} must contain only alphabetical characters`);
+
+        if (!/^[a-zA-Z\s_]+$/.test(content)) {
+            throw new Error(`Placeholder {{${content}}} must contain only alphabetical characters and underscores`);
         }
     }
 
     return true;
 }
+
 
 
 const name = body('name')
@@ -33,11 +32,21 @@ const description = body('description')
     .withMessage('Description is required')
     .isString()
     .withMessage('Description must be a string')
-    .custom(validatePlaceholders);
+    .custom(validatePlaceholders,"PlaceHolder must be alphatbetic");
+
+
+// Validation for ID
+const id = param('id')
+    .exists({ checkFalsy: true })
+    .withMessage('ID is required')
+    .isInt({ gt: 0 })
+    .withMessage('ID must be a positive integer');
 
 exports.validateTemplate = [
     name,
     description
 ];
 
-exports.extractPlaceholders = extractPlaceholders;
+exports.validateId = [
+    id
+];

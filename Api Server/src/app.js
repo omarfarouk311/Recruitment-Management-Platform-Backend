@@ -11,12 +11,14 @@ const assessmentRoutes = require('./features/assessments/assessmentRoutes');
 const recruiterRoutes = require('./features/recruiters/recruiterRoutes');
 const jobRoutes = require('./features/jobs/jobRoutes')
 const { role } = require('../config/config')
+const templatesRouter = require('./features/templates/templateRoutes');
 const app = express();
+
 
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 1;
+    req.userId = 12;
     req.userRole = role.company;
     next()
 })
@@ -25,6 +27,7 @@ app.use(express.json());
 
 app.use('/assessments',assessmentRoutes)
 
+app.use("/templates",templatesRouter);
 
 app.use('/jobs', jobRoutes)
 app.use('/recruitment_processes',recruitment_processRoutes);
