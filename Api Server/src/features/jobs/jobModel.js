@@ -1,72 +1,59 @@
 const Pool = require('../../../config/db')
 const Kafka = require('../../common/kafka')
-const { asc_order, desc_order, cv_parsing_topic, logs_topic, create_job, action_types } = require('../../../config/config')
+const { asc_order, desc_order } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
+
 
 
 class jobModel {
 
 
-    static async produceToKafka(processObject, topicName) {
-        await Kafka.produce(processObject, topicName);
-        return;
-    }
-
-    static async createJob(companyId, jobData) {
-        let client = await Pool.getWritePool().connect();
+    static async createJob(client, companyId, jobData) {
         let readClient = await Pool.getReadPool().connect();
         let index = 1;
-      
+
         try {
-            const doesRecruitmentExist = `select 1 FROM recruitment_process WHERE id = $1 AND company_id = $2 ;`
+            const doesRecruitmentExist = `
+            SELECT 1 FROM recruitment_process WHERE id = $1 AND company_id = $2;
+        `;
             const { rowCount } = await readClient.query(doesRecruitmentExist, [jobData.processId, companyId]);
-            if (rowCount == 0) {
-                const err = new Error('invalid recruitment process id');
-                err.msg = 'Recruitment process id is not associated with the company';
+
+            if (rowCount === 0) {
+                const err = new Error('Invalid recruitment process ID');
+                err.msg = 'Recruitment process ID is not associated with the company';
                 err.status = 403;
                 throw err;
             }
+
             const date = new Date();
-            await client.query('BEGIN');
             const query = `
-            INSERT into job (title, description, created_at, recruitment_process_id, company_id, industry_id, country, city, remote, applied_cnt, closed)
+            INSERT INTO job (title, description, created_at, recruitment_process_id, company_id, industry_id, country, city, remote, applied_cnt, closed)
             VALUES ($${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++})
             RETURNING id;
-            `
-            const values = [jobData.jobTitle, jobData.jobDescription, date, jobData.processId, companyId, jobData.industryId, jobData.country, jobData.city, Boolean(jobData.remote), 0, Boolean(0)]
+        `;
+            const values = [
+                jobData.jobTitle, jobData.jobDescription, date, jobData.processId,
+                companyId, jobData.industryId, jobData.country, jobData.city,
+                Boolean(jobData.remote), 0, Boolean(0)
+            ];
             const { rows } = await client.query(query, values);
             const jobId = rows[0].id;
-            index = 1;
-            for (let i = 0; i < jobData.skills.length; i++) {
-                const query2 = `INSERT INTO job_skill (job_id, skill_id, importance) 
-                                VALUES ($${index}, $${index + 1}, $${index + 2})`; 
-                const values2 = [jobId, jobData.skills[i].skillId, jobData.skills[i].importance];
+
+            for (const skill of jobData.skills) {
+                const query2 = `INSERT INTO job_skill (job_id, skill_id, importance) VALUES ($1, $2, $3)`;
+                const values2 = [jobId, skill.skillId, skill.importance];
                 await client.query(query2, values2);
             }
-            const query3 = `SELECT name FROM company WHERE id = $1`;
-            const result = await client.query(query3, [companyId]);
-            const companyName = result.rows[0].name;
-            const processObject = {
-                id: uuid(),
-                performed_by: companyName,
-                company_id: companyId,
-                extra_data: null,
-                action_type: action_types.create_job
-            }
-            await this.produceToKafka({ jobId }, cv_parsing_topic)
-            await this.produceToKafka(processObject, logs_topic)
-            await client.query('COMMIT');
-            console.log('Ack from kafka')
-            return { message: 'Job added successfully' };
-            
+
+            return { message: 'Job added successfully', jobId };
         } catch (err) {
-            await client.query('ROLLBACK');
-            console.log('Error in createJob');
-            throw err;            
+            console.error('Error in createJob:', err);
+            throw err;
         } finally {
-            client.release()
+            readClient.release();
         }
     }
+
 
 
     static async getAllCompanyJobs(companyId, filters) {
@@ -138,89 +125,79 @@ class jobModel {
         }
     }
 
-    static async deleteJobById(companyId, jobId) {
-        let client = await Pool.getReadPool().connect();
+    static async deleteJobById(client, companyId, jobId) {
         try {
-            client = await Pool.getWritePool().connect();
-            const query = `DELETE FROM job WHERE id = $1;`
-            const values = [jobId];
-            await client.query(query, values);
-            const query2 = `SELECT name FROM company WHERE id = $1`;
-            const result = await client.query(query2, [companyId]);
-            const companyName = result.rows[0].name;
-            const processObject = {
-                id: uuid(),
-                performed_by: companyName,
-                company_id: companyId,
-                extra_data: null,
-                action_type: action_types.close_job
-            }
-            await this.produceToKafka(processObject, logs_topic)
-            console.log('Ack from kafka')
-            return { message: 'Job deleted successfully' };
+            const query = `DELETE FROM job WHERE id = $1;`;
+            await client.query(query, [jobId]);
+            return;
         } catch (err) {
-            console.log('Error in deleteJobById')
+            console.error('Error in deleteJobById:', err);
             throw err;
         }
     }
 
-    static async updateJobById(companyId, jobId, jobData) {
-        let client = await Pool.getWritePool().connect();
-        let clientRead = await Pool.getReadPool().connect();
+
+    static async updateJobById(client, companyId, jobId, jobData) {
         try {
-            const doesRecruitmentExist = `select 1 FROM recruitment_process WHERE id = $1 AND company_id = $2 ;`
-            const { rowCount } = await clientRead.query(doesRecruitmentExist, [jobData.processId, companyId]);
-            if (rowCount == 0) {
-                const err = new Error('invalid recruitment process id');
-                err.msg = 'Recruitment process id is not associated with the company';
+            const date = new Date();
+            let index = 1;
+
+            // Check if recruitment process exists
+            const doesRecruitmentExist = `SELECT 1 FROM recruitment_process WHERE id = $1 AND company_id = $2;`;
+            const { rowCount } = await client.query(doesRecruitmentExist, [jobData.processId, companyId]);
+            if (rowCount === 0) {
+                const err = new Error('Invalid recruitment process ID');
+                err.msg = 'Recruitment process ID is not associated with the company';
                 err.status = 403;
                 throw err;
             }
-            await client.query('BEGIN');
-            const date = new Date();
-            let index = 1;
+
+            // Update job details
             const query = `
-                            UPDATE job SET title = $${index++}, description = $${index++}, created_at = $${index++}, recruitment_process_id = $${index++}, company_id = $${index++}, industry_id = $${index++}, country = $${index++}, city = $${index++}, remote = $${index++}, applied_cnt = $${index++}, closed = $${index++}
-                            WHERE id = $${index++};
-                        `
+                        UPDATE job SET title = $${index++}, description = $${index++}, created_at = $${index++}, 
+                          recruitment_process_id = $${index++}, company_id = $${index++}, industry_id = $${index++}, 
+                          country = $${index++}, city = $${index++}, remote = $${index++}, applied_cnt = $${index++}, 
+                          closed = $${index++}
+                        WHERE id = $${index++};
+        `;
             const values = [
-                jobData.jobTitle, jobData.jobDescription, date, jobData.processId, companyId, jobData.industryId, jobData.country, jobData.city, Boolean(jobData.remote), 0, Boolean(0), jobId
-            ]
+                jobData.jobTitle, jobData.jobDescription, date, jobData.processId, companyId, jobData.industryId,
+                jobData.country, jobData.city, Boolean(jobData.remote), 0, Boolean(0), jobId
+            ];
             await client.query(query, values);
-            const query2 = `DELETE FROM job_skill WHERE job_id = $1;`
-            const values2 = [jobId];
-            await client.query(query2, values2);
+
+            // Delete old job skills
+            await client.query(`DELETE FROM job_skill WHERE job_id = $1;`, [jobId]);
+
+            // Insert new job skills
             index = 1;
             for (let i = 0; i < jobData.skills.length; i++) {
                 const query3 = `INSERT INTO job_skill (job_id, skill_id, importance) 
-                                VALUES ($${index}, $${index + 1}, $${index + 2})`;
+                            VALUES ($${index}, $${index + 1}, $${index + 2})`;
                 const values3 = [jobId, jobData.skills[i].skillId, jobData.skills[i].importance];
                 await client.query(query3, values3);
             }
-         
-            const query4 = `SELECT name FROM company WHERE id = $1`;
-            const result = await client.query(query4, [companyId]);
-            const companyName = result.rows[0].name;
-            const processObject = {
-                id: uuid(),
-                performed_by: companyName,
-                company_id: companyId,
-                extra_data: null,
-                action_type: action_types.update_job
-            }
-            await this.produceToKafka({ jobId }, cv_parsing_topic)
-            await this.produceToKafka(processObject, logs_topic)
-            await client.query('COMMIT');
-            console.log('Ack from kafka')
-            return { message: 'Job updated successfully' };
+
+            return;
         } catch (err) {
-            client.query("ROLLBACK");
+            console.error('Error in updateJobById:', err);
             throw err;
-        } finally {
-            client.release();
         }
     }
 
+
+    
+    static async getCompanyName(companyId) {
+        let client = await Pool.getReadPool().connect();
+        try {
+            const query = `SELECT name FROM company WHERE id = $1;`
+            const values = [companyId];
+            const { rows } = await client.query(query, values);
+            return rows[0].name;
+        } catch (err) {
+            throw err;
+        }
+    }
 
     // for Authorization //
     static async getCompanyIdOfJob(jobId) {
