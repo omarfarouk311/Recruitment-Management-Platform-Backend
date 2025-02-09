@@ -71,3 +71,38 @@ module.exports.getUniquetDepartmentsController=async(req,res,next)=>{
         next(err)
     }
 }
+
+module.exports.getJobOfferSentController=async(req,res,next)=>{
+    try{
+        let recruiterId=req.userId;
+        let jobTitle=req.query.jobTitle;
+        let sorted=req.query.sorted;
+        let page=req.query.page
+        let limit=config.pagination_limit
+        let result=await recruiterService.getJobOfferSentService(recruiterId,jobTitle,sorted,page,limit)
+
+        res.status(200).json({
+            success:true,
+            jobOffers:result
+        })
+
+
+    }catch(err){
+        console.log("err in getJobOfferSentController")
+        next(err)
+    }
+}
+
+module.exports.getJobTitleList=async(req,res,next)=>{
+    try{
+        let recruiterId=req.userId;
+        let result=await recruiterService.getJobTitleListService(recruiterId)
+        res.status(200).json({
+            success:true,
+            jobTitles:result
+        })
+    }catch(err){
+        console.log("err in getJobTitleList")
+        next(err)
+    }
+}

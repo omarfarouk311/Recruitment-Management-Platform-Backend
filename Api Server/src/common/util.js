@@ -20,3 +20,4 @@ exports.handleValidationErrors = (req, res, next) => {
 
     next();
 };
+
