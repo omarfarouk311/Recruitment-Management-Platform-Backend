@@ -106,3 +106,35 @@ module.exports.getJobTitleList=async(req,res,next)=>{
         next(err)
     }
 }
+
+module.exports.getRecruiterDataController=async(req,res,next)=>{
+    try{
+
+        let recruiteId=req.userId
+        let result=await recruiterService.getRecruiterDataService(recruiteId);
+      
+        res.status(200).json({
+            success:true,
+            recruiterData:result
+        })
+
+    }catch(err){
+        console.log("err in getRecruiterDataController")
+        next(err)
+    }
+}
+
+module.exports.getProfilePicController=async(req,res,next)=>{
+    try{
+        let recruiterId=req.userId
+        let recruiterRole=req.userRole
+        let result=await recruiterService.getProfilePicService(recruiterId,recruiterRole)
+        res.status(200).json({
+            success:true,
+            profilePic:result
+        })
+    }catch(err){
+        console.log("err in getProfilePicController")
+        next(err)
+    }
+}

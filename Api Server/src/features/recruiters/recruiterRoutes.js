@@ -40,4 +40,10 @@ router.route('/assigned-Candidate-JobTitles')  // get list of the jobs the recru
         .get(authorizeRecruiter,
              recruiterController.getJobTitleList)
 
+router.route('/profile-data')
+        .get(recruiterController.getRecruiterDataController)
+router.route('/profile-pic')
+        .get(authorizeRecruiter
+             ,recruiterController.getProfilePicController)
+
 module.exports=router

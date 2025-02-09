@@ -1,4 +1,6 @@
 const recruiterModel=require('./recruiterModel')
+const{getPhotoService}=require('../../common/util')
+const{imagesBucketName}=require('../../../config/config')
 
 
 module.exports.getRecruitersService=async(companyId,recruiter,department,sorted,page,limit)=>{
@@ -27,4 +29,14 @@ module.exports.getJobOfferSentService=async(recruiterId,jobTitle,sorted,page,lim
 
 module.exports.getJobTitleListService=async(recruiterId)=>{
     return await recruiterModel.getJobTitleList(recruiterId)
+}
+
+module.exports.getRecruiterDataService=async(recruiterId)=>{
+    return await recruiterModel.getRecruiterData(recruiterId)
+}
+
+module.exports.getProfilePicService=async(recruiterId,recruiterRole)=>{
+    let bucketName=imagesBucketName;
+    let objectName=`${recruiterRole}${recruiterId}`
+    return await getPhotoService(bucketName,objectName)
 }

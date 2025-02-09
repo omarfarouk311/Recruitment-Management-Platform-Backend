@@ -264,6 +264,32 @@ class RecruiterModel {
             throw err;
         }
     }
+    static async getRecruiterData(recruiteId){
+        let replica_DB=replicaPool.getReadPool()
+        try{
+            let query=
+            `
+            SELECT t1.name as recruiterName,Company.name as companyName,Company_Location.city as companyCity,
+            Company_Location.country as companyCountry,t1.department as recruiterDepartment,Users.has_image
+            FROM(
+            SELECT id,company_id,name,department
+            FROM Recruiter
+            WHERE id=$1) as t1
+            JOIN Company ON Company.id=t1.company_id
+            JOIN Company_Location ON Company.id=Company_Location.company_id
+            JOIN Users ON Users.id=t1.id
+            `
+
+            let value=[recruiteId]
+            let queryResult=await replica_DB.query(query,value)
+           
+            return queryResult.rows[0];
+
+        }catch(err){
+            console.log('err in getRecruiterData model',err.message)
+            throw err;
+        }
+    }
 }
 
    
