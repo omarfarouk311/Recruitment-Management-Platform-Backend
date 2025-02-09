@@ -23,11 +23,8 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-<<<<<<< HEAD
   has_image BOOLEAN NOT NULL
-=======
   department text, --still want to index it
->>>>>>> features/recruiters
 );
 
 CREATE TABLE Company (
@@ -37,8 +34,7 @@ CREATE TABLE Company (
   founded_in SMALLINT NOT NULL,
   size int NOT NULL,
   rating real NOT NULL,
-  name TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  name TEXT NOT NULL
 );
 
 CREATE TABLE Company_Industry (
@@ -63,7 +59,7 @@ CREATE TABLE Job_Skill (
 
 CREATE TABLE Skills (
   id serial PRIMARY KEY,
-  name TEXT NOT NULL
+  name TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE Education (
@@ -275,7 +271,7 @@ CREATE TABLE Action (
 );
 
 CREATE TABLE Logs (
-  id bytea PRIMARY KEY,
+  id uuid PRIMARY KEY,
   performed_by text NOT NULL,
   company_id int NOT NULL,
   created_at timestamp NOT NULL,

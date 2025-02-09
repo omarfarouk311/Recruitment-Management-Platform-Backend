@@ -168,7 +168,7 @@ class CandidateModel {
                 WHERE seeker_id = ANY($2) AND job_id = $3 AND recruiter_id IS NULL
                 RETURNING seeker_id;`;
             const params = [recruiterId, seekerIds, jobId];
-            let updated_candidates = (await client.query(query, params)).rowCount;
+            let updated_candidates = (await client.query(query, params));
             
             let assigned_candidates_cnt = (await client.query(`
                 SELECT assigned_candidates_cnt
@@ -176,7 +176,7 @@ class CandidateModel {
                 WHERE id = $1
                 FOR UPDATE;    
             `, [recruiterId])
-            ).rows[0].assigned_candidates_cnt + updated_candidates;
+            ).rows[0].assigned_candidates_cnt + updated_candidates.rowCount;
             
             await client.query(`
                 UPDATE recruiter 
@@ -184,7 +184,7 @@ class CandidateModel {
                 WHERE id = $2;`, [assigned_candidates_cnt, recruiterId]);
 
             await client.query('COMMIT;');
-            return {assigned_candidates_cnt: assigned_candidates_cnt};
+            return {assigned_candidates_cnt: assigned_candidates_cnt, updated_candidates: updated_candidates.rows};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
@@ -226,14 +226,14 @@ class CandidateModel {
                         inLastPhase.push(result.seeker_id);
                         return undefined;
                     }
-                    return {seeker_id: result.seeker_id, next_phase_name: result.next_phase_name};
+                    return {seekerId: result.seeker_id, nextPhaseName: result.next_phase_name, phase_num: result.phase_num};
                 });
                 updatedCandidates = updatedCandidates.filter((value) => value != undefined);
 
                 if(updatedCandidates.length > 0) {
                     let deadline = new Date();
                     deadline.setDate(deadline.getDate() + results[0].deadline);
-                    let validSeekerIds = updatedCandidates.map((value) => value.seeker_id);
+                    let validSeekerIds = updatedCandidates.map((value) => value.seekerId);
                     await client.query(`
                         UPDATE recruiter
                         SET assigned_candidates_cnt = assigned_candidates_cnt - (
@@ -309,13 +309,14 @@ class CandidateModel {
 
 
                 // delete candidates from candidates table
-                await client.query(`
+                let res = await client.query(`
                     DELETE FROM candidates
-                    WHERE seeker_id = ANY($1) AND job_id = $2;
+                    WHERE seeker_id = ANY($1) AND job_id = $2
+                    RETURNING seeker_id, phase_num, 0 as decision;
                 `, [seekerIds, jobId]);
 
                 await client.query('COMMIT;');
-
+                return res;
             } catch (error) {
                 await client.query('ROLLBACK;');
                 throw error;
@@ -330,15 +331,16 @@ class CandidateModel {
         try {
             await client.query('BEGIN;');
             let result = await client.query(`
-                SELECT recruiter_id
+                SELECT recruiter_id, seeker_id
                 FROM candidates
-                WHERE seeker_id = ANY($1) AND job_id = $2
+                WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id IS NOT NULL
                 FOR UPDATE;    
             `, [seekerIds, jobId]);
-
-            let recruiters = result.rows.map((value) => value.recruiter_id);
             
-            if (!recruiters.length) {
+            let recruiters = result.rows.map((value) => value.recruiter_id);
+            seekerIds = result.rows.map((value) => value.seeker_id);
+            
+            if (!result.rows.length) {
                 let error = new Error();
                 error.msg = 'Candidates are already not assigned';
                 error.status = 400;
@@ -358,8 +360,9 @@ class CandidateModel {
                     SELECT COUNT(*) 
                     FROM candidates 
                     WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
-                )
+                ) RETURNING assigned_candidates_cnt;
             `, [seekerIds, jobId]);
+            assigned_candidates_cnt = assigned_candidates_cnt.rows[0].assigned_candidates_cnt;
 
             await client.query(`
                 UPDATE candidates
@@ -368,13 +371,46 @@ class CandidateModel {
             `, [seekerIds, jobId]);
 
             await client.query('COMMIT;');
-            return {assigned_candidates_cnt: assigned_candidates_cnt};
+            return {assigned_candidates_cnt: assigned_candidates_cnt, seekerIds: seekerIds};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
         } finally {
             client.release();
         }
+    }
+
+    static async getCompanyName(companyId) {
+        let results = await ReadPool().query(`
+            SELECT name
+            FROM company
+            WHERE id = $1;
+        `, [companyId]);
+
+        return results.rows[0].name;
+    }
+
+    static async getRecruiterName(recruiterId) {
+        let results = await ReadPool().query(`
+            SELECT name
+            FROM recruiter
+            WHERE id = $1;
+        `, [recruiterId]);
+
+        return results.rows[0].name;
+    }
+
+    static async getRecruitementPhases(jobId) {
+        let results = await ReadPool().query(`
+            SELECT JSON_OBJECT_AGG(
+                    phase_num, rp.name
+            ) AS phases
+            FROM job
+            JOIN recruitment_phase rp ON rp.recruitment_process_id = job.recruitment_process_id
+            WHERE job.id = $1
+        `, [jobId]);
+        
+        return results.rows[0].phases;
     }
 }
 

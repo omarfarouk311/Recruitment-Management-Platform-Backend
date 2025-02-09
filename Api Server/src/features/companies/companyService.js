@@ -26,3 +26,7 @@ exports.getCompanyJobs = async (companyId, filters, userRole) => {
     else result = await companyModel.getCompanyJobs(companyId, filters, userRole);
     return result;
 };
+
+exports.updateCompanyData = async (companyId, data) => {
+    await companyModel.updateCompanyData(companyId, data);
+};
