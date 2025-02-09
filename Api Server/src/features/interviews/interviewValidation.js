@@ -49,7 +49,7 @@ const validateJobId = () => param('jobId')
     .isInt({ min: 1 }).withMessage('job id must be an integer greater than 0')
     .toInt();
 
-const validateSeekerId = () => param('jobId')
+const validateSeekerId = () => param('seekerId')
     .exists().withMessage('seeker id is required')
     .isInt({ min: 1 }).withMessage('seeker id must be an integer greater than 0')
     .toInt();

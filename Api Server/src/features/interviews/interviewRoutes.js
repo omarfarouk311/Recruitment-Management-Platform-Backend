@@ -4,11 +4,17 @@ const { recruiterAndCompanyInterviewsAuth, dateInterviewModificationAuth } = req
 const { interviewQueryParametersValidation, validateJobId, validateSeekerId, validateDate } = require('./interviewValidation');
 const { handleValidationErrors, validatePage } = require('../../common/util');
 const { getRecruiterInterviewsData, modifyInterviewDate } = require('./interviewController')
+const { notAllowed } = require('../../common/errorMiddleware');
 
 
-router.get('/', interviewQueryParametersValidation, validatePage(), handleValidationErrors, recruiterAndCompanyInterviewsAuth, getRecruiterInterviewsData)
+router.route('/')
+    .get(interviewQueryParametersValidation, validatePage(), handleValidationErrors, recruiterAndCompanyInterviewsAuth, getRecruiterInterviewsData)
+    .all(notAllowed)
 
 // modify date
-router.put('/:jobId/:seekerId', validateJobId(), validateSeekerId(), validateDate(), handleValidationErrors, dateInterviewModificationAuth, modifyInterviewDate)
+router.route('/:jobId/:seekerId')
+    .put(validateJobId(), validateSeekerId(), validateDate(), handleValidationErrors, dateInterviewModificationAuth, modifyInterviewDate)
+    .all(notAllowed)
+
 
 module.exports = router;
