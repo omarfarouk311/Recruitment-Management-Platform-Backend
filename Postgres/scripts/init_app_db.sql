@@ -23,8 +23,13 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
+<<<<<<< HEAD
+  has_image BOOLEAN NOT NULL
+  department text, --still want to index it
+=======
   has_image BOOLEAN NOT NULL,
   department text --still want to index it
+>>>>>>> ebef55b8f53990734427336c444c688d5f339e68
 );
 
 CREATE TABLE Company (
@@ -158,7 +163,7 @@ CREATE TABLE Job_Offer_Template (
   name Text NOT NULL,
   description Text NOT NULL,
   company_id int NOT NULL,
-  upadated_at date NOT NULL,
+  updated_at date NOT NULL,
   placeholders TEXT[] NOT NULL
 );
 
