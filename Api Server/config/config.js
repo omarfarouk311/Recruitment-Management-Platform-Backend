@@ -15,6 +15,9 @@ module.exports = {
     cv_embedding: process.env.KAFKA_CV_EMBEDDING_GENERATION,
     job_embedding_topic: process.env.KAFKA_JOB_EMBEDDING_GENERATION,
     profile_embedding_topic: process.env.KAFKA_PROFILE_EMBEDDING_GENERATION,
+    brokers: [process.env.KAFKA_BROKER1, process.env.KAFKA_BROKER2],
+    minio_user: process.env.MINIO_USER,
+    minio_password: process.env.MINIO_PASSWORD,
     desc_order: -1,
     asc_order: 1, 
     candidate_status_pending: 1,
@@ -39,8 +42,29 @@ module.exports = {
         assign_candidate: 9,
         unassign_candidate: 10,
         create_job: 11,
+<<<<<<< HEAD
         close_job: 12,
         remove_template: 13,
         update_template: 14
     }
+=======
+        close_job: 12
+    },
+    minNameLength: 1,
+    maxOverviewLength: 500,
+    minOverviewLength: 1,
+    minYear: 1800,
+    minCompanySize: 1,
+    maxCompanySize: 100000000,
+    minIndustryLength: 1,
+    maxIndustryLength: 50,
+    minLocationLength: 1,
+    maxLocationLength: 50,
+    minIndustriesArrayLength: 1,
+    maxIndustriesArrayLength: 300,
+    minLocationsArrayLength: 1,
+    maxLocationsArrayLength: 300,
+    imagesBucketName: 'images-bucket',
+    cvsBucketName: 'cvs-bucket'
+>>>>>>> ebef55b8f53990734427336c444c688d5f339e68
 };

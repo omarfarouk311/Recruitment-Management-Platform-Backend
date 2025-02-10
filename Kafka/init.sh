@@ -17,6 +17,7 @@ topics=(
 "job_embedding_generation"
 "profile_embedding_generation"
 "logs"
+"emails"
 )
 
 # Function to check if a topic exists

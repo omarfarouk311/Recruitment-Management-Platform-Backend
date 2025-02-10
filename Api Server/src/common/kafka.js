@@ -1,24 +1,17 @@
 const producer = require('../../config/kafka');
-const { logs_topic } = require('../../config/config');
 
 exports.produce = async (data, topicName) => {
-    const createdAt = new Date();
-    let sendData = data;
-    if (topicName == logs_topic) {
-        sendData = { ...data, createdAt };
-    }
-    try {
+    if(!Array.isArray(data)) {
         await producer.send({
             topic: topicName,
             messages: [
-                {
-                   value: JSON.stringify({ sendData })
-                }
-            ],
+                { value: JSON.stringify(data) }
+            ]
         });
-    }
-    catch (err) {
-        console.error("error in producing message in logs topic\n" + err);
-        throw err;
+    } else {
+        await producer.send({
+            topic: topicName,
+            messages: data.map(d => ({ value: JSON.stringify(d) }))
+        });
     }
 };

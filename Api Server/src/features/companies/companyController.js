@@ -1,4 +1,6 @@
 const companyService = require('./companyService');
+const { getPhotoService } = require('../../common/util');
+const { imagesBucketName } = require('../../../config/config');
 
 function passError(err, next) {
     err.status = 500;
@@ -11,10 +13,12 @@ exports.getCompanyData = async (req, res, next) => {
 
     try {
         const result = await companyService.getCompanyData(companyId);
-        if (!result.length) return res.status(404).json({ message: 'Company not found' });
-        return res.status(200).json(result);
+        return res.status(200).json(result[0]);
     }
     catch (err) {
+        if (err.msg) {
+            return next(err);
+        }
         passError(err, next);
     }
 };
@@ -46,13 +50,58 @@ exports.getCompanyIndustries = async (req, res, next) => {
 exports.getCompanyJobs = async (req, res, next) => {
     const { companyId } = req.params;
     const filters = req.query;
-    const { userRole } = req
+    const { userRole } = req;
 
     try {
         const result = await companyService.getCompanyJobs(companyId, filters, userRole);
         return res.status(200).json(result);
     }
     catch (err) {
+        passError(err, next);
+    }
+};
+
+exports.updateCompanyData = async (req, res, next) => {
+    const { userId: companyId, body: data } = req;
+
+    try {
+        await companyService.updateCompanyData(companyId, data);
+        res.status(204).send();
+    }
+    catch (err) {
+        if (err.msg) {
+            return next(err);
+        }
+        passError(err, next);
+    }
+};
+
+exports.getCompanyPhoto = async (req, res, next) => {
+    const { companyId } = req.params;
+
+    try {
+        const {
+            metaData: { 'content-type': contentType, filename: fileName },
+            size,
+            stream
+        } = await getPhotoService(imagesBucketName, `company${companyId}`);
+
+        res.header({
+            'Content-Type': contentType,
+            'Content-Length': size,
+            'Content-Disposition': `inline; filename = ${fileName}`
+        });
+
+        stream.on('error', (err) => passError(err, next));
+
+        stream.pipe(res);
+    }
+    catch (err) {
+        if (err.code === 'NotFound') {
+            err.msg = 'Company photo not found';
+            err.status = 404;
+            return next(err);
+        }
         passError(err, next);
     }
 };
