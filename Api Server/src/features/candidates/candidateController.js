@@ -57,7 +57,8 @@ exports.MakeDecisionToCandidates = async (req, res, next) => {
             req.body.candidates,
             req.body.jobId, 
             req.body.decision,
-            req.userId
+            req.userId,
+            req.userRole
         );
         res.status(200).json(result || { message: 'Decision made successfully' });
     } catch (error) {
