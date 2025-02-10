@@ -42,8 +42,12 @@ module.exports = {
         assign_candidate: 9,
         unassign_candidate: 10,
         create_job: 11,
-        close_job: 12
+        close_job: 12,
+        remove_template: 13,
+        update_template: 14
     },
+        
+   
     minNameLength: 1,
     maxOverviewLength: 500,
     minOverviewLength: 1,

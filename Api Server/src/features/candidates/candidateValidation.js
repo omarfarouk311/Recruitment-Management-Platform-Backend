@@ -1,4 +1,4 @@
-const { check, param, body, query } = require("express-validator");
+const { check, body, query } = require("express-validator");
 const constants = require("../../../config/config");
 const {validatePage} = require('../../common/util');
 
@@ -58,9 +58,11 @@ const candidates = body("candidates", "Invalid candidates property")
         return value.every((candidate) => typeof candidate === "number");
     }).withMessage("candidates must be an array of numbers");
 
-const recruiterId = body("recruiterId", "Invalid recruiterId").isInt({ min: 1 });
+const recruiterId = check("recruiterId", "Invalid recruiterId").isInt({ min: 1 });
 
-const jobId = body("jobId", "jobId must be positive integer.").isInt({ min: 1 }).toInt();
+const jobId = check("jobId", "jobId must be positive integer.").isInt({ min: 1 }).toInt();
+
+const jobIdQuery = query("jobId", "jobId must be positive integer.").optional().isInt({ min: 1 }).toInt();
 
 
 exports.assignCandidatesToRecruiterValidator = [
@@ -80,4 +82,8 @@ exports.makeDecisionToCandidatesValidator = [
     candidates,
     decision,
     jobId
+];
+
+exports.getCandidateLocationsValidator = [
+    jobIdQuery
 ];
