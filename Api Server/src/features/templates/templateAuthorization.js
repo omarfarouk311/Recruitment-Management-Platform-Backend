@@ -56,5 +56,13 @@ exports.authGetAllTemplates = (req, res, next) => {
     if (req.userRole !== 'company') {
         return res.status(403).json({ message: 'Unauthorized Access!' });
     }
+    
+    else if(req.userRole == role.recruiter) {
+        if (!TemplateAuthorization.belongsToCompany(req.params.id,req.userId)){
+            return res.status(403).json({ message: 'Unauthorized Access!' });
+        }
+    }
+
+    else{ return res.status(403).json({ message: 'Unauthorized Access!' }); }
     next();
-}
+};

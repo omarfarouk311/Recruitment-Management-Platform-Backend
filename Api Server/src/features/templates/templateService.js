@@ -1,5 +1,5 @@
-const { produce} = require("../../common/kafka")
 const { Templates } = require('./templateModel');
+
 
 
 // Helper function to extract placeholders
@@ -28,43 +28,23 @@ exports.createTemplate = async (templateData,companyId) => {
   
   const placeholders = extractPlaceholders(templateData.description);
   const res = await Templates.createTemplate(templateData,companyId,placeholders);
-  companyName = await getCompanyName(companyId); 
-  const logData = {
-    performed_by: companyName,
-    company_id: companyId,
-    created_at: new Date(),
-    extra_data: JSON.stringify({ templateData, placeholders }),
-    action_type: 'create_template',
-};
-await produce(logData, logs_topic);
   return res;
+
 };
 
 exports.updateTemplate = async (id, updatedData,companyId) => {
+
   const placeholders = extractPlaceholders(updatedData.description);
-  const res = await Templates.updateTemplate(id, updatedData,placeholders);
-  companyName = await getCompanyName(companyId); 
-  const logData = {
-    performed_by: companyName,
-    company_id: companyId,
-    created_at: new Date(),
-    extra_data: JSON.stringify({ id, updatedData, placeholders }),
-    action_type: 'update_template',
+  const res = await Templates.updateTemplate(id, updatedData,placeholders,companyId);
+  return res;
+
 };
-await produce(logData, logs_topic);
-  return res; 
-};
+ 
+  
 
 exports.deleteTemplate = async (id,companyId) => {
-  const res = await Templates.deleteTemplate(id); 
-  companyName = await getCompanyName(companyId); 
-  const logData = {
-    performed_by: companyId,
-    company_id: companyId,
-    created_at: new Date(),
-    extra_data: JSON.stringify({ id }),
-    action_type: 'remove_template',
-};
-await produce(logData, logs_topic);
+
+  const res = await Templates.deleteTemplate(id,companyId); 
   return res;
+
 };
