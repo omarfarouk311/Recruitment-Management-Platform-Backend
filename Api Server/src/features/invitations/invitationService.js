@@ -1,6 +1,6 @@
 const invitationModel = require('./invitationModel');
 
-exports.getInvitations = async (recruiterId, filters) => {
-    const result = await invitationModel.getInvitations(recruiterId, filters);
+exports.getInvitations = async (userId, userRole, filters) => {
+    const result = await invitationModel.getInvitations(userId, userRole, filters);
     return result;
 };

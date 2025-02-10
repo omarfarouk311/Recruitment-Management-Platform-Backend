@@ -1,6 +1,5 @@
 const { query } = require('express-validator');
 const { validatePage } = require('../../common/util');
-const config = require('../../../config/config');
 
 const validateSortByDate = () => query('sortByDate', "Invalid sort option, it must be 1 or -1")
     .optional()

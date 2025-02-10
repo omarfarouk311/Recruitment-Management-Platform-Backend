@@ -4,11 +4,13 @@ const { client } = require('../../config/MinIO');
 const { imagesBucketName, cvsBucketName } = require('../../config/config');
 
 exports.validatePage = () => query('page')
-    .trim()
+    .isString()
+    .withMessage('Invalid page number, it must be a positive number')
     .notEmpty()
     .withMessage('page parameter must be passed as a query parameter')
+    .trim()
     .isInt({ min: 1, allow_leading_zeroes: false })
-    .withMessage("Invalid page number, it must be a positive number")
+    .withMessage('Invalid page number, it must be a positive number')
     .toInt();
 
 exports.handleValidationErrors = (req, res, next) => {

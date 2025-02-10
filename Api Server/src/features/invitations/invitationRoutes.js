@@ -1,14 +1,14 @@
 const { Router } = require('express');
 const invitationController = require('./invitationController');
 const invitationValidation = require('./invitationValidation');
-const { authorizeGetInvitations } = require('./invitationAuthorization')
+const invitationAuthorization = require('./invitationAuthorization')
 const { handleValidationErrors } = require('../../common/util');
 const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/')
     .get(
-        authorizeGetInvitations,
+        invitationAuthorization.authorizeGetInvitations,
         invitationValidation.validateGetInvitations,
         handleValidationErrors,
         invitationController.getInvitations
