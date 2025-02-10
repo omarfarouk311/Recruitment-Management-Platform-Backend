@@ -151,5 +151,13 @@ exports.getCandidateLocationsForRecruiter = async (recruiterId) => {
 };
 
 exports.getCandidateLocationsForJob = async (jobId) => {
+<<<<<<< Updated upstream
     return await CandidateQueryset.getCandidateLocationsForCompany(jobId);
+=======
+    return await CandidateQueryset.getCandidateLocationsForJob(jobId);
+};
+
+exports.getPhaseTypes = async () => {
+    return await CandidateQueryset.getPhaseTypes();
+>>>>>>> Stashed changes
 };

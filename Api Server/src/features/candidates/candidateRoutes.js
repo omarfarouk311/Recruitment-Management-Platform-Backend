@@ -51,6 +51,9 @@ router.get(
     candidateController.getCandidateLocations
 );
 
-
+router.get(
+    '/phase-types',
+    candidateController.getPhaseTypes
+);
 
 module.exports = router;

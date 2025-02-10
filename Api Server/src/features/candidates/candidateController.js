@@ -97,3 +97,12 @@ exports.getCandidateLocations = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getPhaseTypes = async (req, res, next) => {
+    try {
+        const phaseTypes = await candidateService.getPhaseTypes();
+        res.status(200).json(phaseTypes);
+    } catch (error) {
+        next(error);
+    }
+};
