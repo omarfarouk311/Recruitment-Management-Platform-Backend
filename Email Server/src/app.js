@@ -7,13 +7,18 @@ const mailjet = require('../config/mailjet');
 (async function () {
     const pool = getReadPool();
     await consumer.connect();
-    await consumer.subscribe({ topic: emails_topic, fromBeginning: true });
+    await consumer.subscribe({ topic: emails_topic, fromBeginning: false });
 
     await consumer.run({
         autoCommit: false,
         eachMessage: async ({ topic, partition, message }) => {
-            const {type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department} = JSON.parse(message.value);
+            let {type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department} = JSON.parse(message.value);
             try {
+                if (deadline) {
+                    deadline = new Date(deadline).toUTCString();
+                    console.log(deadline);
+                }
+
                 let email
                 let pool = getReadPool();
                 let jobTitle;
@@ -27,7 +32,7 @@ const mailjet = require('../config/mailjet');
                     jobTitle = jobTitle.rows[0].title;
                 }
 
-                console.log(companyId)
+                
                 if(companyId) {
                     var { name: companyName, email: companyEmail } = (await pool.query(`
                         SELECT name, email 
@@ -36,8 +41,6 @@ const mailjet = require('../config/mailjet');
                         WHERE users.id = $1`, [companyId]
                     )).rows[0];
                 }
-
-                console.log(companyName);
 
                 let recruiter;
                 if(recruiterId) {
@@ -68,7 +71,7 @@ const mailjet = require('../config/mailjet');
                             jobSeekerData.name, 
                             jobSeekerData.email, 
                             rejected, 
-                            deadline? (new Date(deadline)).toUTCString: undefined, 
+                            deadline? deadline: undefined, 
                             interview? interview: undefined, 
                             newPhaseName
                         )
@@ -109,16 +112,14 @@ const mailjet = require('../config/mailjet');
                     );
                 }
 
-
-
-
                 const result = await mailjet
                 .post('send', {version: 'v3.1'})
                 .request({
                     Messages: [email]
                 });
+                
 
-                if(result.response.status == 200) {
+                if(result.response.status == 200 || result.response.status == 400) {
                     await consumer.commitOffsets([{
                         topic,
                         partition,
@@ -127,7 +128,7 @@ const mailjet = require('../config/mailjet');
                 }
             }
             catch (err) {
-                console.error(err);
+                console.error("Error in email server", err);
             }
         }
     });

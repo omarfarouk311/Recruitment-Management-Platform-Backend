@@ -225,8 +225,10 @@ class CandidateModel {
                         inLastPhase.push(result.seeker_id);
                         return undefined;
                     }
+                    let deadline = new Date();
+                    deadline.setDate(deadline.getDate() + (result.deadline || 0));
                     return {
-                        deadline: result.deadline? (new Date()).setDate((new Date()).getDate() + result.deadline): undefined, 
+                        deadline: result.deadline? deadline.toISOString(): undefined, 
                         seekerId: result.seeker_id, 
                         nextPhaseName: result.next_phase_name, 
                         phase_num: result.phase_num, 
@@ -246,15 +248,14 @@ class CandidateModel {
                         )
                     `, [validSeekerIds, jobId]);
                     
-
                     let update_query = `
-                        UPDATE candidates
-                        SET phase = phase + 1, 
-                        phase_deadline = CASE seeker_id
-                            ${updatedCandidates.map(value => `WHEN ${value.seekerId} THEN ${value.deadline? value.deadline: `NULL`}::timestamp`).join(' ') + ' ELSE NULL::timestamp'}
+                    UPDATE candidates
+                    SET phase = phase + 1, 
+                    phase_deadline = CASE seeker_id
+                            ${updatedCandidates.map(value => `WHEN ${value.seekerId} THEN ${value.deadline? `TIMESTAMP '${value.deadline}'`: `NULL::timestamp`}`).join(' ') + ' ELSE NULL::timestamp'}
                         END, 
-                        recruiter_id = NULL
-                        WHERE seeker_id = ANY($1) AND job_id = $2;
+                    recruiter_id = NULL
+                    WHERE seeker_id = ANY($1) AND job_id = $2;
                     `;
                     
                     await client.query(update_query, [validSeekerIds, jobId]);
@@ -316,14 +317,14 @@ class CandidateModel {
 
 
                 // delete candidates from candidates table
-                let res = await client.query(`
+                let res = (await client.query(`
                     DELETE FROM candidates
                     WHERE seeker_id = ANY($1) AND job_id = $2
-                    RETURNING seeker_id, phase_num, 0 as decision;
-                `, [seekerIds, jobId]);
+                    RETURNING seeker_id as "seekerId", phase as phase_num, 0 as decision;
+                `, [seekerIds, jobId])).rows;
 
-                
-                return {res: res, client: client};
+                console.log(res);
+                return {updatedCandidates: res, client: client};
             } catch (error) {
                 await client.query('ROLLBACK;');
                 throw error;

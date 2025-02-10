@@ -74,7 +74,6 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
                 },
             }, 'logs'));
 
-            console.log(userRole == role.company? userId: performed_by.company_id)
             promises.push(produce(result.updatedCandidates.map((value) => {
                 return {
                     companyId: userRole == role.company? userId: performed_by.company_id,
@@ -95,7 +94,7 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
         delete result.client;
         delete result.decision;
         result.updatedCandidates = result.updatedCandidates.map((value) => {
-            delete value.phase_type
+            delete value.phase_type;
             delete value.phase_num;
             return value;
         });
