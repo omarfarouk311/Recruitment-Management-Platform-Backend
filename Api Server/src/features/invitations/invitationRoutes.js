@@ -13,6 +13,12 @@ router.route('/')
         handleValidationErrors,
         invitationController.getInvitations
     )
+    .post(
+        invitationAuthorization.authorizecreateInvitation,
+        invitationValidation.validateCreateInvitation,
+        handleValidationErrors,
+        invitationController.sendInvitation
+    )
     .all(notAllowed);
 
 module.exports = router;

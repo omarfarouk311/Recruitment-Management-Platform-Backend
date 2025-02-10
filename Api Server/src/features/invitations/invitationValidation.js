@@ -1,5 +1,6 @@
-const { query } = require('express-validator');
+const { query, body } = require('express-validator');
 const { validatePage } = require('../../common/util');
+const { minNameLength, maxNameLength } = require('../../../config/config');
 
 const validateSortByDate = () => query('sortByDate', "Invalid sort option, it must be 1 or -1")
     .optional()
@@ -29,4 +30,25 @@ const validateStatus = () => query('status')
         else return 0;
     });
 
+const validateEmail = () => body('recruiterEmail')
+    .isEmail()
+    .withMessage('invalid email format')
+    .isLength({ max: 50 })
+    .withMessage("Email length can't exceed 50")
+
+const validateDepartment = () => body('department')
+    .isString()
+    .withMessage('department must be a string')
+    .isLength({ min: minNameLength, max: maxNameLength })
+    .withMessage(`department length must be between ${minNameLength} and ${maxNameLength}`);
+
+const validateDeadline = () => body('deadline')
+    .isISO8601()
+    .withMessage('Invalid date format, it must be in ISO 8601 format')
+    .customSanitizer(isoString => new Date(isoString))
+    .custom(value => value > new Date())
+    .withMessage('deadline must be after the current time');
+
 exports.validateGetInvitations = [validatePage(), validateStatus(), validateSortByDeadline(), validateSortByDate()];
+
+exports.validateCreateInvitation = [validateEmail(), validateDepartment(), validateDeadline()];

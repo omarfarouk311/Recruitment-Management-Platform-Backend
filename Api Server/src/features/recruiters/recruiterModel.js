@@ -6,7 +6,7 @@ let {desc_order,asc_order}=require('../../../config/config')
 class RecruiterModel {
     
     constructor(id,company_id,name,assigned_candidates_cnt,department){
-        thid.id=id,
+        this.id=id,
         this.company_id=company_id
         this.name=name
         this.assigned_candidates_cnt=assigned_candidates_cnt
@@ -116,40 +116,6 @@ class RecruiterModel {
         }
 
 
-    }
-    static async sendInvitation(email,department,deadline,companyId){
-        const primary_DB=primaryPool.getWritePool()
-        try{
-
-            let currentDate=new Date()
-            let query=
-            `WITH usr as(
-             SELECT id as id
-             FROM Users
-             WHERE email=$1
-            )
-            
-            INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline)
-            VALUES ((SELECT COALESCE(id, NULL) FROM usr), $2, $3, $4, $5)
-            RETURNING recruiter_id
-            `
-            let recruiterValue=[email,companyId,department,currentDate,deadline]
-
-            let result=await primary_DB.query(query,recruiterValue)
-            if(result.rowCount==0){
-                let err=new Error();
-                err.msg="invitation has not sent successfully ,please try again"
-                err.status=500;
-                throw err;
-            }
-            
-           return true;
-
-        }catch(err){
-            console.log('err in sendInvitation model',err.message)
-            throw err;
-        }
-        
     }
     static async getRecruiterByEmail(email){
         const replica_DB=replicaPool.getReadPool()

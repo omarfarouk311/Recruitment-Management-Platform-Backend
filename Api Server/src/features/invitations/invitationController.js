@@ -12,3 +12,16 @@ exports.getInvitations = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.sendInvitation = async (req, res, next) => {
+    const { recruiterEmail, department, deadline } = req.body;
+    const { userId } = req;
+
+    try {
+        await invitationService.createInvitation(recruiterEmail, userId, department, deadline);
+        res.status(201).send();
+    }
+    catch (err) {
+        next(err);
+    }
+};

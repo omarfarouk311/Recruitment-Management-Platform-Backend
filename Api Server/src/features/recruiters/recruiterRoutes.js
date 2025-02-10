@@ -18,13 +18,6 @@ router.route('/:recruiterId')
                 handleValidationErrors,
                 authorizeCompanyRecruiter,
                 recruiterController.deleteRecruiterController)
-        
-
-router.route('/invitation')
-        .post(validateInvitationData,
-              handleValidationErrors,
-              authorizeInvitationData,
-              recruiterController.sendInvitationController)
 
 router.route('/departments')
         .get(recruiterController.getUniquetDepartmentsController)

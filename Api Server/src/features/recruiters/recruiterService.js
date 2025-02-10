@@ -13,10 +13,6 @@ module.exports.deleteRecruiterService=async(companyId,recruiterId)=>{
     return await recruiterModel.deleteRecruiter(companyId,recruiterId)
 }
 
-module.exports.sendInvitationService=async(email,department,deadline,companyId)=>{
-    return await recruiterModel.sendInvitation(email,department,deadline,companyId)
-}
-
 module.exports.getUniquetDepartmentsService=async(companyId)=>{
     return await recruiterModel.getUniqueDepartments(companyId)
 }

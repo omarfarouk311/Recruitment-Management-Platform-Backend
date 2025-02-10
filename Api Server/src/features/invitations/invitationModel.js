@@ -1,7 +1,16 @@
-const { getReadPool } = require('../../../config/db');
+const { getReadPool, getWritePool } = require('../../../config/db');
 const { role: { company, recruiter } } = require('../../../config/config');
 
 class Invitation {
+    constructor(recruiterEmail, companyId, department, createdAt, deadline, status) {
+        this.recruiterEmail = recruiterEmail;
+        this.companyId = companyId;
+        this.department = department;
+        this.createdAt = createdAt;
+        this.deadline = deadline;
+        this.status = status;
+    }
+
     static async getInvitations(userId, userRole, filters, limit = 10) {
         const pool = getReadPool();
         const values = [userId];
@@ -69,6 +78,36 @@ class Invitation {
         const { rows } = await pool.query(query, values);
         return rows;
     }
+
+    async create() {
+        try {
+            const pool = getWritePool();
+            const values = [this.recruiterEmail, this.companyId, this.department, this.createdAt, this.deadline, this.status];
+            const query =
+                `
+            INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline, status)
+            select id, $2, $3, $4, $5, $6
+            from users
+            where email = $1
+            `;
+
+            const { rowCount } = await pool.query(query, values)
+            if (!rowCount) {
+                let err = new Error('recruiter not found while sending an invitation to him');
+                err.msg = 'recruiter not found';
+                err.status = 404;
+                throw err;
+            }
+        }
+        catch (err) {
+            if (err.code === '23505') {
+                err.msg = 'An invitation to this recruiter has already been sent';
+                err.status = 409;
+            }
+            throw err;
+        }
+    }
+
 }
 
 module.exports = Invitation;
