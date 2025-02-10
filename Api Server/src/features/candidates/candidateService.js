@@ -68,9 +68,10 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId) =>
                 },
             }, 'logs');
         }
-        await result.client.query('COMMIT;');
 
+        await result.client.query('COMMIT;');
         delete result.client;
+
         delete result.decision;
         result.updatedCandidates = result.updatedCandidates.map((value) => {
             delete value.phase_num;
