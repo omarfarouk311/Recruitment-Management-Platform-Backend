@@ -57,7 +57,7 @@ exports.multipartParser = (mediaType) => {
             });
 
             // parse expected file and upload it to the object store
-            let cancel = false;
+            let cancel = false, image = false;
             bb.on('file', async (name, file, info) => {
                 const { mimeType, filename } = info;
                 const metadata = {
@@ -67,6 +67,7 @@ exports.multipartParser = (mediaType) => {
 
                 // image
                 if (mediaType === 'image') {
+                    image = true;
                     const objectName = `${req.userRole}${req.userId}`;
 
                     if (mimeType !== 'image/png' && mimeType !== 'image/jpeg' && mimeType !== 'image/jpg') {
@@ -138,7 +139,17 @@ exports.multipartParser = (mediaType) => {
                 handleError(req, next, err);
             });
 
-            bb.on('finish', () => {
+            bb.on('finish', async () => {
+                console.log(image);
+                try {
+                    if (!image) {
+                        await client.removeObject(imagesBucketName, `${req.userRole}${req.userId}`);
+                    }
+                }
+                catch (err) {
+                    return next(err);
+                }
+
                 next();
             });
 

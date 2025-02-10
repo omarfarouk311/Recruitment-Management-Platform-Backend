@@ -39,7 +39,8 @@ exports.getCompanyIndustries = async (req, res, next) => {
     const { companyId } = req.params;
 
     try {
-        const result = await companyService.getCompanyIndustries(companyId);
+        let result = await companyService.getCompanyIndustries(companyId);
+        result = result.map(({ industry }) => industry);
         return res.status(200).json(result);
     }
     catch (err) {
