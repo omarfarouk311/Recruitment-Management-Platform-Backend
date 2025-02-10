@@ -1,5 +1,5 @@
 const CandidateQueryset = require('./candidateModel').CandidateModel;
-const { pagination_limit, action_types } = require('../../../config/config');
+const { pagination_limit, action_types, role } = require('../../../config/config');
 const { produce } = require('../../common/kafka');
 const {v6: uuid} = require('uuid');
 
@@ -14,8 +14,9 @@ exports.getCandidatesForRecruiter = async (recruiterId, simplified, filters, sor
 };
 
 exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, companyId) => {
-    let result = CandidateQueryset.assignCandidatesToRecruiter(seekerIds, recruiterId, jobId);
+    let result;
     try {
+        result = CandidateQueryset.assignCandidatesToRecruiter(seekerIds, recruiterId, jobId);
         let companyName = CandidateQueryset.getCompanyName(companyId);
         [result, companyName] = await Promise.all([result, companyName]);
         
@@ -39,22 +40,27 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
             delete result.client;
         }
         throw error;
+    } finally {
+        if (result.client)
+            result.client.release();
     }
 };
 
-exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId) => {
-    let result = CandidateQueryset.makeDecisionToCandidates(seekerIds, jobId, decision);
+exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, userRole) => {
+    let result; 
     try {
-        let performed_by = CandidateQueryset.getCompanyName(userId) || await CandidateQueryset.getRecruiterName(userId);
+        result = CandidateQueryset.makeDecisionToCandidates(seekerIds, jobId, decision);
+        let performed_by = CandidateQueryset.getCompanyName(userId) || CandidateQueryset.getRecruiterName(userId);
         let recProc = CandidateQueryset.getRecruitementPhases(jobId);
 
         [result, performed_by, recProc] = await Promise.all([result, performed_by, recProc]);
         
         if (result.updatedCandidates.length) {
-            await produce({
+            let promises = [];
+            promises.push(produce({
                 id: uuid(),
                 action_type: action_types.move_candidate,
-                perfomed_by: performed_by,
+                perfomed_by: performed_by.name,
                 created_at: new Date(),
                 companyId: userId,
                 extra_data: {
@@ -62,17 +68,33 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId) =>
                         return {
                             seekerId: value.seekerId,
                             from: recProc[value.phase_num],
-                            to: value.decision !== 0? recProc[`${value.phase_num + 1}`]: "Rejected",
+                            to: decision !== 0? recProc[`${value.phase_num + 1}`]: "Rejected",
                         }
                     }),
                 },
-            }, 'logs');
-        }
-        await result.client.query('COMMIT;');
+            }, 'logs'));
 
+            promises.push(produce(result.updatedCandidates.map((value) => {
+                return {
+                    companyId: userRole == role.company? userId: performed_by.company_id,
+                    jobId: jobId,
+                    jobSeeker: value.seekerId,
+                    rejected: !decision,
+                    newPhaseName: value.decision !== 0? recProc[`${value.phase_num + 1}`]: "Rejected",
+                    interview: value.phase_type === 'interview',
+                    deadline: value.deadline,
+                    type: 1
+                }
+            }), 'emails'));
+
+            await Promise.all(promises);
+        }
+
+        await result.client.query('COMMIT;');
         delete result.client;
         delete result.decision;
         result.updatedCandidates = result.updatedCandidates.map((value) => {
+            delete value.phase_type;
             delete value.phase_num;
             return value;
         });
@@ -83,12 +105,16 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId) =>
             delete result.client;
         }
         throw error;
+    } finally {
+        if (result.client)
+            result.client.release();
     }
 };
 
 exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) => {
-    let result = CandidateQueryset.unassignCandidatesFromRecruiter(seekerIds, jobId);
+    let result;
     try {
+        result = CandidateQueryset.unassignCandidatesFromRecruiter(seekerIds, jobId);
         let companyName = CandidateQueryset.getCompanyName(companyId);
         [result, companyName] = await Promise.all([result, companyName]);
 
@@ -114,5 +140,8 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
             delete result.client;
         }
         throw error;
+    } finally {
+        if (result.client)
+            result.client.release();
     }
 };
