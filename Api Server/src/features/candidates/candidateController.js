@@ -1,4 +1,5 @@
 const candidateService = require('./candidateService');
+const { role } = require('../../../config/config');
 
 exports.getCandidatesForJob = async (req, res, next) => {
     try {
@@ -82,10 +83,11 @@ exports.unassignCandidatesFromRecruiter = async (req, res, next) => {
 exports.getCandidateLocations = async (req, res, next) => {
     try {
         let locations;
-        if (req.query.recruiterId) {
-            locations = await candidateService.getCandidateLocationsForRecruiter(req.query.recruiterId);
-        } else if (req.query.jobId) {
+        if (req.query.jobId) {
             locations = await candidateService.getCandidateLocationsForJob(req.query.jobId);
+        }
+        else if (req.userRole === role.recruiter) {
+            locations = await candidateService.getCandidateLocationsForRecruiter(req.userId);
         } else {
             res.status(400).json({ message: 'Either recruiterId or jobId must be provided' });
             return;

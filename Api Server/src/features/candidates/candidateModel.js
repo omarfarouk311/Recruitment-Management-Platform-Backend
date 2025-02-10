@@ -419,7 +419,7 @@ class CandidateModel {
 
     static async getCandidateLocationsForRecuriter(recruiterId){
         const results = await ReadPool().query(
-            `SELECT DISTINCT job_seeker.country,
+            `SELECT ARRAY_AGG(DISTINCT job_seeker.country) AS "candidateLocations"
              FROM candidates
              JOIN job_seeker ON candidates.seeker_id = job_seeker.id
              WHERE recruiter_id = $1;`, [recruiterId]);
@@ -429,7 +429,7 @@ class CandidateModel {
 
     static async getCandidateLocationsForCompany(jobId){
         const results = await ReadPool().query(
-            `SELECT DISTINCT job_seeker.country,
+            `SELECT ARRAY_AGG(DISTINCT job_seeker.country) AS "candidateLocations"
              FROM candidates
              JOIN job_seeker ON candidates.seeker_id = job_seeker.id
              WHERE job_id = $1;`, [jobId]);

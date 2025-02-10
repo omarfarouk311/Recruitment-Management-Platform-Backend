@@ -1,4 +1,5 @@
 const authQuerySets = require('./candidateModel').CandidateAPIAuthorization;
+const { role } = require('../../../config/config');
 
 exports.authGetCandidatesForJob = async (req, res, next) => {
     try {
@@ -79,19 +80,13 @@ exports.authMakeDecisionToCandidates = async (req, res, next) => {
 
 exports.authGetCandidateLocations = async (req, res, next) => {
     try {
-        if (req.query.recruiterId) {
-            const recruiterFound = await authQuerySets.recruiterBelongsToCompany(req.query.recruiterId, req.userId);
-            if (!recruiterFound) {
-                res.status(403).json({ message: 'Unauthorized Access!' });
-                return;
-            }
-        } else if (req.query.jobId) {
+        if (req.query.jobId && req.userRole === role.company) {
             const found = await authQuerySets.jobBelongsToCompany(req.query.jobId, req.userId);
             if (!found) {
                 res.status(403).json({ message: 'Unauthorized Access!' });
                 return;
             }
-        } else {
+        } else if(req.userRole !== role.recruiter) {
             res.status(400).json({ message: 'Either recruiterId or jobId must be provided' });
             return;
         }

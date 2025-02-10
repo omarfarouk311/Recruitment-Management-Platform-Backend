@@ -147,9 +147,9 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
 };
 
 exports.getCandidateLocationsForRecruiter = async (recruiterId) => {
-    return await CandidateQueryset.getCandidateLocationsForRecruiter(recruiterId);
+    return await CandidateQueryset.getCandidateLocationsForRecuriter(recruiterId);
 };
 
 exports.getCandidateLocationsForJob = async (jobId) => {
-    return await CandidateQueryset.getCandidateLocationsForJob(jobId);
+    return await CandidateQueryset.getCandidateLocationsForCompany(jobId);
 };

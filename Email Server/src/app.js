@@ -107,8 +107,8 @@ const mailjet = require('../config/mailjet');
                         recruiter.name,
                         recruiter.email,
                         companyName,
-                        jobSeekersData,
-                        department
+                        department,
+                        deadline
                     );
                 }
 
@@ -268,14 +268,14 @@ const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId) => {
     let template = client.query(`
         SELECT 
             description,
-            jobSeeker.placeholder_params AS placeholder_params
+            candidates.placeholder_params AS placeholder_params
         FROM job_offer_template 
         JOIN (
             SELECT
                 placeholder_params, template_id
-            FROM job_seeker
+            FROM candidates
             WHERE id = $2
-        ) AS jobSeeker ON id = jobSeeker.template_id
+        ) AS candidates ON job_offer_template.id = candidates.template_id
         WHERE id = $1`, [templateId, jobSeekerId]);
     if (template.length)
         template = template.rows[0];

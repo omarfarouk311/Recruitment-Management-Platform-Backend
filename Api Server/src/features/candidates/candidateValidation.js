@@ -62,6 +62,8 @@ const recruiterId = check("recruiterId", "Invalid recruiterId").isInt({ min: 1 }
 
 const jobId = check("jobId", "jobId must be positive integer.").isInt({ min: 1 }).toInt();
 
+const jobIdQuery = query("jobId", "jobId must be positive integer.").optional().isInt({ min: 1 }).toInt();
+
 
 exports.assignCandidatesToRecruiterValidator = [
     candidates,
@@ -83,5 +85,5 @@ exports.makeDecisionToCandidatesValidator = [
 ];
 
 exports.getCandidateLocationsValidator = [
-    jobId
+    jobIdQuery
 ];
