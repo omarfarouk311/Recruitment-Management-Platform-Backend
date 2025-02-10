@@ -436,7 +436,16 @@ class CandidateModel {
 
         return results.rows;
     }
+
+    static async getPhaseTypes() {
+        const results = await ReadPool().query(`
+            SELECT *
+            FROM phase_type`);
+
+        return results.rows;
+    }
 }
+
 
 
 class CandidateAPIAuthorization {
