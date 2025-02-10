@@ -7,12 +7,12 @@ const mailjet = require('../config/mailjet');
 (async function () {
     const pool = getReadPool();
     await consumer.connect();
-    await consumer.subscribe({ topic: emails_topic, fromBeginning: false });
+    await consumer.subscribe({ topic: emails_topic, fromBeginning: true });
 
     await consumer.run({
         autoCommit: false,
         eachMessage: async ({ topic, partition, message }) => {
-            const {type, jobId, companyId, jobSeeker, templateId, recruiterId, department} = JSON.parse(message.value);
+            const {type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department} = JSON.parse(message.value);
             try {
                 let email
                 let pool = getReadPool();
@@ -27,15 +27,17 @@ const mailjet = require('../config/mailjet');
                     jobTitle = jobTitle.rows[0].title;
                 }
 
+                console.log(companyId)
                 if(companyId) {
-                    var { name: companyName, email: companyEmail } = (await pool.query(`SELECT name, email FROM company WHERE id = $1`, [companyId])).rows[0];
-                    if (companyName.rows.length == 0) {
-                        let error = new Error('company not found');
-                        error.cause = 'self';
-                        throw error;
-                    }
-                    companyName = companyName.rows[0].name;
+                    var { name: companyName, email: companyEmail } = (await pool.query(`
+                        SELECT name, email 
+                        FROM company 
+                        JOIN users ON company.id = users.id 
+                        WHERE users.id = $1`, [companyId]
+                    )).rows[0];
                 }
+
+                console.log(companyName);
 
                 let recruiter;
                 if(recruiterId) {
@@ -44,7 +46,7 @@ const mailjet = require('../config/mailjet');
                             name,
                             email
                         FROM recruiter
-                        JOIN user ON recruiter.id = user.id
+                        JOIN users ON recruiter.id = users.id
                         WHERE recruiter.id = $1
                         `, [recruiterId]);
 
@@ -52,13 +54,12 @@ const mailjet = require('../config/mailjet');
                 }
                     
                 if (jobSeeker) {
-                    let jobSeekerData = await pool.query(`
-                        SELECT name, user.email
+                    let jobSeekerData = (await pool.query(`
+                        SELECT name, users.email
                         FROM job_seeker
-                        JOIN user ON job_seeker.id = user.id
-                        WHERE id = $1
-                    `, [jobSeeker]); 
-
+                        JOIN users ON job_seeker.id = users.id
+                        WHERE job_seeker.id = $1
+                    `, [jobSeeker])).rows[0]; 
                     
                     if (type == email_types.change_phase) { 
                         email = getPhasesEmailTemplate(
@@ -66,10 +67,10 @@ const mailjet = require('../config/mailjet');
                             companyName, 
                             jobSeekerData.name, 
                             jobSeekerData.email, 
-                            value.rejected, 
-                            value.deadline? (new Date(value.deadline)).toUTCString: undefined, 
-                            value.interview? value.interview: undefined, 
-                            value.newPhaseName
+                            rejected, 
+                            deadline? (new Date(deadline)).toUTCString: undefined, 
+                            interview? interview: undefined, 
+                            newPhaseName
                         )
                     } else if( type == email_types.interview_date ) {
                         email = getInterviewEmailTemplate(
@@ -77,7 +78,7 @@ const mailjet = require('../config/mailjet');
                             companyName,
                             jobSeekerData.name, 
                             jobSeekerData.email, 
-                            value.deadline
+                            deadline
                         )
                     } else if( type == email_types.job_offer ) {
                         email = await getJobOfferTemplate(
@@ -117,8 +118,7 @@ const mailjet = require('../config/mailjet');
                     Messages: [email]
                 });
 
-
-                if(result.Messages[0].status == 'success') {
+                if(result.response.status == 200) {
                     await consumer.commitOffsets([{
                         topic,
                         partition,
