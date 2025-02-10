@@ -78,3 +78,20 @@ exports.unassignCandidatesFromRecruiter = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getCandidateLocations = async (req, res, next) => {
+    try {
+        let locations;
+        if (req.query.recruiterId) {
+            locations = await candidateService.getCandidateLocationsForRecruiter(req.query.recruiterId);
+        } else if (req.query.jobId) {
+            locations = await candidateService.getCandidateLocationsForJob(req.query.jobId);
+        } else {
+            res.status(400).json({ message: 'Either recruiterId or jobId must be provided' });
+            return;
+        }
+        res.status(200).json(locations);
+    } catch (error) {
+        next(error);
+    }
+};

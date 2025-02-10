@@ -416,6 +416,26 @@ class CandidateModel {
         
         return results.rows[0].phases;
     }
+
+    static async getCandidateLocationsForRecuriter(recruiterId){
+        const results = await ReadPool().query(
+            `SELECT DISTINCT job_seeker.country,
+             FROM candidates
+             JOIN job_seeker ON candidates.seeker_id = job_seeker.id
+             WHERE recruiter_id = $1;`, [recruiterId]);
+
+        return results.rows;
+    }
+
+    static async getCandidateLocationsForCompany(jobId){
+        const results = await ReadPool().query(
+            `SELECT DISTINCT job_seeker.country,
+             FROM candidates
+             JOIN job_seeker ON candidates.seeker_id = job_seeker.id
+             WHERE job_id = $1;`, [jobId]);
+
+        return results.rows;
+    }
 }
 
 
@@ -462,6 +482,9 @@ class CandidateAPIAuthorization {
         `, [jobId, seekerIds, userId, userId])).rows.length == seekerIds.length;
     }
 }
+
+    
+
 
 module.exports = { 
     CandidateModel,

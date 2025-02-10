@@ -76,3 +76,28 @@ exports.authMakeDecisionToCandidates = async (req, res, next) => {
         next(error);
     }
 }
+
+exports.authGetCandidateLocations = async (req, res, next) => {
+    try {
+        if (req.query.recruiterId) {
+            const recruiterFound = await authQuerySets.recruiterBelongsToCompany(req.query.recruiterId, req.userId);
+            if (!recruiterFound) {
+                res.status(403).json({ message: 'Unauthorized Access!' });
+                return;
+            }
+        } else if (req.query.jobId) {
+            const found = await authQuerySets.jobBelongsToCompany(req.query.jobId, req.userId);
+            if (!found) {
+                res.status(403).json({ message: 'Unauthorized Access!' });
+                return;
+            }
+        } else {
+            res.status(400).json({ message: 'Either recruiterId or jobId must be provided' });
+            return;
+        }
+        next();
+    } catch (error) {
+        console.error("Error in authGetCandidateLocations controller", error);
+        next(error);
+    }
+};

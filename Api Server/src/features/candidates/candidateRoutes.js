@@ -43,4 +43,14 @@ router.patch(
     candidateController.unassignCandidatesFromRecruiter
 );
 
+router.get(
+    '/locations',
+    candidateValidation.getCandidateLocationsValidator,
+    handleValidationErrors,
+    candidateAuth.authGetCandidateLocations,
+    candidateController.getCandidateLocations
+);
+
+
+
 module.exports = router;
