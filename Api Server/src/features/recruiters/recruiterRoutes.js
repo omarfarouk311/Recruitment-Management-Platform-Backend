@@ -4,18 +4,20 @@ const router=express();
 const {handleValidationErrors}=require('../../common/util')
 
 const recruiterController=require('./recruiterController');
-const {authorizeCompanyRecruiter,authorizeInvitationData,authorizeRecruiter}=require('./recruiterAuthorization')
+const {authorizeCompanyRecruiter,authorizeInvitationData,authorizeRecruiter,authorizeCompany}=require('./recruiterAuthorization')
 const {validateParams,validateRecruiterId,validateInvitationData,validateJobOffer}=require('./recruiterValidation')
 
 
 router.route('/')   //localhost:3000/recruiters/?recruiter="" & department="" & sorted=""&page=""
         .get(validateParams,
             handleValidationErrors,
+            authorizeCompany,
             recruiterController.getRecruitersContoller)
 
 router.route('/:recruiterId')  
         .delete(validateRecruiterId,
                 handleValidationErrors,
+                authorizeCompany,
                 authorizeCompanyRecruiter,
                 recruiterController.deleteRecruiterController)
         
@@ -23,11 +25,13 @@ router.route('/:recruiterId')
 router.route('/invitation')
         .post(validateInvitationData,
               handleValidationErrors,
+              authorizeCompany,
               authorizeInvitationData,
               recruiterController.sendInvitationController)
 
 router.route('/departments')
-        .get(recruiterController.getUniquetDepartmentsController)
+        .get(authorizeCompany,
+             recruiterController.getUniquetDepartmentsController)
 
 
 router.route('/job-offer-sent')
@@ -41,9 +45,11 @@ router.route('/assigned-Candidate-JobTitles')  // get list of the jobs the recru
              recruiterController.getJobTitleList)
 
 router.route('/profile-data')
-        .get(recruiterController.getRecruiterDataController)
+        .get(authorizeRecruiter,
+             recruiterController.getRecruiterDataController)
+
 router.route('/profile-pic')
         .get(authorizeRecruiter
-             ,recruiterController.getProfilePicController)
+            ,recruiterController.getProfilePicController)
 
 module.exports=router

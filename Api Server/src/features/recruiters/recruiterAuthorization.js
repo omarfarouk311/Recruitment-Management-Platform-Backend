@@ -4,7 +4,7 @@ const {role}=require('../../../config/config')
 module.exports.authorizeCompanyRecruiter=async(req,res,next)=>{  //check if company has authority to delete recruiter
 
     try{
-        let companyId=req.userId // from token later
+        
         let recruiterId=req.params.recruiterId;
 
         let checkRecruiter=await recruiterModel.getRecruiterById(recruiterId) // see if recruiter exists in this company
@@ -15,12 +15,6 @@ module.exports.authorizeCompanyRecruiter=async(req,res,next)=>{  //check if comp
             throw err
         }
         
-        if(companyId!=checkRecruiter.company_id){
-            let err=new Error()
-            err.msg="you are not authorized to delete this recruiter"
-            err.status=403
-            throw err
-        }
         next();
 
     }catch(err){
@@ -56,4 +50,15 @@ module.exports.authorizeRecruiter=async(req,res,next)=>{
      }else{
         next();
      }
+}
+
+module.exports.authorizeCompany=async(req,res,next)=>{
+    if(req.userRole!=role.company){
+        let err=new Error();
+        err.msg="The company only authorized to do this action"
+        err.status=403
+        return next(err);
+    }else{
+        next();
+    }
 }

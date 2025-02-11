@@ -125,16 +125,34 @@ module.exports.getRecruiterDataController=async(req,res,next)=>{
 }
 
 module.exports.getProfilePicController=async(req,res,next)=>{
-    try{
+
+    try {
         let recruiterId=req.userId
         let recruiterRole=req.userRole
-        let result=await recruiterService.getProfilePicService(recruiterId,recruiterRole)
-        res.status(200).json({
-            success:true,
-            profilePic:result
-        })
-    }catch(err){
-        console.log("err in getProfilePicController")
-        next(err)
+
+        const {
+            metaData: { 'content-type': contentType, filename: fileName },
+            size,
+            stream
+        } = await getProfilePicService(recruiterId, recruiterRole); // once the object return the await will finish but the stream will not
+                                                                                // be fully read as it came in chunks and will resond it as soon as chunk came from the readable stream
+
+        res.header({
+            'Content-Type': contentType,
+            'Content-Length': size,
+            'Content-Disposition': `inline; filename = ${fileName}` // inline to display the image not download it
+        });
+
+        stream.on('error', (err) => next(err));
+
+        stream.pipe(res);
+    }
+    catch (err) {
+        if (err.code === 'NotFound') {
+            err.msg = 'Company photo not found';
+            err.status = 404;
+            return next(err);
+        }
+        next(err);
     }
 }
