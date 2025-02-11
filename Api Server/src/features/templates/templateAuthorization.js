@@ -1,5 +1,6 @@
 const { TemplateAuthorization } = require('./templateModel');
 const { role } = require("../../../config/config");
+const { CandidateAPIAuthorization } = require('../candidates/candidateModel');
 
 exports.authCreateTemplate = (req, res, next) => {
     if (req.userRole !== 'company') {
@@ -34,16 +35,16 @@ exports.authDeleteTemplate = async (req, res, next) => {
     }
 };
 
-exports.authGetTemplate = (req, res, next) => {
+exports.authGetTemplate = async (req, res, next) => {
 
     if(req.userRole == role.company) { 
-        if (!TemplateAuthorization.hasPermission(req.params.id, req.userId)){
+        if (! (await TemplateAuthorization.hasPermission(req.params.id, req.userId))){
             return res.status(403).json({ message: 'Unauthorized Access!' });
         }
     }
         
     else if(req.userRole == role.recruiter) {
-        if (!TemplateAuthorization.belongsToCompany(req.params.id, req.userId)){
+        if (! (await TemplateAuthorization.belongsToCompany(req.params.id, req.userId))){
             return res.status(403).json({ message: 'Unauthorized Access!' });
         }
     }
@@ -51,3 +52,10 @@ exports.authGetTemplate = (req, res, next) => {
     else{ return res.status(403).json({ message: 'Unauthorized Access!' }); }
     next();
 };
+
+exports.authGetOfferDetails = async (req, res, next) => {
+    if(!(await CandidateAPIAuthorization.candidatesBelongsToRecruiterOrCompany(req.params.jobId, [req.params.seekerId], req.userId))) {
+        return res.status(403).json({ message: 'Unauthorized Access!' });
+    }
+    next();
+}

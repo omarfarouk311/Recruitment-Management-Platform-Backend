@@ -165,6 +165,22 @@ class Templates {
             pool.release();
         }      
     }
+    
+    static async getOfferDetails(jobId, seekerId) {
+        const pool = getReadPool();
+        let query = `
+            SELECT 
+                c.placeholders_params AS placeholders_params, 
+                j.name AS template_name,
+                j.description AS template_description
+            FROM candidates c
+            JOIN job_offer_template j ON c.template_id = j.id
+            WHERE c.job_id = $1 AND c.seeker_id = $2
+        `
+
+        const result = await pool.query(query, [jobId, seekerId]);
+        return result.rows.length? result.rows[0]: null;
+    }
 }
 
 class HelperQuerySet {

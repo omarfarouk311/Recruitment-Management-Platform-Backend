@@ -54,3 +54,8 @@ exports.deleteTemplate = async (id,companyId) => {
   return res;
 
 };
+
+exports.getOfferDetails = async (jobId, seekerId) => {
+  const offerDetails = await Templates.getOfferDetails(jobId, seekerId);
+  return offerDetails;
+};

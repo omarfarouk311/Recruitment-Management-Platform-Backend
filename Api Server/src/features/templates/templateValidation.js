@@ -57,6 +57,19 @@ const page = query('page')
     .isInt({ gt: 0 })
     .withMessage('Page must be a positive integer');
 
+
+const jobId = param('jobId')
+    .exists({ checkFalsy: true })
+    .withMessage('Job ID is required')
+    .isInt({ gt: 0 })
+    .withMessage('Job ID must be a positive integer');
+
+const seekerId = param('seekerId')
+    .exists({ checkFalsy: true })
+    .withMessage('Seeker ID is required')
+    .isInt({ gt: 0 })
+    .withMessage('Seeker ID must be a positive integer');
+
 exports.validateGetAllTemplates = [
     sortBy,
     page,
@@ -66,7 +79,7 @@ exports.validateGetAllTemplates = [
 exports.validateGetAllTemplate = [
     id,
     simplified
-]
+];
 
 exports.validateTemplate = [
     name,
@@ -75,4 +88,9 @@ exports.validateTemplate = [
 
 exports.validateId = [
     id
+];
+
+exports.validateGetOfferDetails = [
+    jobId,
+    seekerId
 ];

@@ -5,7 +5,7 @@ exports.getAllTemplates = async (req, res, next) => {
         const { sortBy = 1, page, simplified } = req.query;
         (simplified)
         const templates = await Templates.getAllTemplates(req.userId, sortBy, page, req.userRole, simplified);
-        return res.status(200).json({ success: true, data: templates });
+        return res.status(200).json(templates);
     } catch (error) {
         next(error);
     }
@@ -62,3 +62,17 @@ exports.deleteTemplate = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
+exports.getOfferDetails = async (req, res, next) => {
+    try {
+        const { jobId, seekerId } = req.params;
+        const offerDetails = await Templates.getOfferDetails(jobId, seekerId);
+        if (!offerDetails) {
+            return res.status(404).json({message: 'Offer not found' });
+        }
+        res.status(200).json(offerDetails);
+    } catch (error) {
+        next(error);
+    }
+}
