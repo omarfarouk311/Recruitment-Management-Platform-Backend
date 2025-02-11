@@ -1,4 +1,6 @@
-const { Templates } = require('./templateModel');
+const { Templates, HelperQuerySet } = require('./templateModel');
+const { role } = require('../../../config/config');
+const constants = require('../../../config/config')
 
 
 
@@ -16,12 +18,16 @@ function extractPlaceholders (value) {
 }
 
 
-exports.getAllTemplates = async (companyId, sortBy, offset, limit) => {
-  return await Templates.getAllTemplates(companyId, sortBy, offset, limit); 
+exports.getAllTemplates = async (userId, sortBy, page, userRole, simplified) => {
+  const limit = constants.pagination_limit
+  const offset = (page - 1) * limit;
+  
+  let companyId = userRole === role.recruiter? (await HelperQuerySet.getCompanyId(userId)).company_id: userId;
+  return await Templates.getAllTemplates(companyId, sortBy, offset, limit, simplified); 
 };
 
-exports.getTemplateById = async (id,companyId) => {
-  return await Templates.getTemplateById(id,companyId); 
+exports.getTemplateById = async (id, simplified) => {
+  return await Templates.getTemplateById(id, simplified); 
 };
 
 exports.createTemplate = async (templateData,companyId) => {

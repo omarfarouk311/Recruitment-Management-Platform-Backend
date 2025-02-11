@@ -16,7 +16,7 @@ const mailjet = require('../config/mailjet');
             try {
                 if (deadline) {
                     deadline = new Date(deadline).toUTCString();
-                    console.log(deadline);
+                    
                 }
 
                 let email

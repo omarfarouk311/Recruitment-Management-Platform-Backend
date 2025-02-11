@@ -323,7 +323,7 @@ class CandidateModel {
                     RETURNING seeker_id as "seekerId", phase as phase_num, 0 as decision;
                 `, [seekerIds, jobId])).rows;
 
-                console.log(res);
+                
                 return {updatedCandidates: res, client: client};
             } catch (error) {
                 await client.query('ROLLBACK;');

@@ -1,4 +1,4 @@
-const { body,param } = require('express-validator');
+const { body, param, query } = require('express-validator');
 
 // Helper function to validate placeholders
 function validatePlaceholders(value) {
@@ -41,6 +41,32 @@ const id = param('id')
     .withMessage('ID is required')
     .isInt({ gt: 0 })
     .withMessage('ID must be a positive integer');
+
+const sortBy = query('sortBy')
+    .optional()
+    .isInt()
+    .isIn([1, -1]).withMessage('SortBy must be 1 or -1');
+
+const simplified = query('simplified')
+    .optional()
+    .isBoolean()
+    .withMessage('Simplified must be a boolean')
+
+const page = query('page')
+    .optional()
+    .isInt({ gt: 0 })
+    .withMessage('Page must be a positive integer');
+
+exports.validateGetAllTemplates = [
+    sortBy,
+    page,
+    simplified
+];
+
+exports.validateGetAllTemplate = [
+    id,
+    simplified
+]
 
 exports.validateTemplate = [
     name,

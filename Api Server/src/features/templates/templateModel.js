@@ -20,7 +20,7 @@ class TemplateAuthorization {
             `SELECT t.company_id 
              FROM job_offer_template t
              JOIN recruiter r ON t.company_id = r.company_id
-             WHERE t.id = $1 AND r.user_id = $2`,
+             WHERE t.id = $1 AND r.id = $2`,
             [templateId, recruiterId]
         );
         const template = result.rows[0];
@@ -31,20 +31,31 @@ class TemplateAuthorization {
 
 class Templates {
 
-    static async getAllTemplates(companyId, sortBy = 1, offset = 0, limit = process.env.PAGINATION_LIMIT || 5) {
-        const pool = await getReadPool();
+    static async getAllTemplates(companyId, sortBy = 1, offset, limit, simplified) {
+        const pool = getReadPool();
         const order = sortBy === 1 ? 'ASC' : 'DESC';
-        const result = await pool.query(
-            `SELECT name, updated_at FROM job_offer_template WHERE company_id = $1 ORDER BY updated_at ${order} OFFSET $2 LIMIT $3`,
-            [companyId, offset, limit]
-        );
+        const limitQuery = offset ? 'OFFSET $2 LIMIT $3' : '';
+        let params = offset ? [companyId, offset, limit] : [companyId];
+        const columns = simplified ? 'id, name' : 'id, name, updated_at';
+        
+        let query = `
+            SELECT ${columns} 
+            FROM job_offer_template 
+            WHERE company_id = $1 
+        `;
+        
+        if(!simplified)
+            query += `ORDER BY updated_at ${order} ${limitQuery}`;
+        
+        
+        const result = await pool.query(query, params);
         return result.rows;
     }
 
-    static async getTemplateById(id) {
-        const pool = await getReadPool();
-        const result = await pool.query('SELECT name, description, company_id, placeholders FROM job_offer_template WHERE id = $1', [id]);
-        return result.rows[0];
+    static async getTemplateById(id, simplified) {
+        const pool = getReadPool();
+        const result = await pool.query(`SELECT name, description ${simplified? '': ', placeholders'} FROM job_offer_template WHERE id = $1`, [id]);
+        return result.rows.length? result.rows[0]: null;
     }
 
     static async createTemplate(templateData,companyId,placeholders) {
@@ -156,7 +167,16 @@ class Templates {
     }
 }
 
+class HelperQuerySet {
+    static async getCompanyId(recruiterId) {
+        const pool = getReadPool();
+        const result = await pool.query('SELECT company_id FROM recruiter WHERE id = $1', [recruiterId]);
+        return result.rows.length? result.rows[0]: null;
+    }
+}
+
 module.exports = {
     Templates,
-    TemplateAuthorization
+    TemplateAuthorization,
+    HelperQuerySet
 };

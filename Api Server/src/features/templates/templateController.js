@@ -1,26 +1,26 @@
 const Templates  = require('./templateService');
 
-exports.getAllTemplates = async (req, res) => {
+exports.getAllTemplates = async (req, res, next) => {
     try {
-        const { sortBy = 1, page = 1, limit = process.env.PAGINATION_LIMIT || 5 } = req.query;
-        const offset = (page - 1) * limit;
-        const templates = await Templates.getAllTemplates(req.userId, sortBy, offset, limit);
-        res.status(200).json({ success: true, data: templates });
+        const { sortBy = 1, page, simplified } = req.query;
+        (simplified)
+        const templates = await Templates.getAllTemplates(req.userId, sortBy, page, req.userRole, simplified);
+        return res.status(200).json({ success: true, data: templates });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error);
     }
 };
 
-exports.getTemplateDetails = async (req, res) => {
-    try {
+exports.getTemplateDetails = async (req, res, next) => {
+    try{
         const { id } = req.params;
-        const template = await Templates.getTemplateById(id,req.userId);
+        const template = await Templates.getTemplateById(id, req.query.simplified);
         if (!template) {
             return res.status(404).json({ success: false, message: 'Template not found' });
         }
         res.status(200).json({ success: true, data: template });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error);
     }
 };
 
