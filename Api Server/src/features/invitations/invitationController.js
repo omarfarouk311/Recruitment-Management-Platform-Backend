@@ -25,3 +25,17 @@ exports.sendInvitation = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.replyToInvitation = async (req, res, next) => {
+    const { status, date } = req.body;
+    const { companyId } = req.params
+    const { userId } = req;
+
+    try {
+        await invitationService.replyToInvitation(userId, companyId, status, date);
+        res.status(200).send();
+    }
+    catch (err) {
+        next(err);
+    }
+}

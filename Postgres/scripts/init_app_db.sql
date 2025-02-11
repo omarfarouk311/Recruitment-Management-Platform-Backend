@@ -24,7 +24,7 @@ CREATE TABLE Recruiter (
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
   has_image BOOLEAN NOT NULL,
-  department text --still want to index it
+  department text
 );
 
 CREATE TABLE Company (
@@ -298,9 +298,11 @@ CREATE INDEX ON Candidate_History (country, city);
 
 CREATE INDEX ON Candidate_History (job_id);
 
-CREATE INDEX ON Company (size);
+CREATE INDEX ON Recruiter (company_id);
 
-CREATE INDEX ON Company (type);
+CREATE INDEX ON Recruiter (department);
+
+CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (rating);
 

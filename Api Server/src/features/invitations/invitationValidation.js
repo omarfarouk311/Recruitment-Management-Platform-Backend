@@ -1,5 +1,6 @@
 const { query, body } = require('express-validator');
 const { validatePage } = require('../../common/util');
+const { validateCompanyId } = require('../companies/companyValidation');
 const { minNameLength, maxNameLength } = require('../../../config/config');
 
 const validateSortByDate = () => query('sortByDate', "Invalid sort option, it must be 1 or -1")
@@ -49,6 +50,17 @@ const validateDeadline = () => body('deadline')
     .custom(value => value > new Date())
     .withMessage('deadline must be after the current time');
 
+const validateReply = () => body('status')
+    .custom(value => value === 1 || value === 0)
+    .withMessage('status must be 1 for accept or 0 for reject')
+
+const validateDate = () => body('date')
+    .isISO8601()
+    .withMessage('Invalid date format, it must be in ISO 8601 format')
+    .customSanitizer(isoString => new Date(isoString))
+
 exports.validateGetInvitations = [validatePage(), validateStatus(), validateSortByDeadline(), validateSortByDate()];
 
 exports.validateCreateInvitation = [validateEmail(), validateDepartment(), validateDeadline()];
+
+exports.validateReplyToInvitation = [validateCompanyId, validateReply(), validateDate()];

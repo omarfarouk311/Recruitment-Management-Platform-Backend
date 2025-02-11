@@ -21,4 +21,13 @@ router.route('/')
     )
     .all(notAllowed);
 
+router.route('/:companyId')
+    .patch(
+        invitationAuthorization.authorizeReplyToInvitation,
+        invitationValidation.validateReplyToInvitation,
+        handleValidationErrors,
+        invitationController.replyToInvitation
+    )
+    .all(notAllowed)
+
 module.exports = router;
