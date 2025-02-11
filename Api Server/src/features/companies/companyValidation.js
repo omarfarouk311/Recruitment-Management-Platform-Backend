@@ -1,10 +1,8 @@
-const { buildCheckFunction, query, body } = require('express-validator');
+const { buildCheckFunction, query, body, param } = require('express-validator');
 const { validatePage } = require('../../common/util');
 const config = require('../../../config/config');
-const checkCompanyId = buildCheckFunction(['body', 'params']);
 
-const validateCompanyId = () => checkCompanyId('companyId')
-    .trim()
+const validateCompanyId = () => param('companyId')
     .notEmpty()
     .withMessage("Company ID must be passed as a route patameter")
     .isInt({ min: 1, allow_leading_zeroes: false })

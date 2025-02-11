@@ -1,18 +1,33 @@
 const { Router } = require('express');
 const invitationController = require('./invitationController');
 const invitationValidation = require('./invitationValidation');
-const { authorizeGetInvitations } = require('./invitationAuthorization')
+const invitationAuthorization = require('./invitationAuthorization')
 const { handleValidationErrors } = require('../../common/util');
 const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/')
     .get(
-        authorizeGetInvitations,
+        invitationAuthorization.authorizeGetInvitations,
         invitationValidation.validateGetInvitations,
         handleValidationErrors,
         invitationController.getInvitations
     )
+    .post(
+        invitationAuthorization.authorizecreateInvitation,
+        invitationValidation.validateCreateInvitation,
+        handleValidationErrors,
+        invitationController.sendInvitation
+    )
     .all(notAllowed);
+
+router.route('/:companyId')
+    .patch(
+        invitationAuthorization.authorizeReplyToInvitation,
+        invitationValidation.validateReplyToInvitation,
+        handleValidationErrors,
+        invitationController.replyToInvitation
+    )
+    .all(notAllowed)
 
 module.exports = router;
