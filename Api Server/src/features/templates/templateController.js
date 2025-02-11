@@ -76,3 +76,18 @@ exports.getOfferDetails = async (req, res, next) => {
         next(error);
     }
 }
+
+
+exports.sendOfferDetails = async (req, res, next) => {
+    try {
+        const { jobId, seekerId } = req.params;
+        const { placeholders, templateId } = req.body;
+        const updatedOfferDetails = await Templates.sendOfferDetails(jobId, seekerId, placeholders, templateId);
+        if (!updatedOfferDetails) {
+            return res.status(404).json({ message: 'Offer not found' });
+        }
+        res.sendStatus(201);
+    } catch (error) {
+        next(error);
+    }
+}

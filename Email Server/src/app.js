@@ -89,7 +89,9 @@ const mailjet = require('../config/mailjet');
                             companyName,
                             jobSeekerData.name, 
                             jobSeekerData.email, 
-                            templateId
+                            templateId,
+                            jobId,
+                            jobSeeker
                         );
                     } else if( type == email_types.job_offer_acceptance ) {
                         email = getJobAcceptanceEmail(
@@ -239,10 +241,10 @@ const getInterviewEmailTemplate = (jobTitle, companyName, jobSeekerName, jobSeek
     };
 };
 
-const getJobOfferTemplate = async (jobTitle, companyName, jobSeekerName, jobSeekerEmail, templateId) => {
+const getJobOfferTemplate = async (jobTitle, companyName, jobSeekerName, jobSeekerEmail, templateId, jobId, seekerId) => {
     const subject = `Job Offer for ${jobTitle} Position at ${companyName}`;
 
-    const textPart = await getTemplateWithoutPlaceHolders(templateId);
+    const textPart = await getTemplateWithoutPlaceHolders(templateId, seekerId, jobId);
 
     const htmlPart = `<p>${textPart}</p>`;
 
@@ -263,21 +265,22 @@ const getJobOfferTemplate = async (jobTitle, companyName, jobSeekerName, jobSeek
     };
 };
 
-const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId) => {
+const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId, jobId) => {
     const client = getReadPool();
-    let template = client.query(`
+    
+    let template = await client.query(`
         SELECT 
             description,
-            candidates.placeholder_params AS placeholder_params
+            candidates.placeholders_params AS placeholders_params
         FROM job_offer_template 
         JOIN (
             SELECT
-                placeholder_params, template_id
+                placeholders_params, template_id
             FROM candidates
-            WHERE id = $2
+            WHERE seeker_id = $2 AND job_id = $3
         ) AS candidates ON job_offer_template.id = candidates.template_id
-        WHERE id = $1`, [templateId, jobSeekerId]);
-    if (template.length)
+        WHERE id = $1`, [templateId, jobSeekerId, jobId]);
+    if (template.rows.length)
         template = template.rows[0];
     else {
         let error = new Error('template not found');
@@ -285,9 +288,11 @@ const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId) => {
         throw error;
     }
 
+    
     template.description = template.description.replace(/{{(.+?)}}/g, (match, p1) => {
-        return template.placeholder_params[p1] || match;
+        return template.placeholders_params[p1] || match;
     });
+    return template.description;
 }
 
 const getRecruiterInvitationTemplate = (recruiterName, recruiterEmail, companyName, department, deadline) => {

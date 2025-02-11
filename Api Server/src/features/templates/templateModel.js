@@ -181,13 +181,73 @@ class Templates {
         const result = await pool.query(query, [jobId, seekerId]);
         return result.rows.length? result.rows[0]: null;
     }
+
+    static async sendOfferDetails(jobId, seekerId, placeholders, templateId) {
+        const client = await getWritePool().connect();
+        await client.query('BEGIN');
+        try {
+
+            let candidate = await client.query(`
+                SELECT 1 
+                FROM candidates c
+                JOIN recruitment_phase rp ON c.phase = rp.phase_num AND c.recruitment_process_id = rp.recruitment_process_id
+                JOIN phase_type pt ON rp.type = pt.id
+                WHERE job_id = $1 AND seeker_id = $2 AND pt.name = 'job offer'
+                FOR UPDATE
+            `, [jobId, seekerId])
+
+            if (!candidate.rowCount) {
+                let error = new Error('Candidate not found or template not set');
+                error.msg = 'Candidate not found or template not set';
+                error.status = 404;
+                throw error;
+            }
+
+
+            const result = await client.query(
+                'UPDATE candidates SET placeholders_params = $1, template_id = $2 WHERE job_id = $3 AND seeker_id = $4',
+                [placeholders, templateId, jobId, seekerId]
+            );
+
+            
+            return client;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            client.release();
+            throw error;
+        }
+    }
 }
 
 class HelperQuerySet {
-    static async getCompanyId(recruiterId) {
+    static async getCompanyIdByRecruiter(recruiterId) {
         const pool = getReadPool();
         const result = await pool.query('SELECT company_id FROM recruiter WHERE id = $1', [recruiterId]);
-        return result.rows.length? result.rows[0]: null;
+        return result.rows.length? result.rows[0].company_id: null;
+    }
+
+    static async getCompanyIdByJob(jobId) {
+        const pool = getReadPool();
+        const result = await pool.query('SELECT company_id FROM job WHERE id = $1', [jobId]);
+        return result.rows.length? result.rows[0].company_id: null;
+    }
+
+    static async getJobOfferPlaceholders(templateId) {
+        const pool = getReadPool();
+        let jobOfferParams = await pool.query(
+            'SELECT placeholders FROM job_offer_template WHERE id = $1',
+            [templateId]
+        );
+
+        if (!jobOfferParams.rowCount) {
+            let error = new Error('Template not found');
+            error.msg = 'Template not found';
+            error.status = 404;
+            throw error;
+        }
+
+        jobOfferParams = jobOfferParams.rows[0].placeholders;
+        return jobOfferParams;
     }
 }
 

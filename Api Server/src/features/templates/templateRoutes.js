@@ -28,15 +28,15 @@ router.delete('/:id',templateValidation.validateId,handleValidationErrors, templ
 router.get('/offer-details/job/:jobId/seeker/:seekerId', 
     templateValidation.validateGetOfferDetails, 
     handleValidationErrors, 
-    templateAuth.authGetOfferDetails, 
+    templateAuth.authOfferDetails, 
     templatesController.getOfferDetails
 );
 
-// router.put('/offer-details/job/:jobId/seeker/:seekerId',
-//     templateValidation.validateOfferDetails,
-//     handleValidationErrors,
-//     templateAuth.authUpdateOfferDetails,
-//     templatesController.updateOfferDetails
-// );
+router.post('/offer-details/job/:jobId/seeker/:seekerId',
+    templateValidation.validateOfferDetails,
+    handleValidationErrors,
+    templateAuth.authOfferDetails,
+    templatesController.sendOfferDetails
+);
 
 module.exports = router;

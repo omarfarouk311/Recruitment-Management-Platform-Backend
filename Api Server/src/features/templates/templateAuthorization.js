@@ -53,7 +53,7 @@ exports.authGetTemplate = async (req, res, next) => {
     next();
 };
 
-exports.authGetOfferDetails = async (req, res, next) => {
+exports.authOfferDetails = async (req, res, next) => {
     if(!(await CandidateAPIAuthorization.candidatesBelongsToRecruiterOrCompany(req.params.jobId, [req.params.seekerId], req.userId))) {
         return res.status(403).json({ message: 'Unauthorized Access!' });
     }

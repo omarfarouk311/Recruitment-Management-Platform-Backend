@@ -1,4 +1,5 @@
 const { body, param, query } = require('express-validator');
+const { HelperQuerySet } = require('./templateModel');
 
 // Helper function to validate placeholders
 function validatePlaceholders(value) {
@@ -70,6 +71,45 @@ const seekerId = param('seekerId')
     .isInt({ gt: 0 })
     .withMessage('Seeker ID must be a positive integer');
 
+
+const placeholders = body('placeholders')
+    .exists({ checkFalsy: true })
+    .withMessage('Placeholders is required')
+    .isObject()
+    .withMessage('Placeholders must be a JSON object')
+    .custom(async (value, { req }) => {
+        const templateId = req.body.templateId;
+        if (!templateId) {
+            throw new Error('Template ID is required to validate placeholders');
+        }
+        try {
+            var jobOfferParams = await HelperQuerySet.getJobOfferPlaceholders(templateId);
+        } catch(error) {
+            if(error.status) { 
+                throw error;
+            }
+            console.log(`error in template vlaidation`, error)
+            throw new Error(`internal server error`);
+        }
+    
+        const missingKeys = jobOfferParams.filter(param => !Object.keys(value).includes(param));
+        if (missingKeys.length > 0) {
+            throw new Error(`Missing placeholders: ${missingKeys.join(', ')}`);
+        }
+
+        const extraKeys = Object.keys(value).filter(key => !jobOfferParams.includes(key));
+        if (extraKeys.length > 0) {
+            throw new Error(`Extra placeholders: ${extraKeys.join(', ')}`);
+        }
+        return true;
+    });
+
+const templateId = body('templateId')
+    .exists({ checkFalsy: true })
+    .withMessage('Template ID is required')
+    .isInt({ gt: 0 })
+    .withMessage('Template ID must be a positive integer');
+
 exports.validateGetAllTemplates = [
     sortBy,
     page,
@@ -94,3 +134,11 @@ exports.validateGetOfferDetails = [
     jobId,
     seekerId
 ];
+
+
+exports.validateOfferDetails = [
+    placeholders,
+    jobId,
+    seekerId, 
+    templateId
+]
