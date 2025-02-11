@@ -1,6 +1,6 @@
 process.env.TZ = 'UTC';
 const express = require('express');
-const { port } = require('../config/config');
+const { port, role } = require('../config/config');
 const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware');
 const { minioConnect } = require('../config/MinIO');
 const candidateRoutes = require('./features/candidates/candidateRoutes');
@@ -12,32 +12,28 @@ const assessmentRoutes = require('./features/assessments/assessmentRoutes');
 const recruiterRoutes = require('./features/recruiters/recruiterRoutes');
 const jobRoutes = require('./features/jobs/jobRoutes')
 const invitationRoutes = require('./features/invitations/invitationRoutes');
-const { role } = require('../config/config')
-const templatesRouter = require('./features/templates/templateRoutes');
+const templatesRoutes = require('./features/templates/templateRoutes');
 const app = express();
-
 
 
 minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 2;
+    req.userId = 1;
     req.userRole = role.recruiter;
     next();
-})
+});
 
 app.use(express.json());
 
-app.use('/assessments',assessmentRoutes)
-
-app.use("/templates",templatesRouter);
-
-app.use('/jobs', jobRoutes)
+app.use('/assessments', assessmentRoutes)
+app.use('/templates', templatesRoutes);
+app.use('/jobs', jobRoutes);
 app.use('/recruitment_processes', recruitment_processRoutes);
 app.use('/candidates', candidateRoutes);
 app.use('/reviews', reviewRoutes);
-app.use('/recruiters', recruiterRoutes)
+app.use('/recruiters', recruiterRoutes);
 app.use('/logs', logRoutes);
 app.use('/companies', companyRoutes);
 app.use('/invitations', invitationRoutes);

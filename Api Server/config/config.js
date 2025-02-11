@@ -9,12 +9,13 @@ module.exports = {
     db_port: process.env.DB_PORT,
     db_name: process.env.DB_NAME,
     port: process.env.PORT || 3000,
-    logs_topic: process.env.KAFKA_LOGS,
-    cv_parsing_topic: process.env.KAFKA_CV_PARSING,
-    job_parsing_topic: process.env.KAFKA_JOB_PARSING,
-    cv_embedding: process.env.KAFKA_CV_EMBEDDING_GENERATION,
-    job_embedding_topic: process.env.KAFKA_JOB_EMBEDDING_GENERATION,
-    profile_embedding_topic: process.env.KAFKA_PROFILE_EMBEDDING_GENERATION,
+    logs_topic: 'logs',
+    cv_parsing_topic: 'cv_parsing',
+    job_parsing_topic: 'job_parsing',
+    cv_embedding_topic: 'cv_embedding_generation',
+    job_embedding_topic: 'job_embedding_generation',
+    profile_embedding_topic: 'profile_embedding_generation',
+    emails_topic: 'emails',
     brokers: [process.env.KAFKA_BROKER1, process.env.KAFKA_BROKER2],
     minio_user: process.env.MINIO_USER,
     minio_password: process.env.MINIO_PASSWORD,
@@ -44,10 +45,9 @@ module.exports = {
         create_job: 11,
         close_job: 12,
         remove_template: 13,
-        update_template: 14
+        update_template: 14,
+        send_invitation: 15
     },
-        
-   
     minNameLength: 1,
     maxOverviewLength: 500,
     minOverviewLength: 1,
