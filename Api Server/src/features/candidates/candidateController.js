@@ -1,4 +1,5 @@
 const candidateService = require('./candidateService');
+const { role } = require('../../../config/config');
 
 exports.getCandidatesForJob = async (req, res, next) => {
     try {
@@ -57,7 +58,8 @@ exports.MakeDecisionToCandidates = async (req, res, next) => {
             req.body.candidates,
             req.body.jobId, 
             req.body.decision,
-            req.userId
+            req.userId,
+            req.userRole
         );
         res.status(200).json(result || { message: 'Decision made successfully' });
     } catch (error) {
@@ -73,6 +75,33 @@ exports.unassignCandidatesFromRecruiter = async (req, res, next) => {
             req.userId
         );
         res.status(200).json({ message: 'Candidates unassigned successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getCandidateLocations = async (req, res, next) => {
+    try {
+        let locations;
+        if (req.query.jobId) {
+            locations = await candidateService.getCandidateLocationsForJob(req.query.jobId);
+        }
+        else if (req.userRole === role.recruiter) {
+            locations = await candidateService.getCandidateLocationsForRecruiter(req.userId);
+        } else {
+            res.status(400).json({ message: 'Either recruiterId or jobId must be provided' });
+            return;
+        }
+        res.status(200).json(locations);
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getPhaseTypes = async (req, res, next) => {
+    try {
+        const phaseTypes = await candidateService.getPhaseTypes();
+        res.status(200).json(phaseTypes);
     } catch (error) {
         next(error);
     }

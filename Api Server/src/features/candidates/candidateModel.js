@@ -183,14 +183,11 @@ class CandidateModel {
                 SET assigned_candidates_cnt = $1
                 WHERE id = $2;`, [assigned_candidates_cnt, recruiterId]);
 
-            await client.query('COMMIT;');
-            return {assigned_candidates_cnt: assigned_candidates_cnt, updated_candidates: updated_candidates.rows};
+            
+            return {assigned_candidates_cnt: assigned_candidates_cnt, updated_candidates: updated_candidates.rows, client: client};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
-        
-        } finally {
-            client.release();
         }
     }
 
@@ -206,7 +203,8 @@ class CandidateModel {
                         rph.name as next_phase_name,
                         rp.num_of_phases as num_of_phases,
                         candidates.seeker_id as seeker_id,
-                        candidates.phase as phase_num, rph.deadline as deadline
+                        candidates.phase as phase_num, rph.deadline as deadline,
+                        rpt.name as phase_type
                     FROM (
                         SELECT 
                             phase, seeker_id,
@@ -217,6 +215,7 @@ class CandidateModel {
                     ) AS candidates
                     JOIN recruitment_process rp ON rp.id = candidates.recruitment_process_id
                     LEFT JOIN recruitment_phase rph ON rph.recruitment_process_id = rp.id AND rph.phase_num = candidates.phase + 1
+                    LEFT JOIN phase_type rpt ON rpt.id = rph.type 
                 `, [seekerIds, jobId]);
 
                 let inLastPhase = []
@@ -226,13 +225,19 @@ class CandidateModel {
                         inLastPhase.push(result.seeker_id);
                         return undefined;
                     }
-                    return {seekerId: result.seeker_id, nextPhaseName: result.next_phase_name, phase_num: result.phase_num};
+                    let deadline = new Date();
+                    deadline.setDate(deadline.getDate() + (result.deadline || 0));
+                    return {
+                        deadline: result.deadline? deadline.toISOString(): undefined, 
+                        seekerId: result.seeker_id, 
+                        nextPhaseName: result.next_phase_name, 
+                        phase_num: result.phase_num, 
+                        phase_type: result.phase_type
+                    };
                 });
                 updatedCandidates = updatedCandidates.filter((value) => value != undefined);
 
                 if(updatedCandidates.length > 0) {
-                    let deadline = new Date();
-                    deadline.setDate(deadline.getDate() + results[0].deadline);
                     let validSeekerIds = updatedCandidates.map((value) => value.seekerId);
                     await client.query(`
                         UPDATE recruiter
@@ -242,22 +247,25 @@ class CandidateModel {
                             WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
                         )
                     `, [validSeekerIds, jobId]);
-
+                    
                     let update_query = `
-                        UPDATE candidates
-                        SET phase = phase + 1, phase_deadline = $3, recruiter_id = NULL
-                        WHERE seeker_id = ANY($1) AND job_id = $2;
-                    `
-                    await client.query(update_query, [validSeekerIds, jobId, deadline]);
+                    UPDATE candidates
+                    SET phase = phase + 1, 
+                    phase_deadline = CASE seeker_id
+                            ${updatedCandidates.map(value => `WHEN ${value.seekerId} THEN ${value.deadline? `TIMESTAMP '${value.deadline}'`: `NULL::timestamp`}`).join(' ') + ' ELSE NULL::timestamp'}
+                        END, 
+                    recruiter_id = NULL
+                    WHERE seeker_id = ANY($1) AND job_id = $2;
+                    `;
+                    
+                    await client.query(update_query, [validSeekerIds, jobId]);
                 }
 
-                await client.query('COMMIT;');
-                return {invalidCandidates: inLastPhase, updatedCandidates: updatedCandidates}
+                
+                return {invalidCandidates: inLastPhase, updatedCandidates: updatedCandidates, client: client}
             } catch(error) {
                 await client.query('ROLLBACK;');
                 throw error;
-            } finally {
-                client.release();
             }
         }
         else if (decision == 0) {
@@ -309,19 +317,17 @@ class CandidateModel {
 
 
                 // delete candidates from candidates table
-                let res = await client.query(`
+                let res = (await client.query(`
                     DELETE FROM candidates
                     WHERE seeker_id = ANY($1) AND job_id = $2
-                    RETURNING seeker_id, phase_num, 0 as decision;
-                `, [seekerIds, jobId]);
+                    RETURNING seeker_id as "seekerId", phase as phase_num, 0 as decision;
+                `, [seekerIds, jobId])).rows;
 
-                await client.query('COMMIT;');
-                return res;
+                
+                return {updatedCandidates: res, client: client};
             } catch (error) {
                 await client.query('ROLLBACK;');
                 throw error;
-            } finally {
-                client.release();
             }
         }
     }
@@ -360,9 +366,9 @@ class CandidateModel {
                     SELECT COUNT(*) 
                     FROM candidates 
                     WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
-                ) RETURNING assigned_candidates_cnt;
+                ) RETURNING assigned_candidates_cnt, recruiter.name as recruiter_name;
             `, [seekerIds, jobId]);
-            assigned_candidates_cnt = assigned_candidates_cnt.rows[0].assigned_candidates_cnt;
+            let {assigned_candidates_count , recruiter_name} = assigned_candidates_cnt.rows[0];
 
             await client.query(`
                 UPDATE candidates
@@ -370,13 +376,11 @@ class CandidateModel {
                 WHERE seeker_id = ANY($1) AND job_id = $2;
             `, [seekerIds, jobId]);
 
-            await client.query('COMMIT;');
-            return {assigned_candidates_cnt: assigned_candidates_cnt, seekerIds: seekerIds};
+            
+            return {assigned_candidates_cnt: assigned_candidates_count, recruiter_name: recruiter_name, seekerIds: seekerIds, client: client};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
-        } finally {
-            client.release();
         }
     }
 
@@ -392,12 +396,12 @@ class CandidateModel {
 
     static async getRecruiterName(recruiterId) {
         let results = await ReadPool().query(`
-            SELECT name
+            SELECT name, company_id
             FROM recruiter
             WHERE id = $1;
         `, [recruiterId]);
 
-        return results.rows[0].name;
+        return results.rows[0];
     }
 
     static async getRecruitementPhases(jobId) {
@@ -412,7 +416,36 @@ class CandidateModel {
         
         return results.rows[0].phases;
     }
+
+    static async getCandidateLocationsForRecuriter(recruiterId){
+        const results = await ReadPool().query(
+            `SELECT ARRAY_AGG(DISTINCT job_seeker.country) AS "candidateLocations"
+             FROM candidates
+             JOIN job_seeker ON candidates.seeker_id = job_seeker.id
+             WHERE recruiter_id = $1;`, [recruiterId]);
+
+        return results.rows;
+    }
+
+    static async getCandidateLocationsForCompany(jobId){
+        const results = await ReadPool().query(
+            `SELECT ARRAY_AGG(DISTINCT job_seeker.country) AS "candidateLocations"
+             FROM candidates
+             JOIN job_seeker ON candidates.seeker_id = job_seeker.id
+             WHERE job_id = $1;`, [jobId]);
+
+        return results.rows;
+    }
+
+    static async getPhaseTypes() {
+        const results = await ReadPool().query(`
+            SELECT *
+            FROM phase_type`);
+
+        return results.rows;
+    }
 }
+
 
 
 class CandidateAPIAuthorization {
@@ -458,6 +491,9 @@ class CandidateAPIAuthorization {
         `, [jobId, seekerIds, userId, userId])).rows.length == seekerIds.length;
     }
 }
+
+    
+
 
 module.exports = { 
     CandidateModel,

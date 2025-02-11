@@ -1,11 +1,12 @@
 
 let primaryPool=require('../../../config/db')
 let replicaPool=require('../../../config/db')
+let {desc_order,asc_order}=require('../../../config/config')
 
 class RecruiterModel {
     
     constructor(id,company_id,name,assigned_candidates_cnt,department){
-        thid.id=id,
+        this.id=id,
         this.company_id=company_id
         this.name=name
         this.assigned_candidates_cnt=assigned_candidates_cnt
@@ -116,40 +117,6 @@ class RecruiterModel {
 
 
     }
-    static async sendInvitation(email,department,deadline,companyId){
-        const primary_DB=primaryPool.getWritePool()
-        try{
-
-            let currentDate=new Date()
-            let query=
-            `WITH usr as(
-             SELECT id as id
-             FROM Users
-             WHERE email=$1
-            )
-            
-            INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline)
-            VALUES ((SELECT COALESCE(id, NULL) FROM usr), $2, $3, $4, $5)
-            RETURNING recruiter_id
-            `
-            let recruiterValue=[email,companyId,department,currentDate,deadline]
-
-            let result=await primary_DB.query(query,recruiterValue)
-            if(result.rowCount==0){
-                let err=new Error();
-                err.msg="invitation has not sent successfully ,please try again"
-                err.status=500;
-                throw err;
-            }
-            
-           return true;
-
-        }catch(err){
-            console.log('err in sendInvitation model',err.message)
-            throw err;
-        }
-        
-    }
     static async getRecruiterByEmail(email){
         const replica_DB=replicaPool.getReadPool()
         try{
@@ -193,6 +160,78 @@ class RecruiterModel {
             throw err;
         }
     }
+
+    static async getJobOfferSent(recruiterId,jobTitle,sorted,page=1,limit){
+        let replica_DB=replicaPool.getReadPool()
+        try{
+    
+            let value=[recruiterId],cnt=1;
+          
+
+            let query=
+            `
+            WITH candidatesIdsJobIds as(
+            SELECT seeker_id as seeker_id,job_id as job_id,date_applied as date_applied
+            FROM Candidates
+            WHERE recruiter_id=$${cnt++} AND template_id IS NOT NULL)
+
+            SELECT Job_Seeker.name as candidateName,Job.title as jobTitle,candidatesIdsJobIds.date_applied as dateSent
+            FROM candidatesIdsJobIds
+            JOIN Job on candidatesIdsJobIds.job_id=Job.id
+            JOIN Job_Seeker on candidatesIdsJobIds.seeker_id=Job_Seeker.id`
+           if(jobTitle){
+            query+=` WHERE Job.title=$${cnt++}`
+            value.push(jobTitle)
+           }
+          
+           if(sorted==desc_order){
+           
+            query+=` ORDER BY candidatesIdsJobIds.date_applied DESC`
+           }
+           else{        // sort by date by default
+            query+=` ORDER BY candidatesIdsJobIds.date_applied ASC`
+           }
+           
+          
+            let offset=(page-1)*limit
+            query+=` OFFSET $${cnt++} LIMIT $${cnt++}`
+            
+            value.push(offset)
+            value.push(limit)
+            
+           let queryResult=await replica_DB.query(query,value)
+            return queryResult.rows
+
+        }catch(err){
+            console.log('err in getJobOfferSent model',err.message)
+            throw err;
+        }
+    }
+    static async getJobTitleList(recruiterId){
+        let replica_DB=replicaPool.getReadPool()
+
+        try{
+
+            let query=
+            `
+            SELECT Job.title as jobTitle
+            FROM (
+            SELECT DISTINCT job_id
+            FROM Candidates
+            WHERE recruiter_id=$1) as t1
+            JOIN Job on t1.job_id=Job.id
+            `
+            let value=[recruiterId]
+            let queryResult=await replica_DB.query(query,value)
+            return queryResult.rows
+
+        }catch(err){
+            console.log('err in getJobTitleList model',err.message)
+            throw err;
+        }
+    }
 }
+
+   
 
 module.exports=RecruiterModel;

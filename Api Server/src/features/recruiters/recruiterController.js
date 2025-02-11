@@ -40,24 +40,6 @@ module.exports.deleteRecruiterController=async(req,res,next)=>{
 
 }
 
-module.exports.sendInvitationController=async(req,res,next)=>{
-
-    try{
-        
-        const {email,department,deadline}=req.body 
-     
-        await recruiterService.sendInvitationService(email,department,deadline,req.userId)
-        res.status(200).json({
-            success:true,
-            message:"Invitation sent successfully"
-        })
-
-    }catch(err){
-        console.log('err in sendInvitationController',err.message)
-        next(err)
-    }
-}
-
 module.exports.getUniquetDepartmentsController=async(req,res,next)=>{
     try{
         let result=await recruiterService.getUniquetDepartmentsService(req.userId)
@@ -68,6 +50,41 @@ module.exports.getUniquetDepartmentsController=async(req,res,next)=>{
 
     }catch(err){
         console.log("err in getUniquetDepartmentsController")
+        next(err)
+    }
+}
+
+module.exports.getJobOfferSentController=async(req,res,next)=>{
+    try{
+        let recruiterId=req.userId;
+        let jobTitle=req.query.jobTitle;
+        let sorted=req.query.sorted;
+        let page=req.query.page
+        let limit=config.pagination_limit
+        let result=await recruiterService.getJobOfferSentService(recruiterId,jobTitle,sorted,page,limit)
+
+        res.status(200).json({
+            success:true,
+            jobOffers:result
+        })
+
+
+    }catch(err){
+        console.log("err in getJobOfferSentController")
+        next(err)
+    }
+}
+
+module.exports.getJobTitleList=async(req,res,next)=>{
+    try{
+        let recruiterId=req.userId;
+        let result=await recruiterService.getJobTitleListService(recruiterId)
+        res.status(200).json({
+            success:true,
+            jobTitles:result
+        })
+    }catch(err){
+        console.log("err in getJobTitleList")
         next(err)
     }
 }

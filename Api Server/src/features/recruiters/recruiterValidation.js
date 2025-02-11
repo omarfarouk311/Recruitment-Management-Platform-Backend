@@ -9,7 +9,7 @@ const validateName=()=>{
 }
 
 const validateSorted=()=>{
-    return query('sorted').optional().isInt().isIn(['1','2']).toInt().withMessage('sorted query paraemeter should be 1 or 2')
+    return query('sorted').optional().isInt().isIn(['-1','1']).toInt().withMessage('sorted query paraemeter should be 1 or -1')
 }
 
 const validateDepartment=()=>{
@@ -34,6 +34,17 @@ const validateDate=()=>{
     return body('deadline').notEmpty().withMessage('deadline is required in req body').isDate().withMessage('deadline should be valid date')
 }
 
+const validateJobTitle=()=>{
+    return query('jobTitle').optional().isAlphanumeric().withMessage('jobTitle query parameter should be between [a-z]/[A-Z]/[0-9]')
+}
+
+
+module.exports.validateJobOffer=[
+    validateJobTitle(),
+    validateSorted(),
+    validatePage(),
+]
+
 
 module.exports.validateInvitationData=[
     validateEmail(),
@@ -42,7 +53,7 @@ module.exports.validateInvitationData=[
 ]
 
 module.exports.validateRecruiterId=[
-  validateId()
+    validateId()
 ]
 
 
@@ -52,5 +63,6 @@ module.exports.validateParams=[
     validateDepartment(),
     validatePage(),
 ]
+
 
 
