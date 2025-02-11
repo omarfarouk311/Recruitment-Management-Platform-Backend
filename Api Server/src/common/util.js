@@ -106,6 +106,7 @@ exports.multipartParser = (mediaType) => {
                 const { mimeType, valueTruncated } = info;
 
                 if (mimeType !== 'application/json') {
+                    cancel = true;
                     const err = new Error(`Invalid mime type for ${name} field, it must be json`);
                     err.msg = err.message;
                     err.status = 400;
@@ -113,6 +114,7 @@ exports.multipartParser = (mediaType) => {
                 }
 
                 if (valueTruncated) {
+                    cancel = true
                     const err = new Error(`${name} field size exceeded the limit of ${fieldSizeLimit / 1024}kb`);
                     err.msg = err.message;
                     err.status = 400;
@@ -131,6 +133,7 @@ exports.multipartParser = (mediaType) => {
             });
 
             bb.on('fieldsLimit', () => {
+                cancel = true;
                 const err = new Error('only one field is allowed to be sent');
                 err.msg = err.message;
                 err.status = 400;
@@ -142,7 +145,6 @@ exports.multipartParser = (mediaType) => {
             });
 
             bb.on('finish', async () => {
-                console.log(image);
                 try {
                     if (!image) {
                         await client.removeObject(imagesBucketName, `${req.userRole}${req.userId}`);

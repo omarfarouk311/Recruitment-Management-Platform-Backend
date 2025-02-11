@@ -214,6 +214,8 @@ class Company {
         const client = await pool.connect();
 
         try {
+            await client.query('begin');
+
             // delete current locations and industries
             await client.query('delete from Company_Industry where company_id = $1', [companyId]);
             await client.query('delete from Company_Location where company_id = $1', [companyId]);
@@ -238,7 +240,6 @@ class Company {
                 `;
             const { rowCount } = await client.query(insertIndustries, [companyId, industries]);
             if (rowCount < industries.length) {
-                await client.query('rollback');
                 const err = new Error('Invalid industries array');
                 err.msg = 'one or more of the industries not found';
                 err.status = 400;
