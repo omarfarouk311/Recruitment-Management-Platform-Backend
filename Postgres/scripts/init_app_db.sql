@@ -23,8 +23,8 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-  has_image BOOLEAN NOT NULL
-  department text, --still want to index it
+  has_image BOOLEAN NOT NULL,
+  department text
 );
 
 CREATE TABLE Company (
@@ -76,8 +76,9 @@ CREATE TABLE Company_Invitations (
   recruiter_id int,
   company_id int,
   department text NOT NULL,
-  created_at date NOT NULL,
+  created_at TIMESTAMP NOT NULL,
   deadline TIMESTAMP NOT NULL,
+  status SMALLINT NOT NULL,
   PRIMARY KEY (recruiter_id, company_id)
 );
 
@@ -157,7 +158,7 @@ CREATE TABLE Job_Offer_Template (
   name Text NOT NULL,
   description Text NOT NULL,
   company_id int NOT NULL,
-  upadated_at date NOT NULL,
+  updated_at date NOT NULL,
   placeholders TEXT[] NOT NULL
 );
 
@@ -297,9 +298,11 @@ CREATE INDEX ON Candidate_History (country, city);
 
 CREATE INDEX ON Candidate_History (job_id);
 
-CREATE INDEX ON Company (size);
+CREATE INDEX ON Recruiter (company_id);
 
-CREATE INDEX ON Company (type);
+CREATE INDEX ON Recruiter (department);
+
+CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (rating);
 

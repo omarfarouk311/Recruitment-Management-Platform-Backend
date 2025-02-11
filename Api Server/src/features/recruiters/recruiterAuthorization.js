@@ -1,4 +1,5 @@
 const recruiterModel=require('./recruiterModel')
+const {role}=require('../../../config/config')
 
 module.exports.authorizeCompanyRecruiter=async(req,res,next)=>{  //check if company has authority to delete recruiter
 
@@ -44,4 +45,15 @@ module.exports.authorizeInvitationData=async(req,res,next)=>{
     }catch(err){
         next(err);
     }
+}
+
+module.exports.authorizeRecruiter=async(req,res,next)=>{
+     if(req.userRole!=role.recruiter){
+        let err=new Error();
+        err.msg="You are not authorized to do this action"
+        err.status=403
+        return next(err);
+     }else{
+        next();
+     }
 }

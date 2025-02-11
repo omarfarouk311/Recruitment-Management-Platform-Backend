@@ -9,6 +9,7 @@ module.exports = {
     db_port: process.env.DB_PORT,
     db_name: process.env.DB_NAME,
     port: process.env.PORT || 3000,
+    emails_topic: process.env.KAFKA_EMAILS,
     logs_topic: process.env.KAFKA_LOGS,
     cv_parsing_topic: process.env.KAFKA_CV_PARSING,
     job_parsing_topic: process.env.KAFKA_JOB_PARSING,
@@ -45,8 +46,12 @@ module.exports = {
         close_job: 12,
         update_job: 13,
         update_recruitment_process: 14,
-        modify_interview_date: 15
+        modify_interview_date: 15,
+        remove_template: 16,
+        update_template: 17
     },
+        
+   
     minNameLength: 1,
     maxOverviewLength: 500,
     minOverviewLength: 1,

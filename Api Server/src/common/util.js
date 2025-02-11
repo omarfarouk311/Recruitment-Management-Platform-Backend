@@ -4,11 +4,13 @@ const { client } = require('../../config/MinIO');
 const { imagesBucketName, cvsBucketName } = require('../../config/config');
 
 exports.validatePage = () => query('page')
-    .trim()
+    .isString()
+    .withMessage('Invalid page number, it must be a positive number')
     .notEmpty()
     .withMessage('page parameter must be passed as a query parameter')
+    .trim()
     .isInt({ min: 1, allow_leading_zeroes: false })
-    .withMessage("Invalid page number, it must be a positive number")
+    .withMessage('Invalid page number, it must be a positive number')
     .toInt();
 
 exports.handleValidationErrors = (req, res, next) => {
@@ -56,7 +58,7 @@ exports.multipartParser = (mediaType) => {
             });
 
             // parse expected file and upload it to the object store
-            let cancel = false;
+            let cancel = false, image = false;
             bb.on('file', async (name, file, info) => {
                 const { mimeType, filename } = info;
                 const metadata = {
@@ -66,6 +68,7 @@ exports.multipartParser = (mediaType) => {
 
                 // image
                 if (mediaType === 'image') {
+                    image = true;
                     const objectName = `${req.userRole}${req.userId}`;
 
                     if (mimeType !== 'image/png' && mimeType !== 'image/jpeg' && mimeType !== 'image/jpg') {
@@ -102,6 +105,7 @@ exports.multipartParser = (mediaType) => {
                 const { mimeType, valueTruncated } = info;
 
                 if (mimeType !== 'application/json') {
+                    cancel = true;
                     const err = new Error(`Invalid mime type for ${name} field, it must be json`);
                     err.msg = err.message;
                     err.status = 400;
@@ -109,6 +113,7 @@ exports.multipartParser = (mediaType) => {
                 }
 
                 if (valueTruncated) {
+                    cancel = true
                     const err = new Error(`${name} field size exceeded the limit of ${fieldSizeLimit / 1024}kb`);
                     err.msg = err.message;
                     err.status = 400;
@@ -127,6 +132,7 @@ exports.multipartParser = (mediaType) => {
             });
 
             bb.on('fieldsLimit', () => {
+                cancel = true;
                 const err = new Error('only one field is allowed to be sent');
                 err.msg = err.message;
                 err.status = 400;
@@ -137,7 +143,16 @@ exports.multipartParser = (mediaType) => {
                 handleError(req, next, err);
             });
 
-            bb.on('finish', () => {
+            bb.on('finish', async () => {
+                try {
+                    if (!image) {
+                        await client.removeObject(imagesBucketName, `${req.userRole}${req.userId}`);
+                    }
+                }
+                catch (err) {
+                    return next(err);
+                }
+
                 next();
             });
 
@@ -149,4 +164,10 @@ exports.multipartParser = (mediaType) => {
             handleError(req, next, err);
         }
     }
+};
+
+exports.getPhotoService = async (bucketName, objectName) => {
+    const { metaData, size } = await client.statObject(bucketName, objectName);
+    const stream = await client.getObject(bucketName, objectName);
+    return { metaData, size, stream };
 };

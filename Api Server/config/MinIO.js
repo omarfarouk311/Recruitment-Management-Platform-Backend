@@ -22,8 +22,8 @@ async function checkBucketExistence() {
             console.log(`${cvsBucketName} created successfully`);
         }
         else console.log(`${cvsBucketName} already exists`);
-    } catch (err) {
-        
+    } catch (error) {
+        console.log(error);
     }
 }
 
