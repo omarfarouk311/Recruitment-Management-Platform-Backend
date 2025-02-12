@@ -1,5 +1,7 @@
 const { getReadPool, getWritePool } = require('../../../config/db');
-const { role: { recruiter } } = require('../../../config/config');
+const { role: { recruiter }, logs_topic, emails_topic, action_types: { send_invitation }, action_types } = require('../../../config/config');
+const { produce } = require('../../common/kafka');
+const { v6: uuidv6 } = require('uuid');
 
 class Invitation {
     constructor(recruiterEmail, companyId, department, createdAt, deadline, status) {
@@ -80,31 +82,76 @@ class Invitation {
     }
 
     async create() {
-        try {
-            const pool = getWritePool();
-            const values = [this.recruiterEmail, this.companyId, this.department, this.createdAt, this.deadline, this.status];
-            const query =
-                `
-            INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline, status)
-            select id, $2, $3, $4, $5, $6
-            from users
-            where email = $1
-            `;
+        const pool = getWritePool();
+        let values = [];
+        const client = await pool.connect();
 
-            const { rowCount } = await pool.query(query, values)
+        try {
+            await client.query('begin');
+
+            const insertInvitation =
+                `
+                INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline, status)
+                select id, $2, $3, $4, $5, $6
+                from users
+                where email = $1
+                returning recruiter_id
+                `;
+            values = [this.recruiterEmail, this.companyId, this.department, this.createdAt, this.deadline, this.status];
+            const { rows, rowCount } = await client.query(insertInvitation, values);
             if (!rowCount) {
-                let err = new Error('recruiter not found while sending an invitation to him');
+                const err = new Error('recruiter not found while sending an invitation to him');
                 err.msg = 'recruiter not found';
                 err.status = 404;
                 throw err;
             }
+            const { recruiter_id: recruiterId } = rows[0];
+            console.log(recruiterId);
+
+            // retrieve the company name to add it to the produced message
+            const getCompanyName =
+                `
+                select name
+                from company
+                where id = $1
+                `;
+            values = [this.companyId];
+            const { rows: [{ name: companyName }] } = await client.query(getCompanyName, values);
+
+            // produced message into logs topic
+            const logData = {
+                id: uuidv6(),
+                performed_by: companyName,
+                company_id: this.companyId,
+                created_at: this.createdAt,
+                extra_data: {
+                    to: this.recruiterEmail
+                },
+                action_type: send_invitation
+            }
+            // produced message into emails topic
+            const emailData = {
+                type: 4,
+                recruiterId,
+                companyId: this.companyId,
+                department: this.department,
+                deadline: this.deadline
+            }
+            // produce messages into their topics
+            await Promise.all[produce(logData, logs_topic), produce(emailData, emails_topic)];
+
+            await client.query('commit');
         }
         catch (err) {
+            await client.query('rollback')
             if (err.code === '23505') {
                 err.msg = 'An invitation to this recruiter has already been sent';
                 err.status = 409;
             }
             throw err;
+        }
+        finally {
+            client.release();
         }
     }
 
@@ -124,15 +171,15 @@ class Invitation {
                 where recruiter_id = $1 and company_id = $2
                 `;
             values = [recruiterId, companyId];
-            const { rows: [invitation], rowCount: invitationsCount } = await client.query(selectInvitation, values)
+            const { rows: invitations, rowCount: invitationsCount } = await client.query(selectInvitation, values)
             if (!invitationsCount) {
                 const err = new Error('Invitation not found');
                 err.msg = err.message;
                 err.status = 404;
                 throw err;
             }
+            const invitation = invitations[0];
             if (invitation.deadline.getTime() < date.getTime() || invitation.status !== 2) {
-                console.log(invitation.deadline.getTime(), date.getTime());
                 const err = new Error('Invitation expired');
                 err.msg = err.message;
                 err.status = 400;
@@ -148,11 +195,10 @@ class Invitation {
                 returning department
                 `;
             values = [status, recruiterId, companyId];
-            const { rows } = await client.query(updateInvitation, values);
+            const { rows: [{ department }] } = await client.query(updateInvitation, values);
 
-            // link the recruiter to the company with the department in the invitation iin case of acception
+            // link the recruiter to the company with the department in the invitation in case of acception
             if (status) {
-                const { department } = rows[0];
                 const updateRecruiter =
                     `
                 update Recruiter
