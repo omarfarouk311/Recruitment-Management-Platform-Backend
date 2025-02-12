@@ -29,3 +29,4 @@ async function checkBucketExistence() {
 
 exports.minioConnect = checkBucketExistence;
 exports.client = minioClient;
+

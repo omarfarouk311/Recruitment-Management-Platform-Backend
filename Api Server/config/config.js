@@ -44,10 +44,15 @@ module.exports = {
         unassign_candidate: 10,
         create_job: 11,
         close_job: 12,
-        remove_template: 13,
-        update_template: 14,
-        send_invitation: 15
+        update_job: 13,
+        update_recruitment_process: 14,
+        modify_interview_date: 15,
+        remove_template: 16,
+        update_template: 17,
+        send_invitation: 18
     },
+        
+   
     minNameLength: 1,
     maxOverviewLength: 500,
     minOverviewLength: 1,
