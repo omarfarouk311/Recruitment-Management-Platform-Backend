@@ -13,7 +13,6 @@ const recruiterRoutes = require('./features/recruiters/recruiterRoutes');
 const jobRoutes = require('./features/jobs/jobRoutes')
 const invitationRoutes = require('./features/invitations/invitationRoutes');
 const interviewRoutes = require('./features/interviews/interviewRoutes')
-const { role } = require('../config/config')
 const templatesRoutes = require('./features/templates/templateRoutes');
 const app = express();
 
