@@ -18,7 +18,7 @@ minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId =4;
+    req.userId =1;
     req.userRole = role.recruiter;
     next()
 })

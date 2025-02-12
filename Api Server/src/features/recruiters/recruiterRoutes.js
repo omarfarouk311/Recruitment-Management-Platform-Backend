@@ -4,7 +4,7 @@ const router=express();
 const {handleValidationErrors}=require('../../common/util')
 
 const recruiterController=require('./recruiterController');
-const {authorizeCompanyRecruiter,authorizeInvitationData,authorizeRecruiter,authorizeCompany}=require('./recruiterAuthorization')
+const {authorizeCompanyRecruiter,authorizeRecruiter,authorizeCompany}=require('./recruiterAuthorization')
 const {validateParams,validateRecruiterId,validateInvitationData,validateJobOffer}=require('./recruiterValidation')
 
 
@@ -20,14 +20,7 @@ router.route('/:recruiterId')
                 authorizeCompany,
                 authorizeCompanyRecruiter,
                 recruiterController.deleteRecruiterController)
-        
 
-router.route('/invitation')
-        .post(validateInvitationData,
-              handleValidationErrors,
-              authorizeCompany,
-              authorizeInvitationData,
-              recruiterController.sendInvitationController)
 
 router.route('/departments')
         .get(authorizeCompany,

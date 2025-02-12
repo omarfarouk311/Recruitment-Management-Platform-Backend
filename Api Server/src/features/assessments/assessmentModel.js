@@ -15,9 +15,23 @@ class assessmentsModel{
         this.correctAnswers = data.correctAnswers;
     }
 
-    static async save(assessmentData){
-        const primary_DB=primaryPool.getWritePool();
-        const client=await primary_DB.connect();  // to open a connection to the database and do not close it until the transaction is done
+    static async getCompanyName(companyId,client){
+        try{
+
+            let query=`SELECT name from Company WHERE id=$1`
+            let value=[companyId]
+            let companyName=await client.query(query,value)
+             
+            return companyName.rows[0].name
+
+        }catch(err){
+            console.log("err in getCompanyName model",err.message)
+            throw err;
+        }
+    }
+
+    static async save(assessmentData,client){
+       
         
         try{
             
@@ -37,9 +51,6 @@ class assessmentsModel{
                 assessmentData.jobTitle,
                 assessmentData.numberOfQuestions];
 
-
- 
-            await client.query('BEGIN');  // begin the transaction
            
             const assessmentResult = await client.query(assessmentQuery,assessmentvalues); 
             const assessmentId = assessmentResult.rows[0].id;
@@ -65,18 +76,14 @@ class assessmentsModel{
                 }
             })
 
-            await client.query('COMMIT');
             return assessmentResult.rows[0];
 
         }catch(err){
             console.log("Error in addAssessmentModel", err.message)
-            await client.query('ROLLBACK'); // rollback the transaction in case of error
             err.msg="error during saving the assessment,please try again"
             err.status=500
             throw err;
             
-        }finally{
-            client.release();  // release the connection to the pool
         }
     }
 
@@ -229,7 +236,7 @@ class assessmentsModel{
 
     }
 
-    static async delete(assessmentID){
+    static async delete(assessmentID,client){
         try{
             const primary_DB=primaryPool.getWritePool();
 

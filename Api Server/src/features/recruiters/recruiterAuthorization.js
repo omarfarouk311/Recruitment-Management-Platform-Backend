@@ -24,22 +24,6 @@ module.exports.authorizeCompanyRecruiter=async(req,res,next)=>{  //check if comp
 
 }
 
-module.exports.authorizeInvitationData=async(req,res,next)=>{
-    try{
-        let {email}=req.body
-
-        let checkRecruiter=await recruiterModel.getRecruiterByEmail(email)
-        if(!checkRecruiter){
-           let err=new Error();
-           err.msg="No recruiter with this email"
-           err.status=404
-          throw err;
-        }
-        next()
-    }catch(err){
-        next(err);
-    }
-}
 
 module.exports.authorizeRecruiter=async(req,res,next)=>{
      if(req.userRole!=role.recruiter){
