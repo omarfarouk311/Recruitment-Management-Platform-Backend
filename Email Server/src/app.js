@@ -12,11 +12,10 @@ const mailjet = require('../config/mailjet');
     await consumer.run({
         autoCommit: false,
         eachMessage: async ({ topic, partition, message }) => {
-            let {type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department} = JSON.parse(message.value);
+            let { type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department } = JSON.parse(message.value);
             try {
                 if (deadline) {
                     deadline = new Date(deadline).toUTCString();
-                    
                 }
 
                 let email

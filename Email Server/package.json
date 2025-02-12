@@ -2,7 +2,6 @@
   "name": "email-server",
   "version": "1.0.0",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./src/app.js"
@@ -14,7 +13,7 @@
     "dotenv": "^16.4.7",
     "kafkajs": "^2.2.4",
     "node-mailjet": "^6.0.6",
-    "pg": "^8.13.1"
+    "pg": "^8.13.2"
   },
   "description": ""
 }

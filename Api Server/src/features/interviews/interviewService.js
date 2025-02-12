@@ -1,7 +1,7 @@
 const interviewModel = require('./interviewModel')
 const Pool = require('../../../config/db')
 const Kafka = require('../../common/kafka')
-const { action_types, logs_topic } = require('../../../config/config')
+const { action_types, logs_topic, emails_topic } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 
 
@@ -20,7 +20,7 @@ module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timest
         await client.query('BEGIN');
         await interviewModel.modifyInterviewDate(jobId, seekerId, timestamp, client);
         const {name: recruiterName, company_id: companyId} = await interviewModel.getRecruiterNameAndCompanyId(recruiterId)
-        await Kafka.produce({
+        const logs =  Kafka.produce({
             id: uuid(),
             performed_by: recruiterName,
             company_id: companyId,
@@ -28,8 +28,15 @@ module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timest
             action_type: action_types.modify_interview_date,
             created_at: new Date(),
         }, logs_topic)
+        const dateUpdate = Kafka.produce({
+            type: 2,
+            jobId: jobId,
+            companyId: companyId,
+            jobSeeker: seekerId,
+            deadline: timestamp
+        }, emails_topic)
+        await Promise.all([logs, dateUpdate])
         console.log('ack from kafka');
-        // produce to mailjet topic using the template
         await client.query('COMMIT');
         return {message: 'Interview date modified successfully'}
 
