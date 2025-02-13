@@ -23,9 +23,9 @@ module.exports.getRecruitersContoller = async (req, res, next) => {
 module.exports.deleteRecruiterController=async(req,res,next)=>{
     try{
         let recruiterId=req.params.recruiterId
+        let companyId=req.userId
 
-
-        await recruiterService.deleteRecruiterService(recruiterId)
+        await recruiterService.deleteRecruiterService(companyId,recruiterId)
 
         return res.status(200).json({
             success:true,
@@ -39,6 +39,7 @@ module.exports.deleteRecruiterController=async(req,res,next)=>{
 
 
 }
+
 
 module.exports.getUniquetDepartmentsController=async(req,res,next)=>{
     try{
@@ -86,5 +87,55 @@ module.exports.getJobTitleList=async(req,res,next)=>{
     }catch(err){
         console.log("err in getJobTitleList")
         next(err)
+    }
+}
+
+module.exports.getRecruiterDataController=async(req,res,next)=>{
+    try{
+
+        let recruiteId=req.userId
+        let result=await recruiterService.getRecruiterDataService(recruiteId);
+      
+        res.status(200).json({
+            success:true,
+            recruiterData:result
+        })
+
+    }catch(err){
+        console.log("err in getRecruiterDataController")
+        next(err)
+    }
+}
+
+module.exports.getProfilePicController=async(req,res,next)=>{
+
+    try {
+        let recruiterId=req.userId
+        let recruiterRole=req.userRole
+
+        const {
+            metaData: { 'content-type': contentType, filename: fileName },
+            size,
+            stream
+        } = await getProfilePicService(recruiterId, recruiterRole); // once the object return the await will finish but the stream will not
+                                                                                // be fully read as it came in chunks and will resond it as soon as chunk came from the readable stream
+
+        res.header({
+            'Content-Type': contentType,
+            'Content-Length': size,
+            'Content-Disposition': `inline; filename = ${fileName}` // inline to display the image not download it
+        });
+
+        stream.on('error', (err) => next(err));
+
+        stream.pipe(res);
+    }
+    catch (err) {
+        if (err.code === 'NotFound') {
+            err.msg = 'Company photo not found';
+            err.status = 404;
+            return next(err);
+        }
+        next(err);
     }
 }

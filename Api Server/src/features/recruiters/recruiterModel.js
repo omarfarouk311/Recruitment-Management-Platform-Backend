@@ -36,17 +36,17 @@ class RecruiterModel {
          values.push(department)
         }
       
-        if(sorted==1|| sorted==NULL){
-            query+=` ORDER BY assigned_candidates_cnt ASC` 
-        }
-        if(sorted==-1){
+        if(sorted==desc_order){
             query+=` ORDER BY assigned_candidates_cnt DESC`
+        }
+        else{
+            query+=` ORDER BY assigned_candidates_cnt ASC`
         }
         
        let offset=(page-1)*limit
        query+=` offset ${offset} limit ${limit}`
 
-       console.log(query)
+
        let queryResult=await replica_DB.query(query,values)
        let result=queryResult.rows
        return result
@@ -56,9 +56,7 @@ class RecruiterModel {
       }
     }
 
-    static async deleteRecruiter(recruiterId){
-        const primary_DB=primaryPool.getWritePool()
-        const client=await primary_DB.connect()
+    static async deleteRecruiter(recruiterId,client){
         try{
            
             let updateRecruiterQuery=
@@ -75,20 +73,31 @@ class RecruiterModel {
 
             let updateQueryValue=[recruiterId]
 
-            await client.query('BEGIN')
+           
 
             await client.query(updateRecruiterQuery,updateRecruiterValue)
             await client.query(updateCandidateTable,updateQueryValue)
 
-            await client.query('COMMIT')
             return true;
 
         }catch(err){
-            client.query('ROLLBACK')
             console.log("err in delete recruiter model",err.message)
             throw err;
-        }finally{
-            client.release()
+        }
+    }
+
+    static async getCompanyName(companyId,client){
+        try{
+
+            let query=`SELECT name from Company WHERE id=$1`
+            let value=[companyId]
+            let companyName=await client.query(query,value)
+             
+            return companyName.rows[0].name
+
+        }catch(err){
+            console.log("err in getCompanyName model",err.message)
+            throw err;
         }
     }
 
@@ -147,7 +156,7 @@ class RecruiterModel {
         try{
 
             let query=
-            `SELECT DISTINCT department
+            `SELECT DISTINCT department as departments
             FROM Recruiter
             WHERE company_id=$1`
 
@@ -175,7 +184,7 @@ class RecruiterModel {
             FROM Candidates
             WHERE recruiter_id=$${cnt++} AND template_id IS NOT NULL)
 
-            SELECT Job_Seeker.name as candidateName,Job.title as jobTitle,candidatesIdsJobIds.date_applied as dateSent
+            SELECT Job_Seeker.name as candidateName,Job_Seeker.id,Job.title as jobTitle,candidatesIdsJobIds.date_applied as dateSent
             FROM candidatesIdsJobIds
             JOIN Job on candidatesIdsJobIds.job_id=Job.id
             JOIN Job_Seeker on candidatesIdsJobIds.seeker_id=Job_Seeker.id`
@@ -214,7 +223,7 @@ class RecruiterModel {
 
             let query=
             `
-            SELECT Job.title as jobTitle
+            SELECT Job.title as Titles,Job.id as id
             FROM (
             SELECT DISTINCT job_id
             FROM Candidates
@@ -227,6 +236,31 @@ class RecruiterModel {
 
         }catch(err){
             console.log('err in getJobTitleList model',err.message)
+            throw err;
+        }
+    }
+    static async getRecruiterData(recruiteId){
+        let replica_DB=replicaPool.getReadPool()
+        try{
+            let query=
+            `
+            SELECT t1.name as recruiterName,Company.name as companyName,Company_Location.city as companyCity,
+            Company_Location.country as companyCountry,t1.department as recruiterDepartment,t1.has_image as has_image
+            FROM(
+            SELECT id,company_id,name,department,has_image
+            FROM Recruiter
+            WHERE id=$1) as t1
+            JOIN Company ON Company.id=t1.company_id
+            JOIN Company_Location ON Company.id=Company_Location.company_id
+            `
+
+            let value=[recruiteId]
+            let queryResult=await replica_DB.query(query,value)
+           
+            return queryResult.rows[0];
+
+        }catch(err){
+            console.log('err in getRecruiterData model',err.message)
             throw err;
         }
     }
