@@ -63,7 +63,8 @@ CREATE TABLE Skills (
 );
 
 CREATE TABLE Education (
-  user_id int PRIMARY KEY,
+  id serial PRIMARY KEY,
+  user_id int,
   school_name TEXT NOT NULL,
   field TEXT NOT NULL,
   degree TEXT NOT NULL,
@@ -95,6 +96,7 @@ CREATE TABLE Candidates (
   template_id INTEGER,
   placeholders_params JSON,
   recruitment_process_id int NOT NULL,
+  assessment_deadline TIMESTAMP,
   PRIMARY KEY (job_id, seeker_id)
 );
 
@@ -110,12 +112,13 @@ CREATE TABLE Job (
   city TEXT,
   remote BOOLEAN NOT NULL,
   applied_cnt smallint NOT NULL,
-  closed BOOLEAN NOT NULL
+  closed BOOLEAN NOT NULL,
+  applied_cnt_limit smallint NOT NULL
 );
 
 CREATE TABLE Job_Embedding (
   job_id int PRIMARY KEY,
-  embedding vector(300) NOT NULL
+  embedding vector(768) NOT NULL
 );
 
 CREATE TABLE User_Skills (
@@ -125,6 +128,7 @@ CREATE TABLE User_Skills (
 );
 
 CREATE TABLE User_Experience (
+  id serial PRIMARY KEY,
   user_id int NOT NULL,
   company_name text NOT NULL,
   start_date TEXT,
@@ -145,7 +149,7 @@ CREATE TABLE CV (
 
 CREATE TABLE CV_Embedding (
   cv_id int PRIMARY KEY,
-  vector vector(300) NOT NULL
+  vector vector(768) NOT NULL
 );
 
 CREATE TABLE Industry (
@@ -221,6 +225,7 @@ CREATE TABLE Candidate_History (
 
 CREATE TABLE Questions (
   id serial PRIMARY KEY,
+  question_num smallint NOT NULL,
   assessment_id int NOT NULL,
   question text NOT NULL,
   answers text[] NOT NULL,
@@ -228,8 +233,8 @@ CREATE TABLE Questions (
 );
 
 CREATE TABLE Job_Seeker_Embeddings (
-  seeker_id int,
-  embedding vector(300) NOT NULL
+  seeker_id int PRIMARY KEY,
+  embedding vector(768) NOT NULL
 );
 
 CREATE TABLE CV_Keywords (
@@ -241,7 +246,8 @@ CREATE TABLE CV_Keywords (
 CREATE TABLE Recommendations (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
-  similarity_score float NOT NULL
+  similarity_score float NOT NULL,
+  PRIMARY KEY (seeker_id, job_id)
 ) PARTITION BY RANGE (seeker_id);
 
 CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FROM (1) TO (10001);
@@ -363,8 +369,6 @@ CREATE INDEX ON Logs (company_id, performed_by);
 CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
-
-ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
