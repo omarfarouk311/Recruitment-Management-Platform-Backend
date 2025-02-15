@@ -22,14 +22,14 @@ minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 3;
+    req.userId = 2;
     req.userRole = role.recruiter;
     next()
 })
 
 app.use(express.json());
 
-app.use('/assessments', assessmentRoutes)
+app.use('/assessments', assessmentRoutes);
 app.use('/templates', templatesRoutes);
 app.use('/jobs', jobRoutes);
 app.use('/recruitment_processes', recruitment_processRoutes);
@@ -38,7 +38,7 @@ app.use('/reviews', reviewRoutes);
 app.use('/recruiters', recruiterRoutes);
 app.use('/logs', logRoutes);
 app.use('/companies', companyRoutes);
-app.use('/interviews', interviewRoutes)
+app.use('/interviews', interviewRoutes);
 app.use('/invitations', invitationRoutes);
 app.use('/seekers', seekerRoutes);
 

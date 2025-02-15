@@ -220,6 +220,9 @@ CREATE TABLE Candidate_History (
   country text,
   city text,
   remote BOOLEAN NOT NULL,
+  template_description TEXT,
+  placeholders_params JSON,
+  last_status_update date NOT NULL,
   PRIMARY KEY (seeker_id, job_id)
 );
 
