@@ -55,6 +55,34 @@ class JobOfferModel {
         const {rows} = await readPool.query(query, params);
         return rows;
     }
+
+    static async getJobOffer(userId, jobId) {
+        const readPool = getReadPool();
+        let {rows} = await readPool.query(`
+            SELECT
+                j.description AS "offer", c.placeholders_params AS "placeholdersParams"
+            FROM candidates c
+            JOIN job_offer_template j ON c.template_id = j.id
+            WHERE c.seeker_id = $1 AND c.job_id = $2
+        `, [userId, jobId]);
+
+        if(!rows.length) {
+            rows = (await readPool.query(`
+                SELECT
+                    c.template_description AS "offer", c.placeholders_params AS "placeholdersParams"
+                FROM candidate_history c
+                WHERE c.seeker_id = $1 AND c.job_id = $2
+            `, [userId, jobId])).rows;
+        }
+
+        if (!rows.length) {
+            let error = new Error('Job offer not found');
+            error.msg = 'Job offer not found';
+            throw error;
+        }
+
+        return rows[0];
+    }
 }
 
 module.exports = {

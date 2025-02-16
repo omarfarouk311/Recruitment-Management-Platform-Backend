@@ -21,6 +21,8 @@ const sort = () => query('sort')
                     .isIn([constants.desc_order, constants.asc_order])
                     .withMessage('sort must be one of the following: -1 (descending), 1 (ascending)');
 
+const jobId = () => param('jobId').isInt({min: 1, max: 999999999}).withMessage('jobId must be an integer greater than 1');
+
 exports.getOffers = [
     validatePage(),
     companyId(),
@@ -28,4 +30,8 @@ exports.getOffers = [
     city(),
     status(),
     sort()
+]
+
+exports.jobOffer = [
+    jobId()
 ]

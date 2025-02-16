@@ -18,7 +18,12 @@ exports.getJobOffers = async (req, res, next) => {
 };
 
 exports.getJobOffer = async (req, res, next) => {
-    console.log('Not Implemented Yet');
+    try {
+        const jobOffer = await jobOfferService.getJobOffer(req.userId, req.params.jobId);
+        res.status(200).json(jobOffer);
+    } catch(error) {
+        next(error);
+    }
 }
 
 exports.replyToJobOffer = async (req, res, next) => {
