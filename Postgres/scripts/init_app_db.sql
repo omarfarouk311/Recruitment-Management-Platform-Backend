@@ -254,7 +254,7 @@ CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FRO
 
 CREATE TABLE Reviews (
   id serial PRIMARY KEY,
-  creator_id int NOT NULL,
+  creator_id int,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
@@ -266,10 +266,11 @@ CREATE TABLE Reviews (
 CREATE TABLE Report (
   id serial PRIMARY KEY,
   job_id int NOT NULL,
-  seeker_id int NOT NULL,
+  creator_id int,
   created_at timestamp NOT NULL,
   title text NOT NULL,
-  description text NOT NULL
+  description text NOT NULL,
+  UNIQUE (job_id, creator_id)
 );
 
 CREATE TABLE Action (
@@ -356,7 +357,7 @@ CREATE INDEX ON Reviews (created_at);
 
 CREATE INDEX ON Reviews (creator_id);
 
-CREATE INDEX ON Report (seeker_id);
+CREATE INDEX ON Report (creator_id);
 
 CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_name);
 
@@ -438,11 +439,11 @@ ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (seeker_id) REFERENCES Job_S
 
 ALTER TABLE Reviews ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE CASCADE;
 
-ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE SET NULL;
 
 ALTER TABLE Report ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 
-ALTER TABLE Report ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE SET NULL;
+ALTER TABLE Report ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE SET NULL;
 
 ALTER TABLE Assessment_Score ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 

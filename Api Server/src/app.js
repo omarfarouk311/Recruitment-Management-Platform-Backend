@@ -14,7 +14,7 @@ const jobRoutes = require('./features/jobs/jobRoutes')
 const invitationRoutes = require('./features/invitations/invitationRoutes');
 const interviewRoutes = require('./features/interviews/interviewRoutes')
 const templatesRoutes = require('./features/templates/templateRoutes');
-const seekerRoutes = require('./features/seekers/seekerRoutes')
+const reportRoutes = require('./features/reports/reportRoutes');
 const app = express();
 
 
@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use('/assessments', assessmentRoutes)
+app.use('/assessments', assessmentRoutes);
 app.use('/templates', templatesRoutes);
 app.use('/jobs', jobRoutes);
 app.use('/recruitment_processes', recruitment_processRoutes);
@@ -40,7 +40,7 @@ app.use('/logs', logRoutes);
 app.use('/companies', companyRoutes);
 app.use('/interviews', interviewRoutes)
 app.use('/invitations', invitationRoutes);
-app.use('/seekers', seekerRoutes);
+app.use('/reports', reportRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);
