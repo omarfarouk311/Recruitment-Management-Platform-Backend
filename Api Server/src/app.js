@@ -38,7 +38,7 @@ app.use('/reviews', reviewRoutes);
 app.use('/recruiters', recruiterRoutes);
 app.use('/logs', logRoutes);
 app.use('/companies', companyRoutes);
-app.use('/interviews', interviewRoutes)
+app.use('/interviews', interviewRoutes);
 app.use('/invitations', invitationRoutes);
 app.use('/reports', reportRoutes);
 
