@@ -13,6 +13,10 @@ router.route('/')
         handleValidationErrors,
         reportController.createReport
     )
+    .get(
+        reportAuthorization.authorizeReportCreation,
+        reportController.getReports
+    )
     .all(notAllowed);
 
 module.exports = router;

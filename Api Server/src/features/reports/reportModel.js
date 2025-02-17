@@ -1,4 +1,4 @@
-const { getWritePool } = require('../../../config/db');
+const { getWritePool, getReadPool } = require('../../../config/db');
 
 class Report {
     constructor(jobId, creatorId, createdAt, title, description) {
@@ -48,6 +48,25 @@ class Report {
         finally {
             client.release();
         }
+    }
+
+    static async getReports(userId) {
+        const pool = getReadPool();
+        const values = [userId];
+        const query =
+            `
+            select r.title, r.description, r.created_at as "createdAt", j.title as "jobTitle", c.name as "companyName" 
+            from (
+                select job_id, created_at, title, description
+                from report
+                where id = $1
+            ) r
+            join job j on r.job_id = j.id
+            join company c on j.company_id = c.id
+            `;
+
+        const { rows } = await pool.query(query, values);
+        return rows;
     }
 }
 

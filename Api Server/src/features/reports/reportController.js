@@ -11,3 +11,15 @@ exports.createReport = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getReports = async (req, res, next) => {
+    const { userId } = req;
+
+    try {
+        const reports = await reportService.getReports(userId);
+        res.status(200).json(reports);
+    }
+    catch (err) {
+        next(err);
+    }
+};
