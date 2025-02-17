@@ -25,7 +25,6 @@ module.exports = {
     candidate_status_accepted: 2,
     candidate_status_rejected: 3,
     pagination_limit: 10,
-    maxNameLength: 30,
     role: {
         jobSeeker: 'jobSeeker',
         company: 'company',
@@ -51,14 +50,15 @@ module.exports = {
         update_template: 17,
         send_invitation: 18
     },
-        
-   
+    maxNameLength: 30,
     minNameLength: 1,
-    maxOverviewLength: 500,
+    maxOverviewLength: 400,
     minOverviewLength: 1,
+    maxDescriptionLength: 400,
+    minDescriptionLength: 1,
     minYear: 1800,
     minCompanySize: 1,
-    maxCompanySize: 100000000,
+    maxCompanySize: 10000000,
     minIndustryLength: 1,
     maxIndustryLength: 50,
     minLocationLength: 1,
