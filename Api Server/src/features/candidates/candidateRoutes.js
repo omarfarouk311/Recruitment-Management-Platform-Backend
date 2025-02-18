@@ -56,4 +56,9 @@ router.get(
     candidateController.getPhaseTypes
 );
 
+router.get(
+    '/job-title-filter',
+    candidateController.getJobTitleFilter
+)
+
 module.exports = router;

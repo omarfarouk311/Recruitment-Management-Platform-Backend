@@ -10,8 +10,9 @@ exports.getCandidatesForJob = async (req, res, next) => {
                 phaseType: req.query.phaseType,
                 status: req.query.status,
             },
-            req.query.sortBy,
-            req.query.page
+            req.query.sortByRecommendation,
+            req.query.page,
+            req.query.sortByAssessmentScore
         );
         res.status(200).json(candidates);
     } catch (error) {
@@ -106,3 +107,12 @@ exports.getPhaseTypes = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getJobTitleFilter = async (req, res, next) => {
+    try {
+        const jobTitles = await candidateService.getJobTitleFilter(req.userId);
+        res.status(200).json(jobTitles);
+    } catch (error) {
+        next(error);
+    }
+}

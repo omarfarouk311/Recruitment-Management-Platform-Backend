@@ -3,9 +3,9 @@ const { pagination_limit, action_types, role } = require('../../../config/config
 const { produce } = require('../../common/kafka');
 const {v6: uuid} = require('uuid');
 
-exports.getCandidatesForJob = async (jobId, filters, sortBy, page) => {
+exports.getCandidatesForJob = async (jobId, filters, sortByRecommendation, page, sortByAssessmentScore) => {
     offset = (page - 1) * pagination_limit;
-    return await CandidateQueryset.getCandidatesForJob(jobId, filters, sortBy, pagination_limit, offset);
+    return await CandidateQueryset.getCandidatesForJob(jobId, filters, sortByRecommendation, pagination_limit, offset, sortByAssessmentScore);
 };
 
 exports.getCandidatesForRecruiter = async (recruiterId, simplified, filters, sortBy, page=1 ) => {
@@ -157,3 +157,7 @@ exports.getCandidateLocationsForJob = async (jobId) => {
 exports.getPhaseTypes = async () => {
     return await CandidateQueryset.getPhaseTypes();
 };
+
+exports.getJobTitleFilter = async (userId) => {
+    return await CandidateQueryset.getJobTitleFilter(userId);
+}

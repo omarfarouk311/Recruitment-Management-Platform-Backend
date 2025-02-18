@@ -4,48 +4,62 @@ const constants = require('../../../config/config');
 
 class CandidateModel {
 
-    static async getCandidatesForJob(jobId, filters, sortBy, limit, offset) {
+    static async getCandidatesForJob(jobId, filters, sortByRecommendation, limit, offset, sortByAssessmentScore) {
         let params = [jobId];
         let query;
         let index = 0;
         if (filters.status == constants.candidate_status_pending || !filters.status) {
             index+=2;
-            query = `
+            query = ` 
                 SELECT 
-                    job_seeker.id as job_seeker_id,
+                    job_seeker.id as seeker_id,
                     job_seeker.name as job_seeker_name,
                     rp.name as phase_name,
                     candidates.date_applied as date_applied,
                     job_seeker.country as candidate_country,
                     job_seeker.city as candidate_city,
                     recruiter.name as recruiter_name,
-                    assessment.score as score, assessment.total_score as total_score,
-                    DENSE_RANK() OVER (ORDER BY similarity_score DESC) AS rank
+                    CASE 
+                        WHEN 
+                            rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
+                        THEN 
+                            COALESCE(assessment.score, 0::smallint) 
+                        ELSE 
+                            assessment.score 
+                    END AS score, assessment.total_score as total_score,
+                    CASE WHEN rt.name = 'cv screening' THEN DENSE_RANK() OVER (ORDER BY similarity_score DESC) ELSE NULL END AS rank
                 FROM (
                     SELECT 
                         date_applied, 
                         seeker_id, phase, 
                         recruitment_process_id,
                         recruiter_id,
-                        similarity_score, job_id
+                        similarity_score, job_id,
+                        phase_deadline
                     FROM candidates
                     WHERE candidates.job_id = $1
                 ) AS candidates
                 JOIN job_seeker ON candidates.seeker_id = job_seeker.id
-                JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id
+                JOIN recruitment_phase rp ON 
+                    candidates.phase = rp.phase_num AND 
+                    candidates.recruitment_process_id = rp.recruitment_process_id
+                JOIN phase_type rt ON rp.type = rt.id
                 LEFT JOIN recruiter ON candidates.recruiter_id = recruiter.id 
-                LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.phase = assessment.phase_num AND candidates.job_id = assessment.job_id `;
+                LEFT JOIN assessment_score assessment ON 
+                    candidates.seeker_id = assessment.seeker_id AND 
+                    candidates.phase = assessment.phase_num AND 
+                    candidates.job_id = assessment.job_id `;
         }
         else {
             index += 3;
             query = `
             SELECT 
-            seeker_id, phase_name,
-            status, date_applied,
-            score, job_seeker.id as job_seeker_id,
-            job_seeker.name as job_seeker_name,
-            job_seeker.country as candidate_country,
-            job_seeker.city as candidate_city
+                seeker_id, phase_name,
+                status, date_applied,
+                score, job_seeker.id as job_seeker_id,
+                job_seeker.name as job_seeker_name,
+                job_seeker.country as candidate_country,
+                job_seeker.city as candidate_city
             FROM (
                 SELECT
                 job_id, seeker_id,
@@ -73,11 +87,20 @@ class CandidateModel {
                 params.push(filters.phaseType);
                 index++;
             }
-            if (sortBy == constants.desc_order) {
+            if (sortByRecommendation == constants.desc_order) {
                 query += `ORDER BY rank DESC `;
             }
-            else {
+            else if (sortByAssessmentScore == constants.desc_order) {
+                query += `ORDER BY score DESC `;
+            }
+            else if (sortByRecommendation == constants.asc_order) {
                 query += `ORDER BY rank ASC `;
+            }
+            else if (sortByAssessmentScore == constants.asc_order) {
+                query += `ORDER BY score ASC `;
+            }
+            else {
+                query += `ORDER BY candidates.seeker_id DESC `;
             }
         }
         else {
@@ -110,7 +133,15 @@ class CandidateModel {
             job_seeker.country as candidate_country,
             job_seeker.city as candidate_city,
             job.country as job_country,
-            job.city as job_city `;
+            job.city as job_city,
+            CASE 
+                WHEN 
+                    rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
+                THEN 
+                    COALESCE(assessment.score, 0::smallint) 
+                ELSE 
+                    assessment.score 
+            END AS score, assessment.total_score as total_score `;
         }
         query += `
         FROM (
@@ -118,13 +149,22 @@ class CandidateModel {
                 date_applied, 
                 seeker_id, 
                 job_id, phase, 
-                recruitment_process_id
+                recruitment_process_id, phase_deadline
             FROM candidates
             WHERE recruiter_id = $1
         ) AS candidates
         JOIN job_seeker ON candidates.seeker_id = job_seeker.id
         JOIN job ON candidates.job_id = job.id
         JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id `;
+        if (!simplified) {
+            query += `
+            JOIN phase_type rt ON rp.type = rt.id
+            LEFT JOIN assessment_score assessment ON
+                candidates.seeker_id = assessment.seeker_id AND
+                candidates.phase = assessment.phase_num AND
+                candidates.job_id = assessment.job_id `;
+        }
+
         if (Object.keys(filters).length > 0) {
             query += `WHERE 1=1 `;
         }
@@ -458,6 +498,16 @@ class CandidateModel {
             await client.query('ROLLBACK;');
             throw error;
         }
+    }
+
+    static async getJobTitleFilter(userId) {
+        let {rows} = await ReadPool().query(`
+            SELECT ARRAY_AGG(DISTINCT(title)) AS "jobTitle"
+            FROM candidates
+            JOIN job ON candidates.job_id = job.id
+            WHERE candidates.recruiter_id = $1
+        `, [userId]);
+        return rows[0];
     }
 }
 
