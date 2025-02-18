@@ -44,3 +44,7 @@ exports.replyToJobOffer = async (userId, jobId, status) => {
         client.release();
     }
 }
+
+exports.getCompanyNames = async (userId, status) => {
+    return await JobOfferModel.getCompanyNames(userId, status);
+};

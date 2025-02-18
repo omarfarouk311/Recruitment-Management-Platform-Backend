@@ -7,10 +7,10 @@ const jobOfferAuthorization = require('./jobOfferAuthorization')
 
 router.get('/', jobOfferValidation.getOffers, handleValidationErrors, jobOfferAuthorization.isJobSeeker, jobOfferController.getJobOffers);
 
+router.get('/company-names', jobOfferValidation.validateStatus, jobOfferController.getCompanyNames);
+
 router.get('/:jobId', jobOfferValidation.jobOffer, handleValidationErrors, jobOfferAuthorization.isJobSeeker, jobOfferController.getJobOffer);
 
 router.patch('/reply/:jobId', jobOfferValidation.replyToJobOffer, handleValidationErrors, jobOfferController.replyToJobOffer);
-
-router.get('/company-name', jobOfferController.getCompanyName);
 
 module.exports = router;

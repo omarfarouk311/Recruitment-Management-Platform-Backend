@@ -38,6 +38,11 @@ exports.replyToJobOffer = async (req, res, next) => {
     }
 }
 
-exports.getCompanyName = async (req, res, next) => {
-    console.log('Not Implemented Yet');
+exports.getCompanyNames = async (req, res, next) => {
+    try {
+        const companyName = await jobOfferService.getCompanyNames(req.userId, req.query.status);
+        res.status(200).json(companyName);
+    } catch(error) {
+        next(error);
+    }
 }

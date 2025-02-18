@@ -7,7 +7,7 @@ const mailjet = require('../config/mailjet');
 (async function () {
     const pool = getReadPool();
     await consumer.connect();
-    await consumer.subscribe({ topic: emails_topic, fromBeginning: false });
+    await consumer.subscribe({ topic: emails_topic, fromBeginning: true });
 
     await consumer.run({
         autoCommit: false,

@@ -42,3 +42,7 @@ exports.replyToJobOffer = [
     jobId(),
     jobOfferStatus()
 ]
+
+exports.validateStatus = [
+    status()
+]
