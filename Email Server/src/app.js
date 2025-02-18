@@ -7,7 +7,7 @@ const mailjet = require('../config/mailjet');
 (async function () {
     const pool = getReadPool();
     await consumer.connect();
-    await consumer.subscribe({ topic: emails_topic, fromBeginning: false });
+    await consumer.subscribe({ topic: emails_topic, fromBeginning: true });
 
     await consumer.run({
         autoCommit: false,
@@ -93,13 +93,24 @@ const mailjet = require('../config/mailjet');
                             jobSeeker
                         );
                     } else if( type == email_types.job_offer_acceptance ) {
-                        email = getJobAcceptanceEmail(
-                            companyName,
-                            companyEmail,
-                            jobSeekerData.name,
-                            jobSeekerData.email,
-                            jobTitle
-                        )
+                        if(rejected) {
+                            email = getJobRejectionEmail(
+                                companyName,
+                                companyEmail,
+                                jobSeekerData.name,
+                                jobSeekerData.email,
+                                jobTitle
+                            );
+                        }
+                        else {
+                            email = getJobAcceptanceEmail(
+                                companyName,
+                                companyEmail,
+                                jobSeekerData.name,
+                                jobSeekerData.email,
+                                jobTitle
+                            );
+                        }
                     }
 
                 }
@@ -350,7 +361,44 @@ const getJobAcceptanceEmail = (companyName, companyEmail, jobSeekerName, jobSeek
         <p>We are pleased to inform you that <strong>${jobSeekerName}</strong> has officially accepted the job offer for the <strong>${jobTitle}</strong> position at your company.</p>
         <p>You can now proceed with the necessary onboarding steps to ensure a smooth transition for <strong>${jobSeekerName}</strong>.</p>
         <p>You may contact <strong>${jobSeekerName}</strong> directly at <a href="mailto:${jobSeekerEmail}">${jobSeekerEmail}</a> for further communication.</p>
-        <p>Best regards,<br><strong>${platformName} Team</strong></p>`;
+        <p>Best regards,<br><strong>${senderName} Team</strong></p>`;
+
+    return {
+        From: {
+            Email: senderEmail,
+            Name: `${senderName} Team`
+        },
+        To: [
+            {
+                Email: companyEmail,
+                Name: `Hiring Team at ${companyName}`
+            }
+        ],
+        Subject: subject,
+        TextPart: textPart,
+        HTMLPart: htmlPart
+    };
+};
+
+const getJobRejectionEmail = (companyName, companyEmail, jobSeekerName, jobSeekerEmail, jobTitle) => {
+    const subject = `${jobSeekerName} has declined the ${jobTitle} position at ${companyName}`;
+
+    const textPart = `Dear Hiring Team at ${companyName},
+
+        We regret to inform you that ${jobSeekerName} has declined the job offer for the ${jobTitle} position at your company.
+
+        We appreciate your understanding and encourage you to consider ${jobSeekerName} for future opportunities.
+
+        You may contact ${jobSeekerName} directly at ${jobSeekerEmail} for further communication.
+
+        Best regards,  
+        ${senderName} Team`;
+
+    const htmlPart = `<p>Dear Hiring Team at <strong>${companyName}</strong>,</p>
+        <p>We regret to inform you that <strong>${jobSeekerName}</strong> has declined the job offer for the <strong>${jobTitle}</strong> position at your company.</p>
+        <p>We appreciate your understanding and encourage you to consider <strong>${jobSeekerName}</strong> for future opportunities.</p>
+        <p>You may contact <strong>${jobSeekerName}</strong> directly at <a href="mailto:${jobSeekerEmail}">${jobSeekerEmail}</a> for further communication.</p>
+        <p>Best regards,<br><strong>${senderName} Team</strong></p>`;
 
     return {
         From: {

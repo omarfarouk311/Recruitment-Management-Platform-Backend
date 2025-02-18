@@ -83,6 +83,51 @@ class JobOfferModel {
 
         return rows[0];
     }
+
+    static async getCompanyId(jobId) {
+        const readPool = getReadPool();
+        const {rows} = await readPool.query(`
+            SELECT
+                company_id
+            FROM job
+            WHERE id = $1
+        `, [jobId]);
+
+        if (!rows.length) {
+            let error = new Error('Job offer not found');
+            error.msg = 'Job offer not found';
+            throw error;
+        }
+
+        return rows[0].company_id;
+    }
+    static async getCompanyNames(userId, status) {
+        const readPool = getReadPool();
+        if(status == constants.candidate_status_pending || !status) {
+            const {rows} = await readPool.query(`
+                SELECT
+                    comp.name AS "companyName",
+                    comp.id AS "companyId"
+                FROM candidates c
+                JOIN job j ON c.job_id = j.id
+                JOIN company comp ON j.company_id = comp.id
+                WHERE c.seeker_id = $1 AND c.template_id IS NOT NULL
+            `, [userId]);
+            return rows
+        }
+        else {
+            const {rows} = await readPool.query(`
+                SELECT
+                    comp.name AS "companyName",
+                    comp.id AS "companyId"
+                FROM candidate_history c
+                JOIN job j ON c.job_id = j.id
+                JOIN company comp ON j.company_id = comp.id
+                WHERE c.seeker_id = $1 AND c.template_description IS NOT NULL AND c.status = $2
+            `, [userId, status == constants.candidate_status_accepted]);
+            return rows
+        }
+    }
 }
 
 module.exports = {
