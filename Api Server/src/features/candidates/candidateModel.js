@@ -4,7 +4,7 @@ const constants = require('../../../config/config');
 
 class CandidateModel {
 
-    static async getCandidatesForJob(jobId, filters, sortBy, limit, offset) {
+    static async getCandidatesForJob(jobId, filters, sortByRecommendation, limit, offset, sortByAssessmentScore) {
         let params = [jobId];
         let query;
         let index = 0;
@@ -12,7 +12,7 @@ class CandidateModel {
             index+=2;
             query = ` 
                 SELECT 
-                    job_seeker.id as job_seeker_id,
+                    job_seeker.id as seeker_id,
                     job_seeker.name as job_seeker_name,
                     rp.name as phase_name,
                     candidates.date_applied as date_applied,
@@ -87,11 +87,20 @@ class CandidateModel {
                 params.push(filters.phaseType);
                 index++;
             }
-            if (sortBy == constants.desc_order) {
+            if (sortByRecommendation == constants.desc_order) {
                 query += `ORDER BY rank DESC `;
             }
-            else {
+            else if (sortByAssessmentScore == constants.desc_order) {
+                query += `ORDER BY score DESC `;
+            }
+            else if (sortByRecommendation == constants.asc_order) {
                 query += `ORDER BY rank ASC `;
+            }
+            else if (sortByAssessmentScore == constants.asc_order) {
+                query += `ORDER BY score ASC `;
+            }
+            else {
+                query += `ORDER BY candidates.seeker_id DESC `;
             }
         }
         else {
@@ -140,7 +149,7 @@ class CandidateModel {
                 date_applied, 
                 seeker_id, 
                 job_id, phase, 
-                recruitment_process_id
+                recruitment_process_id, phase_deadline
             FROM candidates
             WHERE recruiter_id = $1
         ) AS candidates
@@ -489,6 +498,16 @@ class CandidateModel {
             await client.query('ROLLBACK;');
             throw error;
         }
+    }
+
+    static async getJobTitleFilter(userId) {
+        let {rows} = await ReadPool().query(`
+            SELECT ARRAY_AGG(DISTINCT(title)) AS "jobTitle"
+            FROM candidates
+            JOIN job ON candidates.job_id = job.id
+            WHERE candidates.recruiter_id = $1
+        `, [userId]);
+        return rows[0];
     }
 }
 

@@ -9,6 +9,17 @@ const sortBy = query("sortBy", "invalid sortBy query parameter")
         return value == 1 || value == -1;
     }, "Invalid value for sortBy").toInt();
 
+
+const sortByAssessmentScore = query("sortByAssessmentScore", "invalid sortByAssessmentScore query parameter")
+                                .optional()
+                                .isInt([-1, 1])
+                                .withMessage("Value for sortByAssessmentScore must be -1 or 1").toInt();
+
+const sortByRecommendation = query("sortByRecommendation", "invalid sortByRecommendation query parameter")
+                                .optional()
+                                .isInt([-1, 1])
+                                .withMessage("Value for sortByRecommendation must be -1 or 1").toInt();
+
 const simplified = query("simplified", "invalid simplified query parameter")
     .optional()
     .isBoolean()
@@ -44,7 +55,8 @@ const status = query("status", "Invalid status query parameter")
     .withMessage(`Value for status must be between ${constants.candidate_status_pending} and ${constants.candidate_status_rejected}`).toInt();
 
 exports.getCandidatesForJobValidator = [
-    sortBy,
+    sortByAssessmentScore,
+    sortByRecommendation,
     phaseType,
     candidateLocation,
     status,
