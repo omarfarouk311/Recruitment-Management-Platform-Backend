@@ -1,4 +1,7 @@
-const { Templates } = require('./templateModel');
+const { Templates, HelperQuerySet } = require('./templateModel');
+const { role, emails_topic } = require('../../../config/config');
+const constants = require('../../../config/config');
+const { produce } = require('../../common/kafka');
 
 
 
@@ -16,12 +19,16 @@ function extractPlaceholders (value) {
 }
 
 
-exports.getAllTemplates = async (companyId, sortBy, offset, limit) => {
-  return await Templates.getAllTemplates(companyId, sortBy, offset, limit); 
+exports.getAllTemplates = async (userId, sortBy, page, userRole, simplified) => {
+  const limit = constants.pagination_limit
+  const offset = (page - 1) * limit;
+  
+  let companyId = userRole === role.recruiter? (await HelperQuerySet.getCompanyIdByRecruiter(userId)): userId;
+  return await Templates.getAllTemplates(companyId, sortBy, offset, limit, simplified); 
 };
 
-exports.getTemplateById = async (id,companyId) => {
-  return await Templates.getTemplateById(id,companyId); 
+exports.getTemplateById = async (id, simplified) => {
+  return await Templates.getTemplateById(id, simplified); 
 };
 
 exports.createTemplate = async (templateData,companyId) => {
@@ -48,3 +55,31 @@ exports.deleteTemplate = async (id,companyId) => {
   return res;
 
 };
+
+exports.getOfferDetails = async (jobId, seekerId) => {
+  const offerDetails = await Templates.getOfferDetails(jobId, seekerId);
+  return offerDetails;
+};
+
+exports.sendOfferDetails = async (jobId, seekerId, placeholders, templateId) => {
+  const client = await Templates.sendOfferDetails(jobId, seekerId, placeholders, templateId);
+  try {
+    const companyId = await HelperQuerySet.getCompanyIdByJob(jobId);
+    
+    await produce({
+      companyId: companyId,
+      jobId: jobId,
+      jobSeeker: seekerId,
+      templateId: templateId,
+      type: 3
+    }, emails_topic);
+
+    await client.query('COMMIT');
+  } catch(error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+  return true;
+}

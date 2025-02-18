@@ -80,7 +80,8 @@ module.exports.delete_AssessmentByIdController=async(req,res,next)=>{
     try{
 
         let assessmentId=req.params.id;
-        await assessmentService.delete_AssessmentByIdService(assessmentId);
+        let companyId=req.userId
+        await assessmentService.delete_AssessmentByIdService(assessmentId,companyId);
         return res.status(200).json({
             success: true,
             message: "Assessment deleted successfully"

@@ -300,66 +300,7 @@ class CandidateModel {
             }
         }
         else if (decision == 0) {
-            try {
-                await client.query('BEGIN;');
-                // select the candidates and insert them to the histroy
-                await client.query(`
-                    INSERT INTO 
-                        candidate_history(
-                            seeker_id, job_id, 
-                            phase_name, company_name, 
-                            job_title, country, 
-                            city, remote, 
-                            date_applied, score, 
-                            status, phase_type, total_score
-                        )
-                    SELECT
-                        candidates.seeker_id as seeker_id, candidates.job_id as job_id,
-                        rp.name as phase_name,
-                        company.name as company_name, job.title as job_title,
-                        job.country as country, job.city as city,
-                        job.remote, date_applied,
-                        assessment.score as score, false as status, 
-                        rp.type as phase_type, assessment.total_score as total_score
-                    FROM (
-                        SELECT
-                            date_applied, seeker_id, 
-                            job_id, phase,
-                            recruitment_process_id
-                        FROM candidates
-                        WHERE seeker_id = ANY($1) AND job_id = $2
-                        FOR UPDATE
-                    ) AS candidates
-                    JOIN job ON candidates.job_id = job.id
-                    JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id
-                    JOIN company ON job.company_id = company.id
-                    LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.job_id = assessment.job_id AND candidates.phase = assessment.phase_num
-                    ON CONFLICT (seeker_id, job_id) DO NOTHING;
-                `, [seekerIds, jobId]);
-
-                await client.query(`
-                    UPDATE recruiter
-                    SET assigned_candidates_cnt = assigned_candidates_cnt - (
-                        SELECT COUNT(*) 
-                        FROM candidates 
-                        WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
-                    )
-                `, [seekerIds, jobId]);
-
-
-                // delete candidates from candidates table
-                let res = (await client.query(`
-                    DELETE FROM candidates
-                    WHERE seeker_id = ANY($1) AND job_id = $2
-                    RETURNING seeker_id as "seekerId", phase as phase_num, 0 as decision;
-                `, [seekerIds, jobId])).rows;
-
-                console.log(res);
-                return {updatedCandidates: res, client: client};
-            } catch (error) {
-                await client.query('ROLLBACK;');
-                throw error;
-            }
+            return this.moveCandidatesToHistory(seekerIds, jobId, decision, client);
         }
     }
 
@@ -474,6 +415,80 @@ class CandidateModel {
             FROM phase_type`);
 
         return results.rows;
+    }
+
+    static async moveCandidatesToHistory(seekerIds, jobId, decision, client) {
+        try {
+            await client.query('BEGIN;');
+            // select the candidates and insert them to the histroy
+            await client.query(`
+                INSERT INTO 
+                    candidate_history(
+                        seeker_id, job_id, 
+                        phase_name, company_name, 
+                        job_title, country, 
+                        city, remote, 
+                        date_applied, score, 
+                        status, phase_type, total_score,
+                        template_description, placeholders_params,
+                        last_status_update
+                    )
+                SELECT
+                    candidates.seeker_id as seeker_id, candidates.job_id as job_id,
+                    rp.name as phase_name,
+                    company.name as company_name, job.title as job_title,
+                    job.country as country, job.city as city,
+                    job.remote, date_applied,
+                    assessment.score as score, $3 as status, 
+                    rp.type as phase_type, assessment.total_score as total_score,
+                    jot.description, candidates.placeholders_params,
+                    candidates.last_status_update
+                FROM (
+                    SELECT
+                        date_applied, seeker_id, 
+                        job_id, phase,
+                        recruitment_process_id, template_id,
+                        last_status_update, placeholders_params
+                    FROM candidates
+                    WHERE seeker_id = ANY($1) AND job_id = $2
+                    FOR UPDATE
+                ) AS candidates
+                JOIN job ON candidates.job_id = job.id
+                JOIN recruitment_phase rp ON 
+                    candidates.phase = rp.phase_num AND 
+                    candidates.recruitment_process_id = rp.recruitment_process_id
+                JOIN company ON job.company_id = company.id
+                LEFT JOIN job_offer_template jot ON
+                    candidates.template_id = jot.id
+                LEFT JOIN assessment_score assessment ON 
+                    candidates.seeker_id = assessment.seeker_id AND 
+                    candidates.job_id = assessment.job_id AND 
+                    candidates.phase = assessment.phase_num
+                ON CONFLICT (seeker_id, job_id) DO NOTHING;
+            `, [seekerIds, jobId, decision]);
+
+            await client.query(`
+                UPDATE recruiter
+                SET assigned_candidates_cnt = assigned_candidates_cnt - (
+                    SELECT COUNT(*) 
+                    FROM candidates 
+                    WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
+                )
+            `, [seekerIds, jobId]);
+
+
+            // delete candidates from candidates table
+            let res = (await client.query(`
+                DELETE FROM candidates
+                WHERE seeker_id = ANY($1) AND job_id = $2
+                RETURNING seeker_id as "seekerId", phase as phase_num, 0 as decision;
+            `, [seekerIds, jobId])).rows;
+
+            return {updatedCandidates: res, client: client};
+        } catch (error) {
+            await client.query('ROLLBACK;');
+            throw error;
+        }
     }
 }
 

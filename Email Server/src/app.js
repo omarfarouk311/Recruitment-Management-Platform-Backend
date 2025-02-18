@@ -7,16 +7,15 @@ const mailjet = require('../config/mailjet');
 (async function () {
     const pool = getReadPool();
     await consumer.connect();
-    await consumer.subscribe({ topic: emails_topic, fromBeginning: false });
+    await consumer.subscribe({ topic: emails_topic, fromBeginning: true });
 
     await consumer.run({
         autoCommit: false,
         eachMessage: async ({ topic, partition, message }) => {
-            let {type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department} = JSON.parse(message.value);
+            let { type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department } = JSON.parse(message.value);
             try {
                 if (deadline) {
                     deadline = new Date(deadline).toUTCString();
-                    console.log(deadline);
                 }
 
                 let email
@@ -89,16 +88,29 @@ const mailjet = require('../config/mailjet');
                             companyName,
                             jobSeekerData.name, 
                             jobSeekerData.email, 
-                            templateId
+                            templateId,
+                            jobId,
+                            jobSeeker
                         );
                     } else if( type == email_types.job_offer_acceptance ) {
-                        email = getJobAcceptanceEmail(
-                            companyName,
-                            companyEmail,
-                            jobSeekerData.name,
-                            jobSeekerData.email,
-                            jobTitle
-                        )
+                        if(rejected) {
+                            email = getJobRejectionEmail(
+                                companyName,
+                                companyEmail,
+                                jobSeekerData.name,
+                                jobSeekerData.email,
+                                jobTitle
+                            );
+                        }
+                        else {
+                            email = getJobAcceptanceEmail(
+                                companyName,
+                                companyEmail,
+                                jobSeekerData.name,
+                                jobSeekerData.email,
+                                jobTitle
+                            );
+                        }
                     }
 
                 }
@@ -239,10 +251,10 @@ const getInterviewEmailTemplate = (jobTitle, companyName, jobSeekerName, jobSeek
     };
 };
 
-const getJobOfferTemplate = async (jobTitle, companyName, jobSeekerName, jobSeekerEmail, templateId) => {
+const getJobOfferTemplate = async (jobTitle, companyName, jobSeekerName, jobSeekerEmail, templateId, jobId, seekerId) => {
     const subject = `Job Offer for ${jobTitle} Position at ${companyName}`;
 
-    const textPart = await getTemplateWithoutPlaceHolders(templateId);
+    const textPart = await getTemplateWithoutPlaceHolders(templateId, seekerId, jobId);
 
     const htmlPart = `<p>${textPart}</p>`;
 
@@ -263,21 +275,22 @@ const getJobOfferTemplate = async (jobTitle, companyName, jobSeekerName, jobSeek
     };
 };
 
-const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId) => {
+const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId, jobId) => {
     const client = getReadPool();
-    let template = client.query(`
+    
+    let template = await client.query(`
         SELECT 
             description,
-            candidates.placeholder_params AS placeholder_params
+            candidates.placeholders_params AS placeholders_params
         FROM job_offer_template 
         JOIN (
             SELECT
-                placeholder_params, template_id
+                placeholders_params, template_id
             FROM candidates
-            WHERE id = $2
+            WHERE seeker_id = $2 AND job_id = $3
         ) AS candidates ON job_offer_template.id = candidates.template_id
-        WHERE id = $1`, [templateId, jobSeekerId]);
-    if (template.length)
+        WHERE id = $1`, [templateId, jobSeekerId, jobId]);
+    if (template.rows.length)
         template = template.rows[0];
     else {
         let error = new Error('template not found');
@@ -285,9 +298,11 @@ const getTemplateWithoutPlaceHolders = async (templateId, jobSeekerId) => {
         throw error;
     }
 
+    
     template.description = template.description.replace(/{{(.+?)}}/g, (match, p1) => {
-        return template.placeholder_params[p1] || match;
+        return template.placeholders_params[p1] || match;
     });
+    return template.description;
 }
 
 const getRecruiterInvitationTemplate = (recruiterName, recruiterEmail, companyName, department, deadline) => {
@@ -346,7 +361,44 @@ const getJobAcceptanceEmail = (companyName, companyEmail, jobSeekerName, jobSeek
         <p>We are pleased to inform you that <strong>${jobSeekerName}</strong> has officially accepted the job offer for the <strong>${jobTitle}</strong> position at your company.</p>
         <p>You can now proceed with the necessary onboarding steps to ensure a smooth transition for <strong>${jobSeekerName}</strong>.</p>
         <p>You may contact <strong>${jobSeekerName}</strong> directly at <a href="mailto:${jobSeekerEmail}">${jobSeekerEmail}</a> for further communication.</p>
-        <p>Best regards,<br><strong>${platformName} Team</strong></p>`;
+        <p>Best regards,<br><strong>${senderName} Team</strong></p>`;
+
+    return {
+        From: {
+            Email: senderEmail,
+            Name: `${senderName} Team`
+        },
+        To: [
+            {
+                Email: companyEmail,
+                Name: `Hiring Team at ${companyName}`
+            }
+        ],
+        Subject: subject,
+        TextPart: textPart,
+        HTMLPart: htmlPart
+    };
+};
+
+const getJobRejectionEmail = (companyName, companyEmail, jobSeekerName, jobSeekerEmail, jobTitle) => {
+    const subject = `${jobSeekerName} has declined the ${jobTitle} position at ${companyName}`;
+
+    const textPart = `Dear Hiring Team at ${companyName},
+
+        We regret to inform you that ${jobSeekerName} has declined the job offer for the ${jobTitle} position at your company.
+
+        We appreciate your understanding and encourage you to consider ${jobSeekerName} for future opportunities.
+
+        You may contact ${jobSeekerName} directly at ${jobSeekerEmail} for further communication.
+
+        Best regards,  
+        ${senderName} Team`;
+
+    const htmlPart = `<p>Dear Hiring Team at <strong>${companyName}</strong>,</p>
+        <p>We regret to inform you that <strong>${jobSeekerName}</strong> has declined the job offer for the <strong>${jobTitle}</strong> position at your company.</p>
+        <p>We appreciate your understanding and encourage you to consider <strong>${jobSeekerName}</strong> for future opportunities.</p>
+        <p>You may contact <strong>${jobSeekerName}</strong> directly at <a href="mailto:${jobSeekerEmail}">${jobSeekerEmail}</a> for further communication.</p>
+        <p>Best regards,<br><strong>${senderName} Team</strong></p>`;
 
     return {
         From: {

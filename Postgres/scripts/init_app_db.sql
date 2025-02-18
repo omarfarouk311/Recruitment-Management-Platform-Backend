@@ -23,13 +23,8 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-<<<<<<< HEAD
-  has_image BOOLEAN NOT NULL
-  department text, --still want to index it
-=======
   has_image BOOLEAN NOT NULL,
-  department text --still want to index it
->>>>>>> ebef55b8f53990734427336c444c688d5f339e68
+  department text
 );
 
 CREATE TABLE Company (
@@ -68,7 +63,8 @@ CREATE TABLE Skills (
 );
 
 CREATE TABLE Education (
-  user_id int PRIMARY KEY,
+  id serial PRIMARY KEY,
+  user_id int,
   school_name TEXT NOT NULL,
   field TEXT NOT NULL,
   degree TEXT NOT NULL,
@@ -100,6 +96,7 @@ CREATE TABLE Candidates (
   template_id INTEGER,
   placeholders_params JSON,
   recruitment_process_id int NOT NULL,
+  assessment_deadline TIMESTAMP,
   PRIMARY KEY (job_id, seeker_id)
 );
 
@@ -115,12 +112,13 @@ CREATE TABLE Job (
   city TEXT,
   remote BOOLEAN NOT NULL,
   applied_cnt smallint NOT NULL,
-  closed BOOLEAN NOT NULL
+  closed BOOLEAN NOT NULL,
+  applied_cnt_limit smallint NOT NULL
 );
 
 CREATE TABLE Job_Embedding (
   job_id int PRIMARY KEY,
-  embedding vector(300) NOT NULL
+  embedding vector(768) NOT NULL
 );
 
 CREATE TABLE User_Skills (
@@ -130,6 +128,7 @@ CREATE TABLE User_Skills (
 );
 
 CREATE TABLE User_Experience (
+  id serial PRIMARY KEY,
   user_id int NOT NULL,
   company_name text NOT NULL,
   start_date TEXT,
@@ -150,7 +149,7 @@ CREATE TABLE CV (
 
 CREATE TABLE CV_Embedding (
   cv_id int PRIMARY KEY,
-  vector vector(300) NOT NULL
+  vector vector(768) NOT NULL
 );
 
 CREATE TABLE Industry (
@@ -221,11 +220,15 @@ CREATE TABLE Candidate_History (
   country text,
   city text,
   remote BOOLEAN NOT NULL,
+  template_description TEXT,
+  placeholders_params JSON,
+  last_status_update date NOT NULL,
   PRIMARY KEY (seeker_id, job_id)
 );
 
 CREATE TABLE Questions (
   id serial PRIMARY KEY,
+  question_num smallint NOT NULL,
   assessment_id int NOT NULL,
   question text NOT NULL,
   answers text[] NOT NULL,
@@ -233,8 +236,8 @@ CREATE TABLE Questions (
 );
 
 CREATE TABLE Job_Seeker_Embeddings (
-  seeker_id int,
-  embedding vector(300) NOT NULL
+  seeker_id int PRIMARY KEY,
+  embedding vector(768) NOT NULL
 );
 
 CREATE TABLE CV_Keywords (
@@ -246,14 +249,15 @@ CREATE TABLE CV_Keywords (
 CREATE TABLE Recommendations (
   job_id int NOT NULL,
   seeker_id int NOT NULL,
-  similarity_score float NOT NULL
+  similarity_score float NOT NULL,
+  PRIMARY KEY (seeker_id, job_id)
 ) PARTITION BY RANGE (seeker_id);
 
 CREATE TABLE Recommendations_1_10000 PARTITION OF Recommendations FOR VALUES FROM (1) TO (10001);
 
 CREATE TABLE Reviews (
   id serial PRIMARY KEY,
-  creator_id int NOT NULL,
+  creator_id int,
   company_id int NOT NULL,
   title text NOT NULL,
   description text NOT NULL,
@@ -265,10 +269,11 @@ CREATE TABLE Reviews (
 CREATE TABLE Report (
   id serial PRIMARY KEY,
   job_id int NOT NULL,
-  seeker_id int NOT NULL,
+  creator_id int,
   created_at timestamp NOT NULL,
   title text NOT NULL,
-  description text NOT NULL
+  description text NOT NULL,
+  UNIQUE (job_id, creator_id)
 );
 
 CREATE TABLE Action (
@@ -303,9 +308,11 @@ CREATE INDEX ON Candidate_History (country, city);
 
 CREATE INDEX ON Candidate_History (job_id);
 
-CREATE INDEX ON Company (size);
+CREATE INDEX ON Recruiter (company_id);
 
-CREATE INDEX ON Company (type);
+CREATE INDEX ON Recruiter (department);
+
+CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (rating);
 
@@ -353,7 +360,7 @@ CREATE INDEX ON Reviews (created_at);
 
 CREATE INDEX ON Reviews (creator_id);
 
-CREATE INDEX ON Report (seeker_id);
+CREATE INDEX ON Report (creator_id);
 
 CREATE INDEX ON Assessment_Score (job_id, seeker_id, phase_name);
 
@@ -366,8 +373,6 @@ CREATE INDEX ON Logs (company_id, performed_by);
 CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
-
-ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 
@@ -437,11 +442,11 @@ ALTER TABLE Recommendations_1_10000 ADD FOREIGN KEY (seeker_id) REFERENCES Job_S
 
 ALTER TABLE Reviews ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE CASCADE;
 
-ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
+ALTER TABLE Reviews ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE SET NULL;
 
 ALTER TABLE Report ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 
-ALTER TABLE Report ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE SET NULL;
+ALTER TABLE Report ADD FOREIGN KEY (creator_id) REFERENCES Job_Seeker (id) ON DELETE SET NULL;
 
 ALTER TABLE Assessment_Score ADD FOREIGN KEY (job_id) REFERENCES Job (id) ON DELETE CASCADE;
 

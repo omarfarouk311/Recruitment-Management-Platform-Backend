@@ -1,7 +1,8 @@
 
 const assessmentsModel = require('./assessmentModel');
+const { role } = require('../../../config/config')
 
-module.exports.authorizeCompany=async(req,res,next)=>{
+module.exports.authorizeCompanyAssessment=async(req,res,next)=>{
 
     try{
         let assessmentId=parseInt(req.params.id);
@@ -19,7 +20,7 @@ module.exports.authorizeCompany=async(req,res,next)=>{
                 err.msg="Assessment not found"
                 throw err;
         }
-        if(returnCompanyId!=companyId){
+        if(returnCompanyId!=companyId||req.userRole!=role.company){
             let err=new Error()
             err.status=404;
             err.msg="You are not authorized to access this assessment"
@@ -57,15 +58,31 @@ module.exports.authorizeCompanyJob=async(req,res,next)=>{
         }
 
         let returnedCompanyId=await assessmentsModel.validateCompanyJob(jobId);// to check if company is authorized to access this job
-        console.log(returnedCompanyId,req.userId)
-        if(returnedCompanyId!=companyId){
+
+        if(returnedCompanyId!=companyId||req.userRole!=role.company){
             let err=new Error()
-            err.status=404;
+            err.status=403;
             err.msg="You are not authorized to access this assessment"
             throw err
         }
         next();
     }catch(err){
         next(err);
+    }
+}
+
+module.exports.authorizeCompany=async(req,res,next)=>{
+    try{
+        let userRole=req.userRole
+        if(userRole!=role.company){
+            let err=new Error();
+            err.msg="Only company can do this action"
+            err.status=403
+            throw err
+        }
+        next()
+
+    }catch(err){
+        next(err)
     }
 }
