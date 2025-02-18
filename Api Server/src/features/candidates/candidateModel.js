@@ -10,7 +10,7 @@ class CandidateModel {
         let index = 0;
         if (filters.status == constants.candidate_status_pending || !filters.status) {
             index+=2;
-            query = `
+            query = ` 
                 SELECT 
                     job_seeker.id as job_seeker_id,
                     job_seeker.name as job_seeker_name,
@@ -19,33 +19,47 @@ class CandidateModel {
                     job_seeker.country as candidate_country,
                     job_seeker.city as candidate_city,
                     recruiter.name as recruiter_name,
-                    assessment.score as score, assessment.total_score as total_score,
-                    DENSE_RANK() OVER (ORDER BY similarity_score DESC) AS rank
+                    CASE 
+                        WHEN 
+                            rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
+                        THEN 
+                            COALESCE(assessment.score, 0::smallint) 
+                        ELSE 
+                            assessment.score 
+                    END AS score, assessment.total_score as total_score,
+                    CASE WHEN rt.name = 'cv screening' THEN DENSE_RANK() OVER (ORDER BY similarity_score DESC) ELSE NULL END AS rank
                 FROM (
                     SELECT 
                         date_applied, 
                         seeker_id, phase, 
                         recruitment_process_id,
                         recruiter_id,
-                        similarity_score, job_id
+                        similarity_score, job_id,
+                        phase_deadline
                     FROM candidates
                     WHERE candidates.job_id = $1
                 ) AS candidates
                 JOIN job_seeker ON candidates.seeker_id = job_seeker.id
-                JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id
+                JOIN recruitment_phase rp ON 
+                    candidates.phase = rp.phase_num AND 
+                    candidates.recruitment_process_id = rp.recruitment_process_id
+                JOIN phase_type rt ON rp.type = rt.id
                 LEFT JOIN recruiter ON candidates.recruiter_id = recruiter.id 
-                LEFT JOIN assessment_score assessment ON candidates.seeker_id = assessment.seeker_id AND candidates.phase = assessment.phase_num AND candidates.job_id = assessment.job_id `;
+                LEFT JOIN assessment_score assessment ON 
+                    candidates.seeker_id = assessment.seeker_id AND 
+                    candidates.phase = assessment.phase_num AND 
+                    candidates.job_id = assessment.job_id `;
         }
         else {
             index += 3;
             query = `
             SELECT 
-            seeker_id, phase_name,
-            status, date_applied,
-            score, job_seeker.id as job_seeker_id,
-            job_seeker.name as job_seeker_name,
-            job_seeker.country as candidate_country,
-            job_seeker.city as candidate_city
+                seeker_id, phase_name,
+                status, date_applied,
+                score, job_seeker.id as job_seeker_id,
+                job_seeker.name as job_seeker_name,
+                job_seeker.country as candidate_country,
+                job_seeker.city as candidate_city
             FROM (
                 SELECT
                 job_id, seeker_id,
@@ -110,7 +124,15 @@ class CandidateModel {
             job_seeker.country as candidate_country,
             job_seeker.city as candidate_city,
             job.country as job_country,
-            job.city as job_city `;
+            job.city as job_city,
+            CASE 
+                WHEN 
+                    rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
+                THEN 
+                    COALESCE(assessment.score, 0::smallint) 
+                ELSE 
+                    assessment.score 
+            END AS score, assessment.total_score as total_score `;
         }
         query += `
         FROM (
@@ -125,6 +147,15 @@ class CandidateModel {
         JOIN job_seeker ON candidates.seeker_id = job_seeker.id
         JOIN job ON candidates.job_id = job.id
         JOIN recruitment_phase rp ON candidates.phase = rp.phase_num AND candidates.recruitment_process_id = rp.recruitment_process_id `;
+        if (!simplified) {
+            query += `
+            JOIN phase_type rt ON rp.type = rt.id
+            LEFT JOIN assessment_score assessment ON
+                candidates.seeker_id = assessment.seeker_id AND
+                candidates.phase = assessment.phase_num AND
+                candidates.job_id = assessment.job_id `;
+        }
+
         if (Object.keys(filters).length > 0) {
             query += `WHERE 1=1 `;
         }
