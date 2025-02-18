@@ -83,6 +83,24 @@ class JobOfferModel {
 
         return rows[0];
     }
+
+    static async getCompanyId(jobId) {
+        const readPool = getReadPool();
+        const {rows} = await readPool.query(`
+            SELECT
+                company_id
+            FROM job
+            WHERE id = $1
+        `, [jobId]);
+
+        if (!rows.length) {
+            let error = new Error('Job offer not found');
+            error.msg = 'Job offer not found';
+            throw error;
+        }
+
+        return rows[0].company_id;
+    }
 }
 
 module.exports = {

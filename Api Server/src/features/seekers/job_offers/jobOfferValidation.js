@@ -23,6 +23,8 @@ const sort = () => query('sort')
 
 const jobId = () => param('jobId').isInt({min: 1, max: 999999999}).withMessage('jobId must be an integer greater than 1');
 
+const jobOfferStatus = () => body('status').isBoolean().withMessage('status must be a boolean');
+
 exports.getOffers = [
     validatePage(),
     companyId(),
@@ -34,4 +36,9 @@ exports.getOffers = [
 
 exports.jobOffer = [
     jobId()
+]
+
+exports.replyToJobOffer = [
+    jobId(),
+    jobOfferStatus()
 ]

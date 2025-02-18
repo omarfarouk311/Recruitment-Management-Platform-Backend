@@ -51,7 +51,13 @@ module.exports = {
         update_template: 17,
         send_invitation: 18
     },
-        
+    email_types: {
+        change_phase: 1,
+        interview_date: 2,
+        job_offer: 3,
+        company_invitation: 4,
+        job_offer_acceptance: 5
+    },   
    
     minNameLength: 1,
     maxOverviewLength: 500,

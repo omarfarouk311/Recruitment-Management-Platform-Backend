@@ -27,7 +27,15 @@ exports.getJobOffer = async (req, res, next) => {
 }
 
 exports.replyToJobOffer = async (req, res, next) => {
-    console.log('Not Implemented Yet');
+    try {
+        const jobOffer = await jobOfferService.replyToJobOffer(req.userId, req.params.jobId, req.body.status);
+        console.log(jobOffer);
+        if (jobOffer)
+            return res.sendStatus(200);
+        res.status(404).json({message: 'Job offer not found'});
+    } catch(error) {
+        next(error);
+    }
 }
 
 exports.getCompanyName = async (req, res, next) => {
