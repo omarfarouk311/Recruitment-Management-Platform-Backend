@@ -1,11 +1,11 @@
 const jobModel = require('./jobModel')
 const Kafka = require('../../common/kafka')
-const {  cv_parsing_topic, logs_topic, action_types } = require('../../../config/config')
+const {  job_embedding_topic, logs_topic, action_types } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 const Pool = require('../../../config/db')
 
 
-produceToKafka = async (processObject, topicName) => {
+const produceToKafka = async (processObject, topicName) => {
     await Kafka.produce(processObject, topicName);
 };
 
@@ -27,7 +27,7 @@ module.exports.createJob = async (companyId, jobData) => {
             created_at: new Date(),
         };
 
-        await produceToKafka({ jobId }, cv_parsing_topic);
+        await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
 
         await client.query('COMMIT');
@@ -103,7 +103,7 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
             created_at: new Date(),
         };
 
-        await produceToKafka({ jobId }, cv_parsing_topic);
+        await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
 
         await client.query('COMMIT');
