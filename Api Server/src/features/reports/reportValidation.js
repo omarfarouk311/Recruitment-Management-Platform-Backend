@@ -1,5 +1,6 @@
 const { body } = require('express-validator');
 const { minDescriptionLength, maxDescriptionLength } = require('../../../config/config');
+const { validatePage } = require('../../common/util');
 
 const validateJobId = () => body('jobId')
     .custom(value => typeof value === 'number' && value > 0)
@@ -18,3 +19,5 @@ const validateDescription = () => body('description')
     .withMessage(`title length must be between ${minDescriptionLength} and ${maxDescriptionLength}`);
 
 exports.validateCreateReport = [validateJobId(), validateTitle(), validateDescription()];
+
+exports.validateGetReports = validatePage();
