@@ -11,4 +11,11 @@ router.route('/companies-filter')
     )
     .all(notAllowed);
 
+router.route('/locations-filter')
+    .get(
+        jobsAppliedForAuthorization.authorizeAccess,
+        jobsAppliedForController.getLocationsFilter
+    )
+    .all(notAllowed);
+
 module.exports = router;
