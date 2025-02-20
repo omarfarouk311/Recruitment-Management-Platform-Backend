@@ -48,3 +48,21 @@ module.exports.deleteEducationController=async(req,res,next)=>{
         next(err);
     }
 }
+
+module.exports.editEducationController=async(req,res,next)=>{
+    try{
+        let seekerId=req.userId;
+        let educationId=req.params.educationId;
+        let{school_name,field,degree,grade,start_date,end_date}=req.body;
+        await educationService.editEducationService(seekerId,educationId,school_name,field,degree,grade,start_date,end_date);
+
+        res.status(200).json({
+            success:true,
+            message:"Education edited successfully" 
+        })
+        
+    }catch(err){
+        console.log("err in editEducationController",err.message)
+        next(err);
+    } 
+}

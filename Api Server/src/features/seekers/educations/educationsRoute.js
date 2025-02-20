@@ -29,6 +29,12 @@ router.delete('/:educationId',
     educationController.deleteEducationController
 )
 
+router.patch('/:educationId',
+        validateEducation,
+        handleValidationErrors,
+        authorizeSeeker,
+        educationController.editEducationController)
+
 
 
 

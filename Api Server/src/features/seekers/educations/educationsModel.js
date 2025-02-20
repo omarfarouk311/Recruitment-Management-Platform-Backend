@@ -88,6 +88,42 @@ class educationModel {
         }
     }
 
+    static async editEducation(seekerId,educationId,school_name,field,degree,grade,start_date,end_date){
+        let primary_DB=primaryPool.getWritePool();
+        try{
+
+            let values=[];
+            let cnt=4;
+            let query=
+            `UPDATE Education 
+            SET school_name=$1,field=$2,degree=$3
+            `
+            values=[school_name,field,degree];
+            if(grade!=null){
+                query+=`,grade=$${cnt++}`
+                values.push(grade);
+            }
+            if(start_date!=null){
+                query+=`,start_date=$${cnt++}`
+                values.push(start_date)
+            }
+            if(end_date!=null){
+                query+=`,end_date=$${cnt++}`
+                values.push(end_date);
+            }
+
+            query+=` WHERE id=$${cnt++} AND user_id=$${cnt++}`
+            values.push(educationId,seekerId)
+
+            await primary_DB.query(query,values)
+            return true;
+
+        }catch(err){
+            console.log('err in editEducation model',err.message)
+            throw err;
+        }
+    }
+
 }
 
 module.exports=educationModel
