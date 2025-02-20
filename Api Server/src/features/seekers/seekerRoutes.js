@@ -3,10 +3,12 @@ const router = express.Router();
 const jobOfferRoutes = require('./job_offers/jobOfferRoutes');
 const educationsRoute=require('./educations/educationsRoute')
 const skillRoutes = require('./skills/skillsRoutes')
+const companyRoutes = require('./companies/companyRoutes');
 
 router.use('/job-offers', jobOfferRoutes);
 router.use('/educations',educationsRoute);
 
 router.use('/skills', skillRoutes)
+router.use('/companies', companyRoutes);
 
 module.exports = router;
