@@ -55,12 +55,12 @@ module.exports.getJobDetailsById = async (jobId) => {
     return job
 }
 
-module.exports.deleteJobById = async (companyId, jobId) => {
+module.exports.closeJobById = async (companyId, jobId) => {
     const client = await Pool.getWritePool().connect();
     try {
         await client.query('BEGIN');
 
-        await jobModel.deleteJobById(client, companyId, jobId);
+        await jobModel.closeJobById(client, companyId, jobId);
         const companyName = await jobModel.getCompanyName(companyId);
 
         const processObject = {
@@ -76,7 +76,7 @@ module.exports.deleteJobById = async (companyId, jobId) => {
 
         await client.query('COMMIT');
         console.log('Ack from Kafka');
-        return { message: 'Job deleted successfully' };
+        return { message: 'Job closed successfully' };
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error in deleteJobById:', error);
@@ -118,3 +118,9 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
         client.release();
     }
 };
+
+
+module.exports.getJobDataForEditing = async (jobId) => {
+    const job = await jobModel.getJobDataForEditing(jobId)
+    return job
+}
