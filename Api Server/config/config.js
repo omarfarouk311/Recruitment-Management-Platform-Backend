@@ -49,19 +49,20 @@ module.exports = {
         remove_template: 16,
         update_template: 17,
         send_invitation: 18,
-        create_review: 19,
-        update_review: 20,
-        delete_review: 21
     },
-    
     email_types: {
         change_phase: 1,
         interview_date: 2,
         job_offer: 3,
         company_invitation: 4,
         job_offer_acceptance: 5
-    }, 
-
+    },
+    phase_types: {
+        cv_screening: 'cv screening',
+        assessment: 'assessment',
+        interview: 'interview',
+        job_offer: 'job offer'
+    },
     maxNameLength: 30,
     minNameLength: 1,
     maxOverviewLength: 400,
