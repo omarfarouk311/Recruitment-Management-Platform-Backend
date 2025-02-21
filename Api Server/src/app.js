@@ -17,6 +17,7 @@ const templatesRoutes = require('./features/templates/templateRoutes');
 const reportRoutes = require('./features/reports/reportRoutes');
 const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
+const experienceRoutes = require('./features/seekers/experience/experienceRoutes');
 const app = express();
 
 
@@ -25,7 +26,7 @@ minioConnect();
 // for testing
 app.use((req, res, next) => {
     req.userId = 13;
-    req.userRole = role.recruiter;
+    req.userRole = role.jobSeeker;
     next();
 })
 

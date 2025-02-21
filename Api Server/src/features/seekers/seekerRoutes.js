@@ -5,11 +5,13 @@ const educationsRoute = require('./educations/educationsRoute')
 const skillRoutes = require('./skills/skillsRoutes');
 const companyRoutes = require('./companies/companyRoutes');
 const jobsAppliedForRoutes = require('./jobs_applied_for/jobsAppliedForRoutes');
+const experienceRoutes = require('./experience/experienceRoutes');
 
 router.use('/job-offers', jobOfferRoutes);
 router.use('/educations', educationsRoute);
 router.use('/skills', skillRoutes);
 router.use('/companies', companyRoutes);
 router.use('/jobs-applied-for', jobsAppliedForRoutes);
+router.use('/experiences',experienceRoutes);
 
 module.exports = router;

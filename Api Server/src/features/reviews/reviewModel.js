@@ -152,7 +152,10 @@ class Review {
     }
 
     static async updateCompanyAvgRating(companyId,pool) {
-        const query = `
+        
+        const query=`select id from company where id = $1 select for update`;
+        await pool.query(query,[companyId]);
+            query = `
             UPDATE company
             SET rating = (
                 SELECT AVG(rating)
