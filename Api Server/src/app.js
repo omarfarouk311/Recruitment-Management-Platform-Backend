@@ -24,10 +24,10 @@ minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 1;
-    req.userRole = role.jobSeeker;
+    req.userId = 13;
+    req.userRole = role.recruiter;
     next();
-});
+})
 
 app.use(express.json());
 

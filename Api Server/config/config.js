@@ -48,7 +48,10 @@ module.exports = {
         modify_interview_date: 15,
         remove_template: 16,
         update_template: 17,
-        send_invitation: 18
+        send_invitation: 18,
+        create_review: 19,
+        update_review: 20,
+        delete_review: 21
     },
     
     email_types: {
