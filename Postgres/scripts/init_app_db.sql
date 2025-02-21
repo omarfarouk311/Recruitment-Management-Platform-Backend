@@ -88,8 +88,8 @@ CREATE TABLE Candidates (
   phase SMALLINT NOT NULL,
   recruiter_id int,
   job_id int NOT NULL,
-  date_applied date NOT NULL,
-  last_status_update date NOT NULL,
+  date_applied timestamp NOT NULL,
+  last_status_update timestamp NOT NULL,
   similarity_score float NOT NULL,
   cv_id int NOT NULL,
   phase_deadline TIMESTAMP,
@@ -143,7 +143,7 @@ CREATE TABLE CV (
   id serial PRIMARY KEY,
   user_id int NOT NULL,
   name text NOT NULL,
-  created_at date NOT NULL,
+  created_at timestamp NOT NULL,
   deleted BOOLEAN NOT NULL
 );
 
@@ -162,7 +162,7 @@ CREATE TABLE Job_Offer_Template (
   name Text NOT NULL,
   description Text NOT NULL,
   company_id int NOT NULL,
-  updated_at date NOT NULL,
+  updated_at timestamp NOT NULL,
   placeholders TEXT[] NOT NULL
 );
 
@@ -216,13 +216,13 @@ CREATE TABLE Candidate_History (
   score smallint,
   total_score smallint,
   company_name text NOT NULL,
-  date_applied date NOT NULL,
+  date_applied timestamp NOT NULL,
   country text,
   city text,
   remote BOOLEAN NOT NULL,
   template_description TEXT,
   placeholders_params JSON,
-  last_status_update date NOT NULL,
+  last_status_update timestamp NOT NULL,
   PRIMARY KEY (seeker_id, job_id)
 );
 
@@ -298,8 +298,6 @@ CREATE INDEX ON Job USING GIST (title gist_trgm_ops);
 
 CREATE INDEX ON Company USING GIST (name gist_trgm_ops);
 
-CREATE INDEX ON Candidate_History (status);
-
 CREATE INDEX ON Candidate_History (company_name);
 
 CREATE INDEX ON Candidate_History (remote);
@@ -320,15 +318,17 @@ CREATE INDEX ON Company_Location (country, city);
 
 CREATE INDEX ON Company_Location (company_id);
 
-CREATE INDEX candidates_recruiter_id_status_index ON Candidates (recruiter_id, phase);
+CREATE INDEX ON Candidates (recruiter_id, phase);
 
-CREATE INDEX candidates_seeker_id_status_index ON Candidates (phase);
+CREATE INDEX ON Candidates (phase);
 
-CREATE INDEX candidates_last_status_update_index ON Candidates (last_status_update);
+CREATE INDEX ON Candidates (last_status_update);
 
-CREATE INDEX candidates_score_index ON Candidates (job_id, similarity_score);
+CREATE INDEX ON Candidates (job_id, similarity_score);
 
-CREATE INDEX phase_metadata_deadline_index ON Candidates (phase_deadline);
+CREATE INDEX ON Candidates (phase_deadline);
+
+CREATE INDEX ON Candidates (seeker_id);
 
 CREATE INDEX ON Job (country, city);
 
@@ -410,6 +410,8 @@ ALTER TABLE Candidates ADD FOREIGN KEY (template_id) REFERENCES Job_Offer_Templa
 
 ALTER TABLE Candidates ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recruitment_Process (id) ON DELETE RESTRICT;
 
+ALTER TABLE Candidates ADD FOREIGN KEY (cv_id) REFERENCES CV (id);
+
 ALTER TABLE Job ADD FOREIGN KEY (recruitment_process_id) REFERENCES Recruitment_Process (id) ON DELETE SET NULL;
 
 ALTER TABLE Job ADD FOREIGN KEY (company_id) REFERENCES Company (id) ON DELETE SET NULL;
@@ -470,11 +472,8 @@ ALTER TABLE CV ADD FOREIGN KEY (user_id) REFERENCES Job_Seeker (id) ON DELETE CA
 
 ALTER TABLE CV_Embedding ADD FOREIGN KEY (cv_id) REFERENCES CV (id) ON DELETE CASCADE;
 
-ALTER TABLE Candidates ADD FOREIGN KEY (cv_id) REFERENCES CV (id);
-
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
 
 -- Grant sequence usage for app users
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
-

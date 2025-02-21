@@ -2,6 +2,97 @@ const { getReadPool } = require('../../../../config/db');
 const { pagination_limit } = require('../../../../config/config');
 
 class JobsAppliedFor {
+    static async getJobsAppliedFor(seekerId, filters, limit = pagination_limit) {
+        const pool = getReadPool();
+        const values = [seekerId];
+        let index = 1;
+        let query;
+
+        // pending status (default)
+        if (filters.status === undefined) {
+            query =
+                `
+                select j.id as "jobId", j.title as "jobTitle", co.id as "companyId", co.name as "companyName", j.country, j.city, c.date_applied as "dateApplied", c.last_status_update as "lastStatusUpdate", r.name as "phase", 'Pending' as status
+                from candidates c
+                join job j on c.job_id = j.id
+                join company co on j.company_id = co.id
+                join recruitment_phase r on j.recruitment_process_id = r.recruitment_process_id and c.phase = r.phase_num
+                where c.seeker_id = $${index++}
+                `;
+
+            if (filters.country) {
+                query += ` and j.country = $${index++}`;
+                values.push(filters.country);
+            }
+            if (filters.city) {
+                query += ` and j.city = $${index++}`;
+                values.push(filters.city);
+            }
+            if (filters.companyName) {
+                query += ` and co.name = $${index++}`;
+                values.push(filters.companyName);
+            }
+            if (filters.remote) {
+                query += ' and j.remote = true';
+            }
+        }
+        // accepted or rejected status
+        else {
+            query =
+                `
+                select j.id as "jobId", c.job_title as "jobTitle", j.company_id as "companyId", c.company_name as "companyName", c.country, c.city, c.date_applied as "dateApplied", c.last_status_update as "lastStatusUpdate", c.phase_name as "phase",
+                case 
+                    when c.status = true then 'Accepted'
+                    else 'Rejected'
+                end as status
+                from candidate_history c
+                left join job j on c.job_id = j.id
+                where c.seeker_id = $${index++} and c.status = $${index++}
+                `;
+            values.push(filters.status);
+
+            if (filters.country) {
+                query += ` and c.country = $${index++}`;
+                values.push(filters.country);
+            }
+            if (filters.city) {
+                query += ` and c.city = $${index++}`;
+                values.push(filters.city);
+            }
+            if (filters.companyName) {
+                query += ` and c.company_name = $${index++}`;
+                values.push(filters.companyName);
+            }
+            if (filters.remote) {
+                query += ' and c.remote = true';
+            }
+        }
+
+        //sorting
+        if (filters.sortByDate === 1) {
+            query += ' order by c.date_applied';
+        }
+        else if (filters.sortByDate === -1) {
+            query += ' order by c.date_applied desc';
+        }
+        else if (filters.sortByStatusUpdate === 1) {
+            query += ' order by c.last_status_update';
+        }
+        else if (filters.sortByStatusUpdate === -1) {
+            query += ' order by c.last_status_update desc';
+        }
+        else {
+            query += ' order by c.job_id';
+        }
+
+        // pagination
+        query += ` limit $${index++} offset $${index++}`;
+        values.push(limit, (filters.page - 1) * limit);
+
+        const { rows } = await pool.query(query, values);
+        return rows;
+    }
+
     static async getCompaniesFilter(seekerId) {
         const pool = getReadPool();
         const values = [seekerId];

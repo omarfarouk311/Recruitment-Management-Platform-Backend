@@ -23,3 +23,15 @@ exports.getLocationsFilter = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getJobsAppliedFor = async (req, res, next) => {
+    const { userId, query } = req;
+
+    try {
+        const jobs = await jobsAppliedForService.getJobsAppliedFor(userId, query);
+        res.status(200).json(jobs);
+    }
+    catch (err) {
+        next(err);
+    }
+};
