@@ -45,6 +45,18 @@ class Log {
         const { rows } = await this.replicaPool.query(query, values);
         return rows;
     }
+
+    static async getActions() {
+        const query =
+            `
+            select id, name as action
+            from action
+            order by id
+            `;
+
+        const { rows } = await this.replicaPool.query(query);
+        return rows;
+    }
 }
 
 module.exports = Log;

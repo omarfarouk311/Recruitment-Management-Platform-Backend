@@ -11,3 +11,14 @@ exports.getLogs = async (req, res, next) => {
         next(err);
     }
 };
+
+
+exports.getActions = async (req, res, next) => {
+    try {
+        const actions = await logService.getActions();
+        res.status(200).json(actions);
+    }
+    catch (err) {
+        next(err);
+    }
+};
