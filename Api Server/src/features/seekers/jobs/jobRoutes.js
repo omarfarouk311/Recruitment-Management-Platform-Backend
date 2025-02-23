@@ -15,4 +15,13 @@ router.route('/recommended')
     )
     .all(notAllowed);
 
+router.route('/')
+    .get(
+        authorizeAccess,
+        jobValidation.validateGetSearchedJobs,
+        handleValidationErrors,
+        jobController.getSearchedJobs
+    )
+    .all(notAllowed);
+
 module.exports = router;

@@ -11,3 +11,15 @@ exports.getRecommendedJobs = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getSearchedJobs = async (req, res, next) => {
+    const { query } = req;
+
+    try {
+        const jobs = await jobService.getSearchedJobs(query);
+        res.status(200).json(jobs);
+    }
+    catch (err) {
+        next(err);
+    }
+};
