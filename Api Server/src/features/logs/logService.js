@@ -1,6 +1,7 @@
-const logModel = require('./logModel');
+const Log = require('./logModel');
 
 exports.getLogs = async (companyId, filters) => {
-    const result = await logModel.getLogs(companyId, filters);
-    return result
+    return await Log.getLogs(companyId, filters);
 };
+
+exports.getActions = async () => await Log.getActions();
