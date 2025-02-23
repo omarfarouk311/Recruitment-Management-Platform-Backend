@@ -67,3 +67,7 @@ exports.validateGetJobsAppliedFor = [
     validateSortByDate(),
     validateSortByStatusUpdate(),
 ];
+
+exports.validateLocation = [validateCountry(), validateCity()];
+
+exports.validateRemote = validateRemote();

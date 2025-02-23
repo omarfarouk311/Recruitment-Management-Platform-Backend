@@ -27,6 +27,8 @@ const validateSimplified = () => query('simplified')
 
 const validateIndustry = () => query('industry')
     .optional()
+    .isString()
+    .withMessage('industry parameter must be a string')
     .trim()
     .isLength({ min: config.minIndustryLength, max: config.maxIndustryLength })
     .withMessage(`industry parameter length must be between ${config.minIndustryLength} and ${config.maxIndustryLength}`);
@@ -105,3 +107,5 @@ validateIndustry(), validateSortByDate(), validateRemote()];
 
 exports.validateUpdateCompanyData = [validateOverview(), validateName(), validateType(), validateSize(),
 validateFoundedIn(), validateIndustries(), validateLocations(), validateIndustriesArray(), validateLocationsArray()];
+
+exports.validateIndustry = validateIndustry();
