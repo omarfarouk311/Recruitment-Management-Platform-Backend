@@ -15,6 +15,9 @@ const invitationRoutes = require('./features/invitations/invitationRoutes');
 const interviewRoutes = require('./features/interviews/interviewRoutes')
 const templatesRoutes = require('./features/templates/templateRoutes');
 const reportRoutes = require('./features/reports/reportRoutes');
+const seekerRoutes = require('./features/seekers/seekerRoutes');
+const industryRoutes = require('./features/industries/industryRoutes');
+const experienceRoutes = require('./features/seekers/experience/experienceRoutes');
 const app = express();
 
 
@@ -41,6 +44,8 @@ app.use('/companies', companyRoutes);
 app.use('/interviews', interviewRoutes);
 app.use('/invitations', invitationRoutes);
 app.use('/reports', reportRoutes);
+app.use('/seekers', seekerRoutes);
+app.use('/industries', industryRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);

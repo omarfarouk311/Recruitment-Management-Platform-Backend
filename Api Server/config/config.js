@@ -48,17 +48,21 @@ module.exports = {
         modify_interview_date: 15,
         remove_template: 16,
         update_template: 17,
-        send_invitation: 18
+        send_invitation: 18,
     },
-    
     email_types: {
         change_phase: 1,
         interview_date: 2,
         job_offer: 3,
         company_invitation: 4,
         job_offer_acceptance: 5
-    }, 
-
+    },
+    phase_types: {
+        cv_screening: 'cv screening',
+        assessment: 'assessment',
+        interview: 'interview',
+        job_offer: 'job offer'
+    },
     maxNameLength: 30,
     minNameLength: 1,
     maxOverviewLength: 400,

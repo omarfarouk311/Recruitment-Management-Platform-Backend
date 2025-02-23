@@ -11,4 +11,8 @@ router.route('/')
     .get(authorizeGetLogs, logValidation.validateGetLogs, handleValidationErrors, logController.getLogs)
     .all(notAllowed);
 
+router.route('/actions')
+    .get(authorizeGetLogs, logController.getActions)
+    .all(notAllowed);
+
 module.exports = router;

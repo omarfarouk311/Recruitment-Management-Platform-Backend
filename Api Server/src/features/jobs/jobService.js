@@ -1,11 +1,11 @@
 const jobModel = require('./jobModel')
 const Kafka = require('../../common/kafka')
-const {  cv_parsing_topic, logs_topic, action_types } = require('../../../config/config')
+const {  job_embedding_topic, logs_topic, action_types } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 const Pool = require('../../../config/db')
 
 
-produceToKafka = async (processObject, topicName) => {
+const produceToKafka = async (processObject, topicName) => {
     await Kafka.produce(processObject, topicName);
 };
 
@@ -27,7 +27,7 @@ module.exports.createJob = async (companyId, jobData) => {
             created_at: new Date(),
         };
 
-        await produceToKafka({ jobId }, cv_parsing_topic);
+        await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
 
         await client.query('COMMIT');
@@ -55,12 +55,12 @@ module.exports.getJobDetailsById = async (jobId) => {
     return job
 }
 
-module.exports.deleteJobById = async (companyId, jobId) => {
+module.exports.closeJobById = async (companyId, jobId) => {
     const client = await Pool.getWritePool().connect();
     try {
         await client.query('BEGIN');
 
-        await jobModel.deleteJobById(client, companyId, jobId);
+        await jobModel.closeJobById(client, companyId, jobId);
         const companyName = await jobModel.getCompanyName(companyId);
 
         const processObject = {
@@ -76,7 +76,7 @@ module.exports.deleteJobById = async (companyId, jobId) => {
 
         await client.query('COMMIT');
         console.log('Ack from Kafka');
-        return { message: 'Job deleted successfully' };
+        return { message: 'Job closed successfully' };
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error in deleteJobById:', error);
@@ -103,7 +103,7 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
             created_at: new Date(),
         };
 
-        await produceToKafka({ jobId }, cv_parsing_topic);
+        await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
 
         await client.query('COMMIT');
@@ -118,3 +118,9 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
         client.release();
     }
 };
+
+
+module.exports.getJobDataForEditing = async (jobId) => {
+    const job = await jobModel.getJobDataForEditing(jobId)
+    return job
+}

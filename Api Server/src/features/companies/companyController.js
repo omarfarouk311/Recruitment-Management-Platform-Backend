@@ -2,24 +2,15 @@ const companyService = require('./companyService');
 const { getPhotoService } = require('../../common/util');
 const { imagesBucketName } = require('../../../config/config');
 
-function passError(err, next) {
-    err.status = 500;
-    err.msg = 'Internal server error';
-    next(err);
-}
-
 exports.getCompanyData = async (req, res, next) => {
     const { companyId } = req.params;
 
     try {
         const result = await companyService.getCompanyData(companyId);
-        return res.status(200).json(result[0]);
+        res.status(200).json(result[0]);
     }
     catch (err) {
-        if (err.msg) {
-            return next(err);
-        }
-        passError(err, next);
+        next(err);
     }
 };
 
@@ -28,10 +19,10 @@ exports.getCompanyLocations = async (req, res, next) => {
 
     try {
         const result = await companyService.getCompanyLocations(companyId);
-        return res.status(200).json(result);
+        res.status(200).json(result);
     }
     catch (err) {
-        passError(err, next);
+        next(err);
     }
 };
 
@@ -39,41 +30,37 @@ exports.getCompanyIndustries = async (req, res, next) => {
     const { companyId } = req.params;
 
     try {
-        let result = await companyService.getCompanyIndustries(companyId);
-        result = result.map(({ industry }) => industry);
-        return res.status(200).json(result);
+        const result = await companyService.getCompanyIndustries(companyId);
+        res.status(200).json(result);
     }
     catch (err) {
-        passError(err, next);
+        next(err);
     }
 };
 
 exports.getCompanyJobs = async (req, res, next) => {
     const { companyId } = req.params;
     const filters = req.query;
-    const { userRole } = req;
+    const { userId } = req;
 
     try {
-        const result = await companyService.getCompanyJobs(companyId, filters, userRole);
-        return res.status(200).json(result);
+        const result = await companyService.getCompanyJobs(companyId, filters, userId);
+        res.status(200).json(result);
     }
     catch (err) {
-        passError(err, next);
+        next(err);
     }
 };
 
 exports.updateCompanyData = async (req, res, next) => {
-    const { userId: companyId, body: data } = req;
+    const { userId, body } = req;
 
     try {
-        await companyService.updateCompanyData(companyId, data);
+        await companyService.updateCompanyData(userId, body);
         res.status(204).send();
     }
     catch (err) {
-        if (err.msg) {
-            return next(err);
-        }
-        passError(err, next);
+        next(err);
     }
 };
 
@@ -94,15 +81,13 @@ exports.getCompanyPhoto = async (req, res, next) => {
         });
 
         stream.on('error', (err) => passError(err, next));
-
         stream.pipe(res);
     }
     catch (err) {
         if (err.code === 'NotFound') {
             err.msg = 'Company photo not found';
             err.status = 404;
-            return next(err);
         }
-        passError(err, next);
+        next(err);
     }
 };

@@ -18,12 +18,15 @@ router.route('/')
         .post(jobValidation.newJobValidation, handleValidationErrors, jobOfCompanyAuthorization, jobController.createJob)
         .all(notAllowed)
         
+router.route('/:id/edit')
+        .get(jobValidation.jobIdValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.getJobDataForEditing)
 
 router.route('/:id')
         .get(jobValidation.jobIdValidation, handleValidationErrors, jobController.getJobDetailsById)
-        .delete(jobValidation.jobIdValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.deleteJobById)
+        .patch(jobValidation.jobIdValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.closeJobById)
         .put(jobValidation.jobIdValidation, jobValidation.newJobValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.updateJobById)
         .all(notAllowed)
+
 
 
 

@@ -15,6 +15,8 @@ router.route('/')
     )
     .get(
         reportAuthorization.authorizeReportCreation,
+        reportValidation.validateGetReports,
+        handleValidationErrors,
         reportController.getReports
     )
     .all(notAllowed);

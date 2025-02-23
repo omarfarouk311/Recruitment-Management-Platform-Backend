@@ -36,11 +36,11 @@ module.exports.getJobDetailsById = async (req, res, next) => {
 }
 
 
-module.exports.deleteJobById = async (req, res, next) => {
+module.exports.closeJobById = async (req, res, next) => {
     const jobId = req.params.id;
     const companyId = req.userId;
     try {
-        const msg = await jobService.deleteJobById(companyId, jobId);
+        const msg = await jobService.closeJobById(companyId, jobId);
         res.status(200).json(msg);
     } catch (err) {
         next(err);
@@ -54,6 +54,17 @@ module.exports.updateJobById = async (req, res, next) => {
     try {
         const msg = await jobService.updateJobById(req.userId || 1, jobId, jobData);
         res.status(200).json(msg);
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+module.exports.getJobDataForEditing = async (req, res, next) => {
+    const jobId = req.params.id;
+    try {
+        const job = await jobService.getJobDataForEditing(jobId);
+        res.status(200).send(job);
     } catch (err) {
         next(err);
     }

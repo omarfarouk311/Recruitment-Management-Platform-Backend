@@ -1,4 +1,5 @@
 const { getWritePool, getReadPool } = require('../../../config/db');
+const { pagination_limit } = require('../../../config/config');
 
 class Report {
     constructor(jobId, creatorId, createdAt, title, description) {
@@ -50,9 +51,9 @@ class Report {
         }
     }
 
-    static async getReports(userId) {
+    static async getReports(userId, filters, limit = pagination_limit) {
         const pool = getReadPool();
-        const values = [userId];
+        const values = [userId, limit, (filters.page - 1) * limit];
         const query =
             `
             select r.title, r.description, r.created_at as "createdAt", j.title as "jobTitle", c.name as "companyName" 
@@ -63,6 +64,7 @@ class Report {
             ) r
             join job j on r.job_id = j.id
             join company c on j.company_id = c.id
+            limit $2 offset $3
             `;
 
         const { rows } = await pool.query(query, values);

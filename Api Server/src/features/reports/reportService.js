@@ -5,7 +5,7 @@ exports.createReport = async ({ jobId, title, description }, creatorId) => {
     await report.create();
 };
 
-exports.getReports = async (userId) => {
-    const result = await Report.getReports(userId);
+exports.getReports = async (userId, filters) => {
+    const result = await Report.getReports(userId, filters);
     return result;
 };

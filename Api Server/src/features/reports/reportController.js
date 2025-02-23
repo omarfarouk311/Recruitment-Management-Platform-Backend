@@ -13,10 +13,10 @@ exports.createReport = async (req, res, next) => {
 };
 
 exports.getReports = async (req, res, next) => {
-    const { userId } = req;
+    const { userId, query } = req;
 
     try {
-        const reports = await reportService.getReports(userId);
+        const reports = await reportService.getReports(userId, query);
         res.status(200).json(reports);
     }
     catch (err) {

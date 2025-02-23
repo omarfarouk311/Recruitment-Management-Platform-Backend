@@ -26,14 +26,14 @@ class jobModel {
 
             const date = new Date();
             const query = `
-            INSERT INTO job (title, description, created_at, recruitment_process_id, company_id, industry_id, country, city, remote, applied_cnt, closed)
-            VALUES ($${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++})
+            INSERT INTO job (title, description, created_at, recruitment_process_id, company_id, industry_id, country, city, remote, applied_cnt, closed, applied_cnt_limit)
+            VALUES ($${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++}, $${index++})
             RETURNING id;
         `;
             const values = [
                 jobData.jobTitle, jobData.jobDescription, date, jobData.processId,
                 companyId, jobData.industryId, jobData.country, jobData.city,
-                Boolean(jobData.remote), 0, Boolean(0)
+                Boolean(jobData.remote), 0, Boolean(0), jobData.appliedCntLimit
             ];
             const { rows } = await client.query(query, values);
             const jobId = rows[0].id;
@@ -94,17 +94,31 @@ class jobModel {
                 throw err;
             }
             const query = `
-                        SELECT j.title as job_title, j.description as job_description, CURRENT_DATE - j.created_at as days_ago,
-                        j.country as country, j.city as city, j.remote as remote, j.applied_cnt as applied_cnt, j.closed as closed,
+                        SELECT j.title as job_title,
+                        j.description as job_description,
+                        CURRENT_DATE - j.created_at as days_ago,
+                        j.country as country,
+                        j.city as city,
+                        j.remote as remote,
+                        j.applied_cnt as applied_cnt,
+                        j.closed as closed,
                         
-                        c.name as company_name, c.rating as company_rating, c.founded_on as founded_on, c.overview as overview,
-                        c.company_size as company_size, c.type as type ,
+                        c.name as company_name,
+                        c.rating as company_rating,
+                        c.founded_on as founded_on,
+                        c.overview as overview,
+                        c.company_size as company_size,
+                        c.type as type ,
 
-                        r.title as review_title, r.description as review_description, r.rating as review_rating, r.created_at as review_created_at
+                        r.title as review_title,
+                        r.description as review_description,
+                        r.rating as review_rating,
+                        r.created_at as review_created_at
 
                         FROM (SELECT title, description, created_at, company_id, industry_id, country, city, remote,
                                 applied_cnt, closed
                                 FROM job WHERE id = $1
+                                AND closed = $2
                             ) as j
                         JOIN company c
                         ON j.company_id = c.id
@@ -113,7 +127,7 @@ class jobModel {
                         JOIN industry i
                         ON i.id = j.industry_id;
                      `
-            const values = [jobId];
+            const values = [jobId, false];
             const { rows } = await client.query(query, values);
             return rows[0];
         } catch (err) {
@@ -122,9 +136,9 @@ class jobModel {
         }
     }
 
-    static async deleteJobById(client, companyId, jobId) {
+    static async closeJobById(client, companyId, jobId) {
         try {
-            const query = `DELETE FROM job WHERE id = $1;`;
+            const query = `UPDATE job SET closed = true WHERE id = $1;`
             await client.query(query, [jobId]);
             return;
         } catch (err) {
@@ -154,12 +168,12 @@ class jobModel {
                         UPDATE job SET title = $${index++}, description = $${index++}, created_at = $${index++}, 
                           recruitment_process_id = $${index++}, company_id = $${index++}, industry_id = $${index++}, 
                           country = $${index++}, city = $${index++}, remote = $${index++}, applied_cnt = $${index++}, 
-                          closed = $${index++}
+                          closed = $${index++}, applied_cnt_limit = $${index++}
                         WHERE id = $${index++};
         `;
             const values = [
                 jobData.jobTitle, jobData.jobDescription, date, jobData.processId, companyId, jobData.industryId,
-                jobData.country, jobData.city, Boolean(jobData.remote), 0, Boolean(0), jobId
+                jobData.country, jobData.city, Boolean(jobData.remote), 0, Boolean(0), jobData.appliedCntLimit, jobId
             ];
             await client.query(query, values);
 
@@ -182,6 +196,71 @@ class jobModel {
         }
     }
 
+    
+    static async getJobDataForEditing(jobId) {
+        let client = await Pool.getReadPool().connect();
+        try {
+            await client.query('BEGIN');
+            const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
+            const { rowCount } = await client.query(isExistQuery, [jobId]);
+            if (rowCount == 0) {
+                const err = new Error('Job id is not in database');
+                err.msg = 'Job not found';
+                err.status = 404;
+                throw err;
+            }
+            const query = `
+                        SELECT j.title as job_title,
+                        j.description as job_description,
+                        j.applied_cnt_limit as applied_cnt_limit,
+                        j.closed as closed,             
+                        j.country as country,
+                        j.city as city,
+                        j.remote as remote,
+
+                        i.name as industry_name,
+
+                        rp.name as recruitment_process_name
+                        FROM (
+                                SELECT id, title, description, recruitment_process_id, industry_id, country, city, remote, applied_cnt_limit, closed
+                                FROM Job
+                                WHERE id = $1
+                            ) as j
+                        JOIN Industry i
+                        ON j.industry_id = i.id
+                        LEFT JOIN Recruitment_Process rp
+                        ON rp.id = j.recruitment_process_id;
+                     `
+            
+            const values = [jobId];
+            let jobData = await client.query(query, values);
+            jobData = jobData.rows;
+
+            const query2 = `
+                            SELECT s.name as skill_name,
+                            js.importance as skill_importance,
+                            js.skill_id as skill_id
+                            FROM (
+                                    SELECT job_id, skill_id, importance
+                                    FROM Job_Skill
+                                    WHERE job_id = $1
+                                ) as js
+                            JOIN Skills s
+                            ON s.id = js.skill_id
+                        `
+            let skillsData = await client.query(query2, values);
+            skillsData = skillsData.rows
+            const returnedObject = {jobData, skillsData}
+            return returnedObject;
+        } catch (err) {
+            console.log('Error in getJobDataForEditing')
+            await client.query('ROLLBACK')
+            throw err;
+        } finally {
+            client.release();
+        }
+        
+    }
 
     
     static async getCompanyName(companyId) {
