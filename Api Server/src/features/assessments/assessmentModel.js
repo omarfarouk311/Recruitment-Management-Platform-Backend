@@ -1,6 +1,6 @@
 const primaryPool=require('../../../config/db')
 const replicaPool=require('../../../config/db')
-
+let {desc_order,asc_order,limit}=require('../../../config/config')
 class assessmentsModel{
      
     constructor(data){
@@ -15,9 +15,23 @@ class assessmentsModel{
         this.correctAnswers = data.correctAnswers;
     }
 
-    static async save(assessmentData){
-        const primary_DB=primaryPool.getWritePool();
-        const client=await primary_DB.connect();  // to open a connection to the database and do not close it until the transaction is done
+    static async getCompanyName(companyId,client){
+        try{
+
+            let query=`SELECT name from Company WHERE id=$1`
+            let value=[companyId]
+            let companyName=await client.query(query,value)
+             
+            return companyName.rows[0].name
+
+        }catch(err){
+            console.log("err in getCompanyName model",err.message)
+            throw err;
+        }
+    }
+
+    static async save(assessmentData,client){
+       
         
         try{
             
@@ -37,9 +51,6 @@ class assessmentsModel{
                 assessmentData.jobTitle,
                 assessmentData.numberOfQuestions];
 
-
- 
-            await client.query('BEGIN');  // begin the transaction
            
             const assessmentResult = await client.query(assessmentQuery,assessmentvalues); 
             const assessmentId = assessmentResult.rows[0].id;
@@ -65,18 +76,14 @@ class assessmentsModel{
                 }
             })
 
-            await client.query('COMMIT');
             return assessmentResult.rows[0];
 
         }catch(err){
             console.log("Error in addAssessmentModel", err.message)
-            await client.query('ROLLBACK'); // rollback the transaction in case of error
             err.msg="error during saving the assessment,please try again"
             err.status=500
             throw err;
             
-        }finally{
-            client.release();  // release the connection to the pool
         }
     }
 
@@ -229,7 +236,7 @@ class assessmentsModel{
 
     }
 
-    static async delete(assessmentID){
+    static async delete(assessmentID,client){
         try{
             const primary_DB=primaryPool.getWritePool();
 
@@ -398,6 +405,58 @@ class assessmentsModel{
 
         }catch(err){
             console.log("Error in validateCompanyJobModel", err.message)
+            throw err
+        }
+
+    }
+
+    static async get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page){
+        let replica_DB=replicaPool.getReadPool();
+        try{
+            let cnt=1;
+            let values=[];
+            let query=
+            `WITH getSeekerData as(
+            SELECT job_id,date_applied,phase_deadline,recruitment_process_id
+            FROM Candidates
+            WHERE seeker_id=$${cnt++}
+            )
+            SELECT Job.title,Company.name,Company_Locations.country,Company_Locations.city,
+            getSeekerData.date_applied,getSeekerData.phase_deadline,"Pending" as status
+            FROM getSeekerData 
+            JOIN (SELECT recruitment_process_id FROM Recruitment_Phase WHERE assessment_id is not null) as t1 ON getSeekerData.recruitment_process_id=t1.recruitment_process_id
+            JOIN Job ON getSeekerData.job_id=Job.id
+            JOIN Company ON Job.company_id=Company.id
+            JOIN Company_Locations ON Company.id=Company_Locations.company_id
+            WHERE 1=1
+            `
+            values.push(seekerId);
+            if(country){
+                query+=` AND Company_Locations.country=$${cnt++}`
+                values.push(country)
+            }
+            if(city){
+                query+=` AND Company_Locations.city=$${cnt++}` 
+                values.push(city)
+            }
+            if(companyName){
+                query+=` AND Company.name=$${cnt++}`
+                values.push(companyName)
+            }
+            if(sorted==null || sorted==asc_order){
+                query+=` ORDER BY getSeekerData.date_applied ASC`
+            }
+            else if(sorted==desc_order){
+                query+=` ORDER BY getSeekerData.date_applied DESC`
+            }
+
+            let offset=(page-1)*limit;
+            query+=`limit ${limit} offset ${offset}`
+            let result=await replica_DB.query(query,values);
+            return result.rows
+
+        }catch(err){
+            console.log("Error in get_Seeker_Assessment_Dashboard_PendingModel", err.message)
             throw err
         }
 

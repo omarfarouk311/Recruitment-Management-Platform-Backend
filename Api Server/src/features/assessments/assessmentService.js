@@ -1,13 +1,45 @@
 const assessmentsModel = require('./assessmentModel');
+const Kafka = require('../../common/kafka')
+const { action_types, logs_topic,candidate_status_pending,candidate_status_accepted,candidate_status_rejected } = require('../../../config/config')
+const { v6: uuid } = require('uuid');
+const primaryPool=require('../../../config/db')
+
+
+
 
 
 module.exports.add_AssessmentService=async (assessmentData) => {
-       
-        let numOfQuestions=assessmentData.metaData.length // geth num of questions based on the number of elements in the array of json(meta data)
+    const primary_DB=primaryPool.getWritePool();
+    const client=await primary_DB.connect();  // to open a connection to the database and do not close it until the transaction is done
+    try{
+
+        client.query('BEGIN')
+        let companyName=await assessmentsModel.getCompanyName(assessmentData.companyId,client)
+
+        let numOfQuestions=assessmentData.metaData.length // get num of questions based on the number of elements in the array of json(meta data)
         assessmentData.numberOfQuestions=numOfQuestions;
 
-        const assessment=await assessmentsModel.save(assessmentData);
+        const assessment=await assessmentsModel.save(assessmentData,client);
+
+        Kafka.produce({
+            id: uuid(),
+            performed_by: companyName,
+            company_id: assessmentData.companyId,
+            extra_data: null,
+            action_type: action_types.create_assessment,
+            created_at: new Date(),
+        }, logs_topic)
+
+        client.query('COMMIT')
         return assessment;
+
+    }catch(err){
+        client.query('ROLLBACK')
+        throw err
+    }finally{
+        client.release()
+    }
+     
 
 }
 
@@ -40,11 +72,34 @@ module.exports.edit_AssessmentByIdService=async (assessmentId,assessmentData) =>
        
 }
 
-module.exports.delete_AssessmentByIdService=async(assessmentId)=>{
+module.exports.delete_AssessmentByIdService=async(assessmentId,companyId)=>{
+    const primary_DB=primaryPool.getWritePool();
+    const client=await primary_DB.connect();
+    try{
 
-     await assessmentsModel.delete(assessmentId);
+        client.query('BEGIN')
+        let companyName=await assessmentsModel.getCompanyName(companyId,client)
+        await assessmentsModel.delete(assessmentId,client);
+        Kafka.produce({
+            id: uuid(),
+            performed_by: companyName,
+            company_id:companyId,
+            extra_data: null,
+            action_type: action_types.remove_assessment,
+            created_at: new Date(),
+        }, logs_topic)
+
+        client.query('COMMIT')
+        return true;
+
+
+    }catch(err){
+        client.query('ROLLBACK')
+        throw err
+    }finally{
+        client.release()
+    }
     
-     return true;
 }
 
 
@@ -82,4 +137,19 @@ module.exports.get_JobSeekerScoreService=async(jobId,jobSeekerId)=>{
     return jobSeekerScore
 
 }
+
+module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,city,status,companyName,sorted,page)=>{
+    let result
+    if(status==null|| status==candidate_status_pending){
+        result=assessmentsModel.get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page);
+    }
+    else if(status==candidate_status_accepted){
+
+    }
+    else{
+
+    }
+    
+}
+
 

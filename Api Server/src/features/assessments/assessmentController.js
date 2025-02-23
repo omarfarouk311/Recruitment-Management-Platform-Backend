@@ -1,6 +1,7 @@
 const assessmentService=require('./assessmentService');
 
 
+
 module.exports.add_AssessmentController = async (req, res,next) => {
    try{
     const assessmentData=req.body;
@@ -80,7 +81,8 @@ module.exports.delete_AssessmentByIdController=async(req,res,next)=>{
     try{
 
         let assessmentId=req.params.id;
-        await assessmentService.delete_AssessmentByIdService(assessmentId);
+        let companyId=req.userId
+        await assessmentService.delete_AssessmentByIdService(assessmentId,companyId);
         return res.status(200).json({
             success: true,
             message: "Assessment deleted successfully"
@@ -142,4 +144,19 @@ module.exports.get_JobSeekerScore=async(req,res,next)=>{
     }
 
 
+}
+module.exports.get_Seeker_Assessment_Dashboard=async(req,res,next)=>{
+    try{
+        let seekerId=req.userId;
+        let{country,city,status,companyName,sorted,page}=req.params;
+        let result=assessmentService.get_Seeker_Assessment_DashboardService(seekerId,country,city,status,companyName,sorted,page);
+        return res.status(200).json({
+            success: true,
+            result: result 
+        })
+
+    }catch(err){
+        console.log("Error in get_Seeker_Assessment_Dashboard", err.message)
+        next(err);
+    }
 }
