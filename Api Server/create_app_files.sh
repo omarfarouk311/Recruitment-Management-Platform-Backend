@@ -11,7 +11,7 @@ APP_NAME=$1
 PATH=$2
 
 # Create the specified files
-touch "$PATH/${APP_NAME}Authentication.js"
+touch "$PATH/${APP_NAME}Authorization.js"
 touch "$PATH/${APP_NAME}Validation.js"
 touch "$PATH/${APP_NAME}Router.js"
 touch "$PATH/${APP_NAME}Controller.js"
