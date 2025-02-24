@@ -2,7 +2,7 @@ const express = require('express');
 const router= express.Router();
 const assessmentController = require('./assessmentController');
 const {assessmentBodyValidation,assessmentParamsValidation,jobParamsValidation,seekerParamsValidation}=require('./assessmentsValidation');
-const{authorizeCompanyAssessment,authorizeCompanyJob,authorizeCompany}=require('./assessmentAuthorization');
+const{authorizeCompanyAssessment,authorizeCompanyJob,authorizeCompany,authorizeSeeker}=require('./assessmentAuthorization');
 const {handleValidationErrors}=require('../../common/util')
 
 
@@ -11,8 +11,13 @@ router.route('/')
        .post(assessmentBodyValidation,handleValidationErrors,authorizeCompany,assessmentController.add_AssessmentController) // verify token of company later
        .get(authorizeCompany,assessmentController.get_All_AssessmentController)  // verify token of company later
 
+
+router.route('/seeker-assessment-dashboard')
+        .get(authorizeSeeker,assessmentController.get_Seeker_Assessment_Dashboard) 
+
+
 router.route('/:id')
-        .get(handleValidationErrors,authorizeCompanyAssessment,assessmentController.get_AssessmentByIdController) // get assessment by id   // erify token of company later
+        .get(authorizeCompanyAssessment,assessmentController.get_AssessmentByIdController) // get assessment by id   // erify token of company later
         .put(assessmentParamsValidation,handleValidationErrors,assessmentBodyValidation,authorizeCompanyAssessment,assessmentController.edit_AssessmentByIdController)// edit assessment by id   // verify token of company later
         .delete(handleValidationErrors,authorizeCompanyAssessment,assessmentController.delete_AssessmentByIdController)// delete assessment by id   //verify token of company later
 
@@ -30,8 +35,7 @@ router.route('/job/:jobId/jobSeeker/:jobSeekerId')
              assessmentController.get_JobSeekerScore) // get score of jobseeker in the assessment  //verify token of jobseeker later
 
              
-router.route('/seeker-assessment-dashboard')
-        .get(assessmentController.get_Seeker_Assessment_Dashboard) 
+
       
 
 

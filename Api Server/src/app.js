@@ -10,14 +10,15 @@ const recruitment_processRoutes = require('./features/recruitment_process/recrui
 const assessmentRoutes = require('./features/assessments/assessmentRoutes');
 const recruiterRoutes = require('./features/recruiters/recruiterRoutes');
 const jobRoutes = require('./features/jobs/jobRoutes')
+
 const { role } = require('../config/config')
 const app = express();
 
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 1;
-    req.userRole = role.company;
+    req.userId = 3;
+    req.userRole = role.jobSeeker;
     next()
 })
 

@@ -7,16 +7,19 @@ module.exports.authorizeCompanyAssessment=async(req,res,next)=>{
     try{
         let assessmentId=parseInt(req.params.id);
 
-        if(!assessmentId){
+    
+        if(req.role!=role.company){
+            let err=new Error();
+            err.msg="You are not authorized to access this assessment only company can"
+            err.status=404;
             throw err;
         }
-        // let companyId=req.body.companyId // will change to be taken from the token
         let companyId=req.userId
         let returnCompanyId=await assessmentsModel.validateCompanyAssessment(assessmentId);
       
         if(!returnCompanyId){
              let err=new Error()
-                err.status=404;
+                err.status=400;
                 err.msg="Assessment not found"
                 throw err;
         }
@@ -77,6 +80,22 @@ module.exports.authorizeCompany=async(req,res,next)=>{
         if(userRole!=role.company){
             let err=new Error();
             err.msg="Only company can do this action"
+            err.status=403
+            throw err
+        }
+        next()
+
+    }catch(err){
+        next(err)
+    }
+}
+
+module.exports.authorizeSeeker=async(req,res,next)=>{
+    try{
+        let userRole=req.userRole
+        if(userRole!=role.jobSeeker){
+            let err=new Error();
+            err.msg="Only job seeker can do this action"
             err.status=403
             throw err
         }

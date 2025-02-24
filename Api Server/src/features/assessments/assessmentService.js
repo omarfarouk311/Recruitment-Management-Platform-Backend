@@ -140,15 +140,16 @@ module.exports.get_JobSeekerScoreService=async(jobId,jobSeekerId)=>{
 
 module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,city,status,companyName,sorted,page)=>{
     let result
+    
     if(status==null|| status==candidate_status_pending){
         result=assessmentsModel.get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page);
     }
-    else if(status==candidate_status_accepted){
-
-    }
     else{
-
+        if(status==2)status=1;
+        else status=0;
+        result=assessmentsModel.get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page);
     }
+    return result
     
 }
 

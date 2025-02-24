@@ -1,6 +1,6 @@
 const primaryPool=require('../../../config/db')
 const replicaPool=require('../../../config/db')
-let {desc_order,asc_order,limit}=require('../../../config/config')
+let {desc_order,asc_order,pagination_limit}=require('../../../config/config')
 class assessmentsModel{
      
     constructor(data){
@@ -410,33 +410,32 @@ class assessmentsModel{
 
     }
 
-    static async get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page){
+    static async get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page=1){
         let replica_DB=replicaPool.getReadPool();
         try{
             let cnt=1;
             let values=[];
             let query=
             `WITH getSeekerData as(
-            SELECT job_id,date_applied,phase_deadline,recruitment_process_id
+            SELECT job_id,date_applied,phase_deadline,recruitment_process_id,phase
             FROM Candidates
             WHERE seeker_id=$${cnt++}
             )
-            SELECT Job.title,Company.name,Company_Locations.country,Company_Locations.city,
-            getSeekerData.date_applied,getSeekerData.phase_deadline,"Pending" as status
+            SELECT Job.title,Company.name,Job.country,Job.city,
+            getSeekerData.date_applied,getSeekerData.phase_deadline,'Pending' as status
             FROM getSeekerData 
-            JOIN (SELECT recruitment_process_id FROM Recruitment_Phase WHERE assessment_id is not null) as t1 ON getSeekerData.recruitment_process_id=t1.recruitment_process_id
+            JOIN (SELECT recruitment_process_id,phase_num FROM Recruitment_Phase WHERE assessment_id is not null) as t1 ON getSeekerData.recruitment_process_id=t1.recruitment_process_id AND getSeekerData.phase=t1.phase_num
             JOIN Job ON getSeekerData.job_id=Job.id
             JOIN Company ON Job.company_id=Company.id
-            JOIN Company_Locations ON Company.id=Company_Locations.company_id
             WHERE 1=1
             `
             values.push(seekerId);
             if(country){
-                query+=` AND Company_Locations.country=$${cnt++}`
+                query+=` AND Job.country=$${cnt++}`
                 values.push(country)
             }
             if(city){
-                query+=` AND Company_Locations.city=$${cnt++}` 
+                query+=` AND Job.city=$${cnt++}` 
                 values.push(city)
             }
             if(companyName){
@@ -450,13 +449,59 @@ class assessmentsModel{
                 query+=` ORDER BY getSeekerData.date_applied DESC`
             }
 
-            let offset=(page-1)*limit;
-            query+=`limit ${limit} offset ${offset}`
+            let offset=(page-1)*pagination_limit;
+            query+=` limit ${pagination_limit} offset ${offset}`
+            
             let result=await replica_DB.query(query,values);
+     
             return result.rows
 
         }catch(err){
             console.log("Error in get_Seeker_Assessment_Dashboard_PendingModel", err.message)
+            throw err
+        }
+
+    }
+
+    static async get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page){
+        let replica_DB=replicaPool.getReadPool();
+        try{
+
+            let cnt=1;
+            let values=[];
+            let query=
+            `SELECT job_title,company_name,country,city,date_applied,CASE WHEN ${status}=1 THEN 'Accepted' ELSE 'Rejected' END as status 
+            FROM Candidate_History 
+            WHERE seeker_id=$${cnt++} AND status=$${cnt++}
+            `
+            values.push(seekerId,status);
+            
+            if(country){
+                query+=` AND country=$${cnt++}`
+                values.push(country)
+            }
+            if(city){
+                query+=` AND city=$${cnt++}` 
+                values.push(city)
+            }
+            if(companyName){
+                query+=` AND company_name=$${cnt++}`
+                values.push(companyName)
+            }
+            if(sorted==null || sorted==asc_order){
+                query+=` ORDER BY date_applied ASC`
+            }
+            else if(sorted==desc_order){
+                query+=` ORDER BY date_applied DESC`
+            }
+
+            let offset=(page-1)*pagination_limit;
+            query+=` limit ${pagination_limit} offset ${offset}`
+            let result=await replica_DB.query(query,values);
+            return result.rows
+
+        }catch(err){
+            console.log("Error in get_Seeker_Assessment_Dashboard_AcceptedModel",err.message)
             throw err
         }
 
