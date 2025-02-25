@@ -83,7 +83,7 @@ const mailjet = require('../config/mailjet');
                             jobSeekerData.email, 
                             rejected, 
                             deadline? deadline: undefined, 
-                            newPhaseName == 'interview'? true: undefined, 
+                            newPhaseName == 'interview' || interview? true: undefined, 
                             newPhaseName
                         )
                     } else if( type == email_types.interview_date ) {
