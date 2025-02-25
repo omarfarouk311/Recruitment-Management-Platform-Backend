@@ -123,6 +123,13 @@ const mailjet = require('../config/mailjet');
                         deadline
                     );
                 }
+                else if (type == email_types.job_closing) {
+                    email = getJobClosingTemplate(
+                        jobTitle,
+                        companyName,
+                        companyEmail
+                    );
+                }
 
                 const result = await mailjet
                 .post('send', {version: 'v3.1'})
@@ -145,6 +152,41 @@ const mailjet = require('../config/mailjet');
         }
     });
 })();
+
+
+const getJobClosingTemplate = (jobName, companyName, companyEmail) => {
+    const subject = `Job Posting Closed: ${jobName} at ${companyName}`;
+
+    const textPart = `Dear Hiring Team at ${companyName},
+
+        We want to inform you that the job posting for the ${jobName} position has been closed as it has reached the maximum number of applicants allowed.
+
+        This job will no longer accept new applications. However, you can still review and process the existing candidates.
+
+        Best regards,  
+        ${senderName} Team`;
+
+    const htmlPart = `<p>Dear Hiring Team at <strong>${companyName}</strong>,</p>
+        <p>We want to inform you that the job posting for the <strong>${jobName}</strong> position has been closed as it has reached the maximum number of applicants allowed.</p>
+        <p>This job will no longer accept new applications. However, you can still review and process the existing candidates.</p>
+        <p>Best regards,<br><strong>${senderName} Team</strong></p>`;
+
+    return {
+        From: {
+            Email: senderEmail,
+            Name: `${senderName} Team`
+        },
+        To: [
+            {
+                Email: companyEmail,
+                Name: `Hiring Team at ${companyName}`
+            }
+        ],
+        Subject: subject,
+        TextPart: textPart,
+        HTMLPart: htmlPart
+    };
+};
 
 
 const getPhasesEmailTemplate = (jobTitle, companyName, jobSeekerName, jobSeekerEmail, rejected, deadline = null, interview = false, newPhaseName = '') => {

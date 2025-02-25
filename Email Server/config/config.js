@@ -17,7 +17,8 @@ module.exports = {
         interview_date: 2,
         job_offer: 3,
         company_invitation: 4,
-        job_offer_acceptance: 5
+        job_offer_acceptance: 5,
+        job_closing: 6,
     },
     senderName: 'Wuzzfni'
 };
