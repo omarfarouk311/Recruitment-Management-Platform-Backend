@@ -23,3 +23,15 @@ exports.getSearchedJobs = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.applyToJob = async (req, res, next) => {
+    const { userId, body } = req;
+
+    try {
+        await jobService.applyToJob(userId, body);
+        res.status(201).send();
+    }
+    catch (err) {
+        next(err);
+    }
+};

@@ -24,4 +24,13 @@ router.route('/')
     )
     .all(notAllowed);
 
+router.route('/apply')
+    .post(
+        authorizeAccess,
+        jobValidation.validateApplyToJob,
+        handleValidationErrors,
+        jobController.applyToJob
+    )
+    .all(notAllowed);
+
 module.exports = router;
