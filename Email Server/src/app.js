@@ -12,7 +12,7 @@ const mailjet = require('../config/mailjet');
     await consumer.run({
         autoCommit: false,
         eachMessage: async ({ topic, partition, message }) => {
-            let { type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department } = JSON.parse(message.value);
+            let { type, jobId, companyId, jobSeeker, templateId, deadline, interview, newPhaseName, rejected, recruiterId, department, phaseNum } = JSON.parse(message.value);
             try {
                 if (deadline) {
                     deadline = new Date(deadline).toUTCString();
@@ -22,15 +22,27 @@ const mailjet = require('../config/mailjet');
                 let pool = getReadPool();
                 let jobTitle;
                 if(jobId) {
-                    jobTitle = await pool.query(`SELECT title FROM job WHERE id = $1`, [jobId]);
-                    if (jobTitle.rows.length == 0) {
+                    let query = `SELECT title ${phaseNum? ', phase_type.name as newPhaseName': ''} FROM job `;
+                    let params = [jobId];
+                    if (phaseNum) {
+                        query += `
+                            JOIN recruitment_phase ON job.recruitment_process_id = recruitment_phase.recruitment_process_id
+                            JOIN phase_type ON recruitment_phase.type = phase_type.id
+                        `;
+                        params.push(phaseNum);
+                    }
+                    query += `WHERE job.id = $1 AND ${phaseNum ? `recruitment_phase.phase_num = $2 ` : '1=1 '}`;
+                    res = await pool.query(query, [jobId]);
+                    if (res.rows.length == 0) {
                         let error = new Error('job not found!');
                         error.cause = 'self';
                         throw error;
                     }
-                    jobTitle = jobTitle.rows[0].title;
+                    jobTitle = res.rows[0].title;
+                    if (res.rows[0].newPhaseName) {
+                        newPhaseName = res.rows[0].newPhaseName;
+                    }
                 }
-
                 
                 if(companyId) {
                     var { name: companyName, email: companyEmail } = (await pool.query(`
@@ -71,7 +83,7 @@ const mailjet = require('../config/mailjet');
                             jobSeekerData.email, 
                             rejected, 
                             deadline? deadline: undefined, 
-                            interview? interview: undefined, 
+                            newPhaseName == 'interview' || interview? true: undefined, 
                             newPhaseName
                         )
                     } else if( type == email_types.interview_date ) {
@@ -123,6 +135,13 @@ const mailjet = require('../config/mailjet');
                         deadline
                     );
                 }
+                else if (type == email_types.job_closing) {
+                    email = getJobClosingTemplate(
+                        jobTitle,
+                        companyName,
+                        companyEmail
+                    );
+                }
 
                 const result = await mailjet
                 .post('send', {version: 'v3.1'})
@@ -145,6 +164,41 @@ const mailjet = require('../config/mailjet');
         }
     });
 })();
+
+
+const getJobClosingTemplate = (jobName, companyName, companyEmail) => {
+    const subject = `Job Posting Closed: ${jobName} at ${companyName}`;
+
+    const textPart = `Dear Hiring Team at ${companyName},
+
+        We want to inform you that the job posting for the ${jobName} position has been closed as it has reached the maximum number of applicants allowed.
+
+        This job will no longer accept new applications. However, you can still review and process the existing candidates.
+
+        Best regards,  
+        ${senderName} Team`;
+
+    const htmlPart = `<p>Dear Hiring Team at <strong>${companyName}</strong>,</p>
+        <p>We want to inform you that the job posting for the <strong>${jobName}</strong> position has been closed as it has reached the maximum number of applicants allowed.</p>
+        <p>This job will no longer accept new applications. However, you can still review and process the existing candidates.</p>
+        <p>Best regards,<br><strong>${senderName} Team</strong></p>`;
+
+    return {
+        From: {
+            Email: senderEmail,
+            Name: `${senderName} Team`
+        },
+        To: [
+            {
+                Email: companyEmail,
+                Name: `Hiring Team at ${companyName}`
+            }
+        ],
+        Subject: subject,
+        TextPart: textPart,
+        HTMLPart: htmlPart
+    };
+};
 
 
 const getPhasesEmailTemplate = (jobTitle, companyName, jobSeekerName, jobSeekerEmail, rejected, deadline = null, interview = false, newPhaseName = '') => {

@@ -1,5 +1,6 @@
 const { getReadPool, getWritePool } = require('../../../config/db');
-const { role: { recruiter }, logs_topic, emails_topic, action_types: { send_invitation }, action_types } = require('../../../config/config');
+const { role: { recruiter }, logs_topic, emails_topic, action_types: { send_invitation },
+    email_types: { company_invitation } } = require('../../../config/config');
 const { produce } = require('../../common/kafka');
 const { v6: uuidv6 } = require('uuid');
 
@@ -131,7 +132,7 @@ class Invitation {
             }
             // produced message into emails topic
             const emailData = {
-                type: 4,
+                type: company_invitation,
                 recruiterId,
                 companyId: this.companyId,
                 department: this.department,

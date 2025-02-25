@@ -294,6 +294,8 @@ class CandidateModel {
                     phase_deadline = CASE seeker_id
                             ${updatedCandidates.map(value => `WHEN ${value.seekerId} THEN ${value.deadline? `TIMESTAMP '${value.deadline}'`: `NULL::timestamp`}`).join(' ') + ' ELSE NULL::timestamp'}
                         END, 
+                    assessment_deadline = NULL,
+                    last_status_update = NOW(),
                     recruiter_id = NULL
                     WHERE seeker_id = ANY($1) AND job_id = $2;
                     `;
