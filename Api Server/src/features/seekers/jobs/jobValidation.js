@@ -8,7 +8,7 @@ const validateCompanyRating = () => query('companyRating')
     .isString()
     .withMessage('companyRating parameter must be a string')
     .trim()
-    .isInt({ allow_leading_zeroes: false, min: 1, max: 4 })
+    .isInt({ allow_leading_zeroes: false, min: 1, max: 5 })
     .withMessage("Invalid companyRating parameter, it must be between 1 and 4")
     .toInt();
 

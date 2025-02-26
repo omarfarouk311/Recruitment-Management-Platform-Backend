@@ -36,8 +36,8 @@ class Job {
         }
         // company rating filter is from the lower bound up to (and not including) the upper bound
         if (filters.companyRating) {
-            query += ` and c.rating >= $${index++} and c.rating < $${index++}`;
-            values.push(filters.companyRating, filters.companyRating + 1);
+            query += ` and c.rating >= $${index++}`;
+            values.push(filters.companyRating);
         }
         if (filters.fromDate) {
             query += ` and j.created_at between $${index++} and $${index++}`;
@@ -83,8 +83,8 @@ class Job {
             values.push(filters.industry);
         }
         if (filters.companyRating) {
-            query += ` and c.rating >= $${index++} and c.rating < $${index++}`;
-            values.push(filters.companyRating, filters.companyRating + 1);
+            query += ` and c.rating >= $${index++}`;
+            values.push(filters.companyRating);
         }
         if (filters.fromDate) {
             query += ` and j.created_at between $${index++} and $${index++}`;

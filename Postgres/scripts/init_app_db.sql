@@ -300,8 +300,6 @@ CREATE INDEX ON Company USING GIST (name gist_trgm_ops);
 
 CREATE INDEX ON Candidate_History (company_name);
 
-CREATE INDEX ON Candidate_History (remote);
-
 CREATE INDEX ON Candidate_History (country, city);
 
 CREATE INDEX ON Candidate_History (job_id);
@@ -317,6 +315,8 @@ CREATE INDEX ON Company (rating);
 CREATE INDEX ON Company_Location (country, city);
 
 CREATE INDEX ON Company_Location (company_id);
+
+CREATE INDEX ON Company_Invitations (company_id);
 
 CREATE INDEX ON Candidates (recruiter_id, phase);
 

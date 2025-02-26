@@ -22,32 +22,26 @@ class Invitation {
         let query =
             userRole === recruiter ?
                 `
-                select c.id as "companyId", c.name, i.department, i.created_at as "dateRecieved", i.deadline,
+                select i.company_id as "companyId", c.name, i.department, i.created_at as "dateRecieved", i.deadline,
                 case
-                    when i.status = 2 then 'pending'
-                    when i.status = 1 then 'accepted'
-                    else 'rejected'
+                    when i.status = 2 then 'Pending'
+                    when i.status = 1 then 'Accepted'
+                    else 'Rejected'
                 end as status
-                from (
-                    select company_id, department, created_at, deadline, status
-                    from Company_Invitations
-                    where recruiter_id = $${index++}
-                ) i
+                from Company_Invitations i
                 join Company c on i.company_id = c.id
+                where i.recruiter_id = $${index++}
                 `:
                 `
-                select r.id as "recruiterId", r.name, i.department, i.created_at as "dateSent", i.deadline,
+                select i.recruiter_id as "recruiterId", r.name, i.department, i.created_at as "dateSent", i.deadline,
                 case
-                    when i.status = 2 then 'pending'
-                    when i.status = 1 then 'accepted'
-                    else 'rejected'
+                    when i.status = 2 then 'Pending'
+                    when i.status = 1 then 'Accepted'
+                    else 'Rejected'
                 end as status
-                from (
-                    select recruiter_id, department, created_at, deadline, status
-                    from Company_Invitations
-                    where company_id = $${index++}
-                ) i
+                from Company_Invitations i
                 join recruiter r on i.recruiter_id = r.id
+                where i.company_id = $${index++}
                 `;
 
         if (filters.status) {
