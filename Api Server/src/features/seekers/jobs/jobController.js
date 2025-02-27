@@ -35,3 +35,15 @@ exports.applyToJob = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.removeRecommendation = async (req, res, next) => {
+    const { userId, params } = req;
+
+    try {
+        await jobService.removeRecommendation(userId, params);
+        res.status(204).send();
+    }
+    catch (err) {
+        next(err);
+    }
+};

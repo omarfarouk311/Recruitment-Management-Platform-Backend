@@ -16,7 +16,7 @@ class Job {
             join job j on r.job_id = j.id
             join company c on j.company_id = c.id
             ${filters.industry ? 'join industry i on j.industry_id = i.id' : ''}
-            where r.seeker_id = $${index++} and closed = false
+            where r.seeker_id = $${index++}
             `;
 
         if (filters.country) {
@@ -218,17 +218,26 @@ class Job {
                 where id = $2
                 `;
             values = [updatedAppliedCount, jobId];
+            await client.query(updateJob, values);
 
-            // produce email messages into kafka
             const promises = [];
-            // notify the company that the job has been closed
             if (updatedAppliedCount === appliedLimit) {
+                // stop recommending this job
+                const removeJobFromRecommendations =
+                    `
+                    delete from Recommendations
+                    where job_id = $1
+                    `;
+                values = [jobId];
+                promises.push(client.query(removeJobFromRecommendations, values));
+
+                // notify the company that the job has been closed
                 const companyEmailData = {
                     type: job_closing,
                     jobId,
                     companyId
                 };
-                promises.push(produce(companyEmailData, emails_topic));
+                promises.push(produce(companyEmailData, emails_topic), client.query);
             }
             // notify the seeker that he has been progressed to the first phase
             const seekerEmailData = {
@@ -240,7 +249,7 @@ class Job {
                 deadline,
                 phaseNum: 1,
             };
-            promises.push(produce(seekerEmailData, emails_topic), client.query(updateJob, values))
+            promises.push(produce(seekerEmailData, emails_topic))
             await Promise.all(promises);
 
             await client.query('commit');
@@ -256,6 +265,15 @@ class Job {
         finally {
             client.release();
         }
+    }
+
+    static async removeRecommendation(seekerId, jobId) {
+        const query =
+            `
+            delete from Recommendations
+            where seeker_id = $1 and job_id = $2
+            `;
+        await this.primaryPool.query(query, [seekerId, jobId]);
     }
 }
 

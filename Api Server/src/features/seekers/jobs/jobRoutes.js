@@ -15,6 +15,15 @@ router.route('/recommended')
     )
     .all(notAllowed);
 
+router.route('/recommended/:jobId')
+    .delete(
+        authorizeAccess,
+        jobValidation.validateJobIdParam,
+        handleValidationErrors,
+        jobController.removeRecommendation
+    )
+    .all(notAllowed);
+
 router.route('/')
     .get(
         authorizeAccess,

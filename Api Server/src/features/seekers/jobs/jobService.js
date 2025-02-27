@@ -9,3 +9,5 @@ exports.getSearchedJobs = async (filters) => {
 };
 
 exports.applyToJob = (seekerId, { cvId, jobId }) => Job.apply(seekerId, cvId, jobId);
+
+exports.removeRecommendation = (seekerId, { jobId }) => Job.removeRecommendation(seekerId, jobId);

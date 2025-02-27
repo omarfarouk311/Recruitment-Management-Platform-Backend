@@ -1,4 +1,4 @@
-const { query, body } = require('express-validator');
+const { query, body, param } = require('express-validator');
 const { validatePage, validateIndustry, validateCountry, validateCity, validateRemote } = require('../../../common/util');
 
 const validateCompanyRating = () => query('companyRating')
@@ -33,8 +33,6 @@ const validateToDate = () => query('toDate')
     .customSanitizer(isoString => new Date(isoString));
 
 const validateWord = () => query('word')
-    .notEmpty()
-    .withMessage('word parameter must exist')
     .isString()
     .withMessage('word parameter must be a string')
     .trim()
@@ -48,6 +46,11 @@ const validateCVId = () => body('cvId', 'Invalid CV id')
 const validateJobId = () => body('jobId', 'Invalid job id')
     .custom(value => typeof value === 'number' && value > 0)
     .isInt();
+
+const validateJobIdParam = () => param('jobId', 'Invalid job id')
+    .isString()
+    .isInt({ min: 1 })
+    .toInt();
 
 exports.validateGetRecommendedJobs =
     [
@@ -64,3 +67,5 @@ exports.validateGetRecommendedJobs =
 exports.validateGetSearchedJobs = [...exports.validateGetRecommendedJobs, validateWord()];
 
 exports.validateApplyToJob = [validateCVId(), validateJobId()];
+
+exports.validateJobIdParam = validateJobIdParam();

@@ -352,6 +352,8 @@ CREATE INDEX ON Questions (assessment_id);
 
 CREATE INDEX ON Recommendations (seeker_id, similarity_score);
 
+CREATE INDEX ON Recommendations (job_id);
+
 CREATE INDEX ON Reviews (company_id);
 
 CREATE INDEX ON Reviews (rating);
