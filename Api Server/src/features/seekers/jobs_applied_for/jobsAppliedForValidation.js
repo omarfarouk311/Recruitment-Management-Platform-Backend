@@ -1,28 +1,6 @@
 const { query } = require('express-validator');
-const { minLocationLength, maxLocationLength, minNameLength, maxNameLength } = require('../../../../config/config');
-const { validatePage } = require('../../../common/util');
-
-const validateRemote = () => query('remote')
-    .optional()
-    .isString()
-    .withMessage('remote parameter value must be a string')
-    .custom(value => value === 'true')
-    .withMessage('remote parameter allowed value is true')
-    .toBoolean()
-
-const validateCountry = () => query('country')
-    .optional()
-    .isString()
-    .withMessage('country parameter value must be a string')
-    .isLength({ min: minLocationLength, max: maxLocationLength })
-    .withMessage(`country parameter length must be between ${minLocationLength} and ${maxLocationLength}`);
-
-const validateCity = () => query('city')
-    .optional()
-    .isString()
-    .withMessage('city parameter value must be a string')
-    .isLength({ min: minLocationLength, max: maxLocationLength })
-    .withMessage(`city parameter length must be between ${minLocationLength} and ${maxLocationLength}`);
+const { minNameLength, maxNameLength } = require('../../../../config/config');
+const { validatePage, validateCity, validateCountry, validateRemote } = require('../../../common/util');
 
 const validateStatus = () => query('status')
     .optional()
@@ -37,7 +15,7 @@ const validateCompanyName = () => query('companyName')
     .isString()
     .withMessage('companyName parameter value must be a string')
     .isLength({ min: minNameLength, max: maxNameLength })
-    .withMessage(`companyName parameter length must be between ${minNameLength} and ${maxLocationLength}`);
+    .withMessage(`companyName parameter length must be between ${minNameLength} and ${maxNameLength}`);
 
 const validateSortByDate = () => query('sortByDate')
     .optional()
@@ -67,7 +45,3 @@ exports.validateGetJobsAppliedFor = [
     validateSortByDate(),
     validateSortByStatusUpdate(),
 ];
-
-exports.validateLocation = [validateCountry(), validateCity()];
-
-exports.validateRemote = validateRemote();

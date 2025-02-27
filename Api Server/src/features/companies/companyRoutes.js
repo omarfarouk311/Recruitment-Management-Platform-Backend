@@ -7,8 +7,12 @@ const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/profile')
-    .put(authorizeUpdateCompanyData, multipartParser('image'), companyValidation.validateUpdateCompanyData, handleValidationErrors,
-        companyController.updateCompanyData)
+    .put(authorizeUpdateCompanyData,
+        multipartParser('image'),
+        companyValidation.validateUpdateCompanyData,
+        handleValidationErrors,
+        companyController.updateCompanyData
+    )
     .all(notAllowed);
 
 router.route('/:companyId')

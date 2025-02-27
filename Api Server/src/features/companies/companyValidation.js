@@ -1,51 +1,30 @@
-const { buildCheckFunction, query, body, param } = require('express-validator');
-const { validatePage } = require('../../common/util');
+const { query, body, param } = require('express-validator');
+const { validatePage, validateIndustry, validateRemote } = require('../../common/util');
 const config = require('../../../config/config');
 
-const validateCompanyId = () => param('companyId')
+const validateCompanyId = () => param('companyId', 'Invalid company ID')
+    .isString()
     .notEmpty()
     .withMessage("Company ID must be passed as a route patameter")
     .isInt({ min: 1, allow_leading_zeroes: false })
-    .withMessage("Invalid Company ID")
     .toInt();
 
 const validateFilterBar = () => query('filterBar')
     .optional()
+    .isString()
+    .withMessage('filterBar parameter must be a string')
     .trim()
     .custom(value => value === 'true')
-    .withMessage('Invalid filterBar parameter, true is the only allowed value')
+    .withMessage('filterBar parameter allowed value is true')
     .customSanitizer(value => Boolean(value));
 
-const validateSimplified = () => query('simplified')
-    .optional()
-    .trim()
-    .custom(value => value === 'true')
-    .withMessage('Invalid simplified parameter, true is the only allowed value')
-    .custom((value, { req: { query } }) => query.filterBar === undefined)
-    .withMessage('Only one of filterBar and simplified parameters can get passed')
-    .customSanitizer(value => Boolean(value));
-
-const validateIndustry = () => query('industry')
+const validateSortByDate = () => query('sortByDate')
     .optional()
     .isString()
-    .withMessage('industry parameter must be a string')
+    .withMessage('sortByDate parameter must be a string')
     .trim()
-    .isLength({ min: config.minIndustryLength, max: config.maxIndustryLength })
-    .withMessage(`industry parameter length must be between ${config.minIndustryLength} and ${config.maxIndustryLength}`);
-
-const validateSortByDate = () => query('sortByDate', "Invalid sort option, it must be 1 or -1")
-    .optional()
-    .trim()
-    .isInt()
-    .toInt()
-    .custom(value => value === 1 || value === -1);
-
-const validateRemote = () => query('remote')
-    .optional()
-    .trim()
-    .custom(value => value === 'true')
-    .withMessage('Invalid remote parameter, true is the only allowed value')
-    .customSanitizer(value => Boolean(value));
+    .custom(value => value === '1' || value === '-1')
+    .withMessage('sortByDate parameter value must be 1 or -1');
 
 const validateOverview = () => body('overview')
     .isString()
@@ -65,13 +44,13 @@ const validateType = () => body('type')
     .custom(value => typeof value === 'boolean')
     .withMessage('type must be true or flase')
 
-const validateFoundedIn = () => body('foundedIn')
+const validateFoundedIn = () => body('foundedIn', `foundedIn must be an integer between ${config.minYear} and ${new Date().getFullYear()}`)
     .custom(value => typeof value === 'number' && value >= config.minYear && value <= new Date().getFullYear())
-    .withMessage(`foundedIn must be a number between ${config.minYear} and ${new Date().getFullYear()}`)
+    .isInt();
 
-const validateSize = () => body('size')
+const validateSize = () => body('size', `size must be an integer between ${config.minCompanySize} and ${config.maxCompanySize}`)
     .custom(value => typeof value === 'number' && value >= config.minCompanySize && value <= config.maxCompanySize)
-    .withMessage(`size must be a number between ${config.minCompanySize} and ${config.maxCompanySize}`)
+    .isInt();
 
 const validateIndustries = () => body('industries')
     .isArray({ min: config.minIndustriesArrayLength, max: config.maxIndustriesArrayLength })
@@ -102,10 +81,23 @@ const validateLocationsArray = () => body('locations.*')
 
 exports.validateCompanyId = validateCompanyId();
 
-exports.validateGetCompanyJobs = [validateCompanyId(), validatePage(), validateFilterBar(), validateSimplified(),
-validateIndustry(), validateSortByDate(), validateRemote()];
+exports.validateGetCompanyJobs = [
+    validateCompanyId(),
+    validatePage(),
+    validateFilterBar(),
+    validateIndustry(),
+    validateSortByDate(),
+    validateRemote()
+];
 
-exports.validateUpdateCompanyData = [validateOverview(), validateName(), validateType(), validateSize(),
-validateFoundedIn(), validateIndustries(), validateLocations(), validateIndustriesArray(), validateLocationsArray()];
-
-exports.validateIndustry = validateIndustry();
+exports.validateUpdateCompanyData = [
+    validateOverview(),
+    validateName(),
+    validateType(),
+    validateSize(),
+    validateFoundedIn(),
+    validateIndustries(),
+    validateLocations(),
+    validateIndustriesArray(),
+    validateLocationsArray()
+];

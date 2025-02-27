@@ -121,23 +121,18 @@ class Company {
         const values = [companyId];
         let index = 1;
 
-        // job seeker isn't allowed to see the closed jobs
+        // only the company is allowed to see its closed jobs
         let query =
-            `select j.id, j.title, j.country, j.city, j.created_at as "createdAt"
-            from job j 
+            `
+            select j.id, j.title, j.country, j.city, j.created_at as "createdAt"
+            from job j
+            ${filters.industry ? 'join industry i on j.industry_id = i.id' : ''}
             where j.company_id = $${index++} ${userId !== companyId ? 'and j.closed = false' : ''} ${filters.remote ? 'and j.remote = true' : ''}
             `;
 
         // industry filter
         if (filters.industry) {
-            query +=
-                ` 
-                join (
-                    select id, name
-                    from industry
-                    where name = $${index++}
-                ) i on j.industry_id = i.id
-                `;
+            query += ` and name = $${index++}`
             values.push(filters.industry);
         }
 
@@ -153,7 +148,7 @@ class Company {
         }
 
         //pagination
-        query += ` limit $${index++} offset $${index++}`;
+        query += ` limit $${index++} offset $${index++} `;
         values.push(limit, (filters.page - 1) * limit);
 
         const { rows } = await pool.query(query, values);
@@ -165,7 +160,7 @@ class Company {
         const values = [companyId];
         let index = 1;
 
-        // job seeker isn't allowed to see the closed jobs
+        // only the company is allowed to see its closed jobs
         let query =
             `
             select id, title
@@ -207,7 +202,7 @@ class Company {
                 insert into Company_Industry
                 select $1, id
                 from industry
-                where name = any ($2)
+                where name = any($2)
                 `;
             const { rowCount } = await client.query(insertIndustries, [this.id, this.industries]);
             if (rowCount < this.industries.length) {

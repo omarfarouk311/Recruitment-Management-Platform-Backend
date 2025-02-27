@@ -1,7 +1,5 @@
 const { query, body } = require('express-validator');
-const { validateLocation, validateRemote } = require('../jobs_applied_for/jobsAppliedForValidation')
-const { validateIndustry } = require('../../companies/companyValidation');
-const { validatePage } = require('../../../common/util');
+const { validatePage, validateIndustry, validateCountry, validateCity, validateRemote } = require('../../../common/util');
 
 const validateCompanyRating = () => query('companyRating')
     .optional()
@@ -35,7 +33,7 @@ const validateToDate = () => query('toDate')
     .customSanitizer(isoString => new Date(isoString));
 
 const validateWord = () => query('word')
-    .custom(value => value !== undefined)
+    .notEmpty()
     .withMessage('word parameter must exist')
     .isString()
     .withMessage('word parameter must be a string')
@@ -43,13 +41,13 @@ const validateWord = () => query('word')
     .isLength({ min: 1, max: 50 })
     .withMessage('word parameter length must be between 1 and 50');
 
-const validateCVId = () => body('cvId')
+const validateCVId = () => body('cvId', 'Invalid CV id')
     .custom(value => typeof value === 'number' && value > 0)
-    .withMessage('Invalid CV id');
+    .isInt();
 
-const validateJobId = () => body('jobId')
+const validateJobId = () => body('jobId', 'Invalid job id')
     .custom(value => typeof value === 'number' && value > 0)
-    .withMessage('Invalid job id');
+    .isInt();
 
 exports.validateGetRecommendedJobs =
     [
@@ -57,9 +55,10 @@ exports.validateGetRecommendedJobs =
         validateFromDate(),
         validateToDate(),
         validateCompanyRating(),
-        validateIndustry,
-        validateRemote,
-        validateLocation
+        validateIndustry(),
+        validateRemote(),
+        validateCountry(),
+        validateCity()
     ];
 
 exports.validateGetSearchedJobs = [...exports.validateGetRecommendedJobs, validateWord()];

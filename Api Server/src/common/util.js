@@ -1,7 +1,8 @@
 const { validationResult, query } = require('express-validator');
 const busboy = require('busboy');
 const { client } = require('../../config/MinIO');
-const { imagesBucketName, cvsBucketName } = require('../../config/config');
+const { imagesBucketName, cvsBucketName, minLocationLength, maxLocationLength, minIndustryLength,
+    maxIndustryLength } = require('../../config/config');
 
 exports.validatePage = () => query('page')
     .isString()
@@ -12,6 +13,36 @@ exports.validatePage = () => query('page')
     .isInt({ min: 1, allow_leading_zeroes: false })
     .withMessage('Invalid page number, it must be a positive number')
     .toInt();
+
+exports.validateRemote = () => query('remote')
+    .optional()
+    .isString()
+    .withMessage('remote parameter value must be a string')
+    .custom(value => value === 'true')
+    .withMessage('remote parameter allowed value is true')
+    .toBoolean();
+
+exports.validateCountry = () => query('country')
+    .optional()
+    .isString()
+    .withMessage('country parameter value must be a string')
+    .isLength({ min: minLocationLength, max: maxLocationLength })
+    .withMessage(`country parameter length must be between ${minLocationLength} and ${maxLocationLength}`);
+
+exports.validateCity = () => query('city')
+    .optional()
+    .isString()
+    .withMessage('city parameter value must be a string')
+    .isLength({ min: minLocationLength, max: maxLocationLength })
+    .withMessage(`city parameter length must be between ${minLocationLength} and ${maxLocationLength}`);
+
+exports.validateIndustry = () => query('industry')
+    .optional()
+    .isString()
+    .withMessage('industry parameter must be a string')
+    .trim()
+    .isLength({ min: minIndustryLength, max: maxIndustryLength })
+    .withMessage(`industry parameter length must be between ${minIndustryLength} and ${maxIndustryLength}`);
 
 exports.handleValidationErrors = (req, res, next) => {
     const err = validationResult(req);
