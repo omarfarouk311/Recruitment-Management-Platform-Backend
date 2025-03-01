@@ -1,8 +1,8 @@
 const { validationResult, query } = require('express-validator');
 const busboy = require('busboy');
 const { client } = require('../../config/MinIO');
-const { imagesBucketName, cvsBucketName, minLocationLength, maxLocationLength, minIndustryLength,
-    maxIndustryLength } = require('../../config/config');
+const { imagesBucketName, minLocationLength, maxLocationLength, minIndustryLength,
+    maxIndustryLength, fileSizeLimit } = require('../../config/config');
 
 exports.validatePage = () => query('page')
     .isString()
@@ -57,7 +57,7 @@ exports.handleValidationErrors = (req, res, next) => {
 };
 
 exports.multipartParser = (mediaType) => {
-    const fileSizeLimit = 1048576 * 5 /*5MB*/, fieldSizeLimit = 1024 * 50 /*50KB*/;
+    const fieldSizeLimit = 1024 * 50 /*50KB*/;
 
     // function that detaches streams, discards the rest of incoming request data, and forwards the error
     const handleError = (req, next, err) => {

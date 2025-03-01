@@ -82,5 +82,6 @@ module.exports = {
     minLocationsArrayLength: 1,
     maxLocationsArrayLength: 300,
     imagesBucketName: 'images-bucket',
-    cvsBucketName: 'cvs-bucket'
+    cvsBucketName: 'cvs-bucket',
+    fileSizeLimit: 1048576 * 10
 };
