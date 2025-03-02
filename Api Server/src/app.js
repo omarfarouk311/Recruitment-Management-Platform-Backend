@@ -17,6 +17,8 @@ const templatesRoutes = require('./features/templates/templateRoutes');
 const reportRoutes = require('./features/reports/reportRoutes');
 const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
+const cvRoutes = require('./features/cvs/cvRoutes');
+
 const app = express();
 
 minioConnect();
@@ -44,6 +46,7 @@ app.use('/invitations', invitationRoutes);
 app.use('/reports', reportRoutes);
 app.use('/seekers', seekerRoutes);
 app.use('/industries', industryRoutes);
+app.use('/cvs', cvRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);
