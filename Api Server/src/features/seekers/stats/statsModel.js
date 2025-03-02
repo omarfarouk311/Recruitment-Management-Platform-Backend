@@ -7,10 +7,10 @@ class Stats {
         const values = [seekerId];
         const query =
             `
-            select count(*) as "JobsAppliedFor",
-            count(*) filter (where p.name = '${phase_types.job_offer}'  ) as "jobOffers",
-            count(*) filter (where p.name = '${phase_types.assessment}') as "assessments",
-            count(*) filter (where p.name = '${phase_types.interview}') as "upcomingInterviews"
+            select count(*)::int as "jobsAppliedFor",
+            (count(*) filter (where p.name = '${phase_types.job_offer}'))::int as "jobOffers",
+            (count(*) filter (where p.name = '${phase_types.assessment}'))::int as "assessments",
+            (count(*) filter (where p.name = '${phase_types.interview}'))::int as "interviews"
             from Candidates c
             join Recruitment_Phase r on c.recruitment_process_id = r.recruitment_process_id and c.phase = r.phase_num
             join Phase_Type p on r.type = p.id
