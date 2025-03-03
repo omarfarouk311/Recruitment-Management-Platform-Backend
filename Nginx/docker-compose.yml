@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    networks:
+      - internal-net
+    container_name: nginx
+    volumes:
+      - .:/etc/nginx/
+    ports:
+      - 80:80
+
+networks:
+  internal-net:
+    external: true
