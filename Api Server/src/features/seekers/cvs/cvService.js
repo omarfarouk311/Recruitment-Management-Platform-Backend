@@ -2,8 +2,7 @@ const CV = require('./cvModel');
 const { client } = require('../../../../config/MinIO');
 const { fileSizeLimit, cvsBucketName } = require('../../../../config/config');
 
-exports.uploadCV = async (cvData) => {
-    const { seekerId, mimeType, fileName, fileSize, dataStream } = cvData;
+exports.uploadCV = async ({ seekerId, mimeType, fileName, fileSize, dataStream }) => {
     let id;
 
     if (mimeType !== 'application/pdf') {
@@ -18,7 +17,7 @@ exports.uploadCV = async (cvData) => {
         dataStream.resume();
         const err = new Error(`CV size exceeded the limit of ${fileSizeLimit / 1048576}mb`)
         err.msg = err.message;
-        err.status = 400;
+        err.status = 413;
         throw err;
     }
 

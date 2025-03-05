@@ -5,10 +5,8 @@ const grpc = require('@grpc/grpc-js');
 const { CVService } = parsedProto;
 const client = new CVService('parser-server:50051', grpc.credentials.createInsecure());
 
-exports.parseCV = (cvData) => {
+exports.parseCV = ({ mimeType, fileSize, dataStream }) => {
     return new Promise((resolve, reject) => {
-        const { mimeType, fileSize, dataStream } = cvData;
-
         if (mimeType !== 'application/pdf') {
             dataStream.resume();
             const err = new Error('Invalide file type while uploading the CV')
@@ -21,7 +19,7 @@ exports.parseCV = (cvData) => {
             dataStream.resume();
             const err = new Error(`CV size exceeded the limit of ${fileSizeLimit / 1048576}mb`)
             err.msg = err.message;
-            err.status = 400;
+            err.status = 413;
             throw err;
         }
 

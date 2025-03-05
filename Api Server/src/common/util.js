@@ -197,8 +197,51 @@ exports.multipartParser = (mediaType) => {
     }
 };
 
-exports.getPhotoService = async (bucketName, objectName) => {
+exports.getImageService = async ({ bucketName, objectName }) => {
     const { metaData, size } = await client.statObject(bucketName, objectName);
     const stream = await client.getObject(bucketName, objectName);
     return { metaData, size, stream };
+};
+
+exports.uploadImageService = async ({ bucketName, objectName, mimeType, fileName, fileSize, dataStream }) => {
+    if (mimeType !== 'image/png' && mimeType !== 'image/jpeg' && mimeType !== 'image/jpg') {
+        dataStream.resume();
+        const err = new Error('Invalide file type while uploading the CV');
+        err.msg = 'Image type must be png, jpeg, or jpg';
+        err.status = 400;
+        throw err;
+    }
+
+    if (fileSize > fileSizeLimit) {
+        dataStream.resume();
+        const err = new Error(`Image size exceeded the limit of ${fileSizeLimit / 1048576}mb`);
+        err.msg = err.message;
+        err.status = 413;
+        throw err;
+    }
+
+    // wrap the error event listener in a promise
+    const streamErrorPromise = new Promise((resolve, reject) => {
+        dataStream.on('error', async (err) => {
+            try {
+                await client.removeObject(bucketName, objectName, { forceDelete: true });
+                err.msg = 'Error while uploading the Image';
+                err.status = 500;
+                reject(err);
+            }
+            catch (err) {
+                err.msg = 'Error while uploading the Image';
+                err.status = 500;
+                reject(err);
+            }
+        });
+    });
+
+    await Promise.race([
+        streamErrorPromise,
+        client.putObject(bucketName, objectName, dataStream, fileSize, {
+            'content-type': mimeType,
+            filename: fileName
+        })
+    ]);
 };

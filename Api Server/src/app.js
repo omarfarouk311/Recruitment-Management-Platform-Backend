@@ -25,7 +25,7 @@ minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 1;
+    req.userId = 11;
     req.userRole = role.company;
     next();
 });
@@ -46,6 +46,7 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
+app.use('/api/cvs', cvRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);
