@@ -111,20 +111,19 @@ module.exports.getProfilePicController=async(req,res,next)=>{
 
     try {
         let recruiterId=req.userId
-        let recruiterRole=req.userRole
 
         const {
             metaData: { 'content-type': contentType, filename: fileName },
             size,
             stream
-        } = await getProfilePicService(recruiterId, recruiterRole); // once the object return the await will finish but the stream will not
+        } = await getProfilePicService(recruiterId); // once the object return the await will finish but the stream will not
                                                                                 // be fully read as it came in chunks and will resond it as soon as chunk came from the readable stream
 
         res.header({
             'Content-Type': contentType,
             'Content-Length': size,
             'Content-Disposition': `inline; filename = ${fileName}` // inline to display the image not download it
-        });
+        }).status(200);
 
         stream.on('error', (err) => next(err));
 

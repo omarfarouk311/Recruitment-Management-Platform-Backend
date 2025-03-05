@@ -25,28 +25,28 @@ minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 1;
-    req.userRole = role.jobSeeker;
+    req.userId = 11;
+    req.userRole = role.company;
     next();
 });
 
 app.use(express.json());
 
-app.use('/assessments', assessmentRoutes);
-app.use('/templates', templatesRoutes);
-app.use('/jobs', jobRoutes);
-app.use('/recruitment_processes', recruitment_processRoutes);
-app.use('/candidates', candidateRoutes);
-app.use('/reviews', reviewRoutes);
-app.use('/recruiters', recruiterRoutes);
-app.use('/logs', logRoutes);
-app.use('/companies', companyRoutes);
-app.use('/interviews', interviewRoutes);
-app.use('/invitations', invitationRoutes);
-app.use('/reports', reportRoutes);
-app.use('/seekers', seekerRoutes);
-app.use('/industries', industryRoutes);
-app.use('/cvs', cvRoutes);
+app.use('/api/assessments', assessmentRoutes);
+app.use('/api/templates', templatesRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/recruitment_processes', recruitment_processRoutes);
+app.use('/api/candidates', candidateRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/recruiters', recruiterRoutes);
+app.use('/api/logs', logRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/seekers', seekerRoutes);
+app.use('/api/industries', industryRoutes);
+app.use('/api/cvs', cvRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);

@@ -1,7 +1,6 @@
 services:
   api:
     image: node:22.13.1-bookworm-slim
-    container_name: api
     volumes:
       - .:/src
     networks:
@@ -10,8 +9,7 @@ services:
       - .env
     working_dir: /src
     command: ["npm", "start"]
-    ports:
-      - 3000:3000
+    scale: 2
 
 networks:
   internal-net:

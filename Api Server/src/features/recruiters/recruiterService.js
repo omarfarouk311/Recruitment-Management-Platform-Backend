@@ -1,10 +1,9 @@
 const recruiterModel=require('./recruiterModel')
-const{getPhotoService}=require('../../common/util')
+const{getImageService}=require('../../common/util')
 const{imagesBucketName}=require('../../../config/config')
 let primaryPool=require('../../../config/db')
-let replicaPool=require('../../../config/db')
 const Kafka = require('../../common/kafka')
-const { action_types, logs_topic } = require('../../../config/config')
+const { action_types, logs_topic , role} = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 
 
@@ -61,8 +60,11 @@ module.exports.getRecruiterDataService=async(recruiterId)=>{
     return await recruiterModel.getRecruiterData(recruiterId)
 }
 
-module.exports.getProfilePicService=async(recruiterId,recruiterRole)=>{
-    let bucketName=imagesBucketName;
-    let objectName=`${recruiterRole}${recruiterId}`
-    return await getPhotoService(bucketName,objectName)
+module.exports.getProfilePicService=async(recruiterId)=>{
+    const imageData = {
+        bucketName: imagesBucketName,
+        objectName: `${role.recruiter}${recruiterId}`
+    };
+    
+    return await getImageService(imageData);
 }
