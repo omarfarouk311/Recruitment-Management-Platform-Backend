@@ -42,7 +42,7 @@ class Log {
         query += ` limit $${index++} offset $${index++}`
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await this.replicaPool.query(query, values);
+        const { rows } = await Log.replicaPool.query(query, values);
         return rows;
     }
 
@@ -54,7 +54,7 @@ class Log {
             order by id
             `;
 
-        const { rows } = await this.replicaPool.query(query);
+        const { rows } = await Log.replicaPool.query(query);
         return rows;
     }
 }
