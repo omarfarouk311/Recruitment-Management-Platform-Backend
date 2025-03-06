@@ -4,6 +4,7 @@ const { authorizeAccess } = require('../jobs_applied_for/jobsAppliedForAuthoriza
 const { checkLimit } = require('./cvMiddlewares');
 const cvController = require('./cvController')
 const { cvIdValidation, jobIdValidation, seekerIdValidation } = require('./cvValidation');
+const { handleValidationErrors } = require('../../../common/util')
 const router = Router();
 
 
@@ -21,12 +22,12 @@ const router = Router();
 
 router.route('/')
     .post(authorizeAccess, checkLimit, cvController.uploadCV)
-    .get(jobIdValidation(), seekerIdValidation(), cvController.getCvName)
+    .get(jobIdValidation(), seekerIdValidation(), handleValidationErrors, cvController.getCvName)
     .all(notAllowed);
 
 router.route('/:cvId')
-    .get(cvIdValidation(), jobIdValidation(), seekerIdValidation(), cvController.downloadCV)
-    .delete(authorizeAccess, cvIdValidation(), cvController.deleteCV)
+    .get(cvIdValidation(), jobIdValidation(), seekerIdValidation(),handleValidationErrors, cvController.downloadCV)
+    .delete(authorizeAccess, cvIdValidation(), handleValidationErrors, cvController.deleteCV)
     .all(notAllowed);
 
 module.exports = router;
