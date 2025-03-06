@@ -1,11 +1,13 @@
 const CV = require('./cvModel');
 const { client } = require('../../../../config/MinIO');
 const { fileSizeLimit, cvsBucketName } = require('../../../../config/config');
+const { getPhotoService } = require('../../../common/util');
+
 
 exports.uploadCV = async (cvData) => {
     const { seekerId, mimeType, fileName, fileSize, dataStream } = cvData;
     let id;
-
+    console.log(fileName);
     if (mimeType !== 'application/pdf') {
         dataStream.resume();
         const err = new Error('Invalide file type while uploading the CV')
@@ -66,3 +68,26 @@ exports.uploadCV = async (cvData) => {
         throw err;
     }
 }; 
+
+module.exports.getCvName = async (jobId, seekerId, userId, userRole) => {
+    const cvs = await CV.getCvName(jobId, seekerId, userId, userRole);
+    return cvs;
+}
+
+exports.downloadCV = async (cvId, userId, userRole, seekerId, jobId) => {
+    try {
+        await CV.downloadCV(cvId, userId, userRole, seekerId, jobId);
+        return await getPhotoService(cvsBucketName, cvId);
+    } catch (err) {
+        throw err;
+    }
+}
+
+exports.deleteCV = async (cvId, userId) => {
+    try {
+        await CV.deleteCV(cvId, userId);
+        return;
+    } catch (err) {
+        throw err;
+    }
+}
