@@ -22,3 +22,14 @@ module.exports.modifyInterviewDate = async (req, res, next) => {
         next(err);
     }
 }
+
+module.exports.getSeekerInterviewsData = async (req, res, next) => {
+    const userId = req.userId;
+    const filters = req.query;
+    try {
+        const interviews = await interviewService.getSeekerInterviewsData(userId, filters);
+        res.status(200).json({ interviews });
+    } catch (err) {
+        next(err);
+    }
+}

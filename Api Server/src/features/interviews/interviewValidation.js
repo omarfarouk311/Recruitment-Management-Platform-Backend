@@ -1,6 +1,5 @@
 const { query, param, body } = require('express-validator');
 
-
 const interviewQueryParametersValidation = [
     query('sort')
         .optional()
@@ -30,17 +29,6 @@ const interviewQueryParametersValidation = [
         .isString().withMessage('Title must be a string')
         .trim()
         .notEmpty().withMessage('Title cannot be empty'),
-
-    query()
-        .custom((value, { req }) => {
-            const allowedParams = ['page', 'sort', 'title'];  
-            const invalidParams = Object.keys(req.query).filter(param => !allowedParams.includes(param));
-
-            if (invalidParams.length > 0) {
-                throw new Error(`Invalid query parameters`);
-            }
-            return true;
-        })
 ];
 
 
@@ -63,6 +51,9 @@ const validateDate = () => body('timestamp')
         }
         return true;
     })
+
+
+
 
 module.exports = {
     interviewQueryParametersValidation,

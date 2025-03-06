@@ -9,15 +9,7 @@ const router = Router();
 
 
 
-/* view -> seeker or (company, recruiter)
-    get role 
-    if seeker -> get all cvs associated to this user
-    else -> I will get the cvId from candidates table (jobId and seeker Id)
-    then get the cv from minio
 
-    route will contain optional query parameters (jobId, seekerId)
-
-*/
 
 
 router.route('/')

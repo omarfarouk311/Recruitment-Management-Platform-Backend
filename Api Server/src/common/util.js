@@ -2,7 +2,7 @@ const { validationResult, query } = require('express-validator');
 const busboy = require('busboy');
 const { client } = require('../../config/MinIO');
 const { imagesBucketName, minLocationLength, maxLocationLength, minIndustryLength,
-    maxIndustryLength, fileSizeLimit } = require('../../config/config');
+    maxIndustryLength, fileSizeLimit, minNameLength, maxNameLength } = require('../../config/config');
 
 exports.validatePage = () => query('page')
     .isString()
@@ -43,6 +43,13 @@ exports.validateIndustry = () => query('industry')
     .trim()
     .isLength({ min: minIndustryLength, max: maxIndustryLength })
     .withMessage(`industry parameter length must be between ${minIndustryLength} and ${maxIndustryLength}`);
+
+exports.validateCompanyName = () => query('companyName')
+    .optional()
+    .isString()
+    .withMessage('company parameter value must be a string')
+    .isLength({ min: minNameLength, max: maxNameLength })
+    .withMessage(`company parameter length must be between ${minNameLength} and ${maxNameLength}`);
 
 exports.handleValidationErrors = (req, res, next) => {
     const err = validationResult(req);
