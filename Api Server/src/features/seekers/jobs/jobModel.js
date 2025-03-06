@@ -51,7 +51,7 @@ class Job {
             `;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await this.replicaPool.query(query, values);
+        const { rows } = await Job.replicaPool.query(query, values);
         return rows;
     }
 
@@ -98,13 +98,13 @@ class Job {
             `;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await this.replicaPool.query(query, values);
+        const { rows } = await Job.replicaPool.query(query, values);
         return rows;
     }
 
     static async apply(seekerId, cvId, jobId) {
         let values = [];
-        const client = await this.primaryPool.connect();
+        const client = await Job.primaryPool.connect();
 
         try {
             await client.query('begin');
@@ -273,7 +273,7 @@ class Job {
             delete from Recommendations
             where seeker_id = $1 and job_id = $2
             `;
-        await this.primaryPool.query(query, [seekerId, jobId]);
+        await Job.primaryPool.query(query, [seekerId, jobId]);
     }
 }
 

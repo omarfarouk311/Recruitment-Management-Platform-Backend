@@ -1,14 +1,14 @@
 const { Router } = require('express');
 const companyController = require('./companyController');
 const companyValidation = require('./companyValidation');
-const { authorizeUpdateCompanyData } = require('./companyAuthorization')
-const { handleValidationErrors, multipartParser } = require('../../common/util');
+const companyAuthorization = require('./companyAuthorization')
+const { handleValidationErrors } = require('../../common/util');
 const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/profile')
-    .put(authorizeUpdateCompanyData,
-        multipartParser('image'),
+    .put(
+        companyAuthorization.authorizeUpdateCompanyData,
         companyValidation.validateUpdateCompanyData,
         handleValidationErrors,
         companyController.updateCompanyData
@@ -31,8 +31,13 @@ router.route('/:companyId/jobs')
     .get(companyValidation.validateGetCompanyJobs, handleValidationErrors, companyController.getCompanyJobs)
     .all(notAllowed);
 
-router.route('/:companyId/photo')
-    .get(companyController.getCompanyPhoto)
+router.route('/:companyId/image')
+    .get(companyValidation.validateCompanyId, companyController.getCompanyImage)
+    .post(
+        companyValidation.validateCompanyId,
+        companyAuthorization.authorizeUploadCompanyImage,
+        companyController.uploadCompanyImage
+    )
     .all(notAllowed);
 
 module.exports = router;

@@ -25,6 +25,7 @@ const { getInterviewEmailTemplate, getJobAcceptanceEmail, getJobClosingTemplate,
                 if (jobId) {
                     let query = `SELECT title ${phaseNum ? ', phase_type.name as "phaseType", recruitment_phase.name as "newPhaseName"' : ''} FROM job `;
                     let params = [jobId];
+
                     if (phaseNum) {
                         query += `
                             JOIN recruitment_phase ON job.recruitment_process_id = recruitment_phase.recruitment_process_id and recruitment_phase.phase_num = $2
@@ -34,11 +35,13 @@ const { getInterviewEmailTemplate, getJobAcceptanceEmail, getJobClosingTemplate,
                     }
                     query += `WHERE job.id = $1`;
                     const res = await pool.query(query, params);
+
                     if (res.rows.length == 0) {
                         let error = new Error('job not found!');
                         error.cause = 'self';
                         throw error;
                     }
+                    
                     jobTitle = res.rows[0].title;
                     if (res.rows[0].newPhaseName) {
                         newPhaseName = res.rows[0].newPhaseName;
@@ -57,14 +60,14 @@ const { getInterviewEmailTemplate, getJobAcceptanceEmail, getJobClosingTemplate,
 
                 let recruiter;
                 if (recruiterId) {
-                    let recruiter = await pool.query(`
+                    const { rows } = await pool.query(`
                         SELECT name, email
                         FROM recruiter
                         JOIN users ON recruiter.id = users.id
                         WHERE recruiter.id = $1
                         `, [recruiterId]);
 
-                    recruiter = recruiter.rows[0]
+                    recruiter = rows[0];
                 }
 
                 if (jobSeeker) {
