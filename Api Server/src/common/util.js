@@ -36,13 +36,12 @@ exports.validateCity = () => query('city')
     .isLength({ min: minLocationLength, max: maxLocationLength })
     .withMessage(`city parameter length must be between ${minLocationLength} and ${maxLocationLength}`);
 
-exports.validateIndustry = () => query('industry')
+exports.validateIndustry = () => query('industry', 'Invalid industry id')
     .optional()
     .isString()
-    .withMessage('industry parameter must be a string')
     .trim()
-    .isLength({ min: minIndustryLength, max: maxIndustryLength })
-    .withMessage(`industry parameter length must be between ${minIndustryLength} and ${maxIndustryLength}`);
+    .isInt({ min: 1, allow_leading_zeroes: false })
+    .toInt();
 
 exports.handleValidationErrors = (req, res, next) => {
     const err = validationResult(req);
