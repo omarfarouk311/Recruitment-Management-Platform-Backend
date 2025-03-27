@@ -98,6 +98,27 @@ class CompanyModel {
         return results.rows;
     }
 
+    static async getCompaniesFilter(userId) {
+        const readPool = getReadPool();
+        const query = `
+            SELECT company.id as id, company.name as name
+            FROM candidates
+            JOIN job j ON j.id = candidates.job_id
+            JOIN company ON j.company_id = company.id
+            WHERE candidates.seeker_id = $1;
+            `;
+        try {
+
+            const { rows } = await readPool.query(query, [userId]);
+            if (rows.length === 0) {
+                return [];
+            }
+            return rows;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = {
