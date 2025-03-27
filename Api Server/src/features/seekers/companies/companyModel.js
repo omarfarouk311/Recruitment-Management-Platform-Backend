@@ -44,7 +44,7 @@ class CompanyModel {
                 coalesce(r.review_count, 0) as "reviewsCount",
                 coalesce(i.industry_count, 0) as "industriesCount",
                 coalesce(l.location_count, 0) as "locationsCount", 
-                rating ${name? ', similarity': ''}
+                rating
             FROM companies
             left join jobs_count j using(id)
             left join reviews_count r using(id)
