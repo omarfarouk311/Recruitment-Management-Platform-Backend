@@ -6,11 +6,17 @@ const { v6: uuid } = require('uuid');
 
 
 module.exports.getRecruiterInterviewsData = async (id, filters) => {
-    const { page, title, sort } = filters;
-    const interviews = await interviewModel.getRecruiterInterviewsData(id, page, title, sort);
+    const { page, title, sort, city, country } = filters;
+    const interviews = await interviewModel.getRecruiterInterviewsData(id, page, title, sort, city, country);
     return interviews;
 }
 
+
+module.exports.getSeekerInterviewsData = async (id, filters) => {
+    const { page, sort, city, country, companyName } = filters;
+    const interviews = await interviewModel.getSeekerInterviewsData(id, page, sort, city, country, companyName);
+    return interviews;
+}
 
 module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timestamp) => {
 
@@ -28,13 +34,14 @@ module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timest
             action_type: action_types.modify_interview_date,
             created_at: new Date(),
         }, logs_topic)
-        // const dateUpdate = Kafka.produce({
-        //     type: 2,
-        //     jobId: jobId,
-        //     companyId: companyId,
-        //     jobSeeker: seekerId,
-        //     deadline: timestamp
-        // }, emails_topic)
+
+        const dateUpdate = Kafka.produce({
+            type: 2,
+            jobId: jobId,
+            companyId: companyId,
+            jobSeeker: seekerId,
+            deadline: timestamp
+        }, emails_topic)
         await Promise.all([logs, dateUpdate])
         console.log('ack from kafka');
         await client.query('COMMIT');

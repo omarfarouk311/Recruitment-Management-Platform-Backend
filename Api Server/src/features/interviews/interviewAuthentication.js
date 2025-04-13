@@ -16,6 +16,20 @@ module.exports.recruiterAndCompanyInterviewsAuth = async (req, res, next) => {
     }
 }
 
+module.exports.seekerInterviewsAuth = async (req, res, next) => {
+    try {
+        if (req.userRole != role.jobSeeker) {
+            const error = new Error('Job seeker is not authotized to access this data');
+            error.msg = 'Authorization error';
+            error.status = 403;
+            throw error;
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+}
+
 module.exports.dateInterviewModificationAuth = async (req, res, next) => {
     try {
         if (req.userRole == role.jobSeeker || req.userRole == role.company) {
