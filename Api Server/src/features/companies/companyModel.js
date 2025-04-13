@@ -13,8 +13,10 @@ class Company {
         this.industries = industries;
     }
 
+    static replicaPool = getReadPool();
+    static primaryPool = getWritePool();
+
     static async getCompanyData(companyId) {
-        const pool = getReadPool();
         const values = [companyId];
         const query =
             `
@@ -61,7 +63,7 @@ class Company {
             where id = $1
             `;
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Company.replicaPool.query(query, values);
         if (!rows.length) {
             const err = new Error('Company not found while retrieving company data');
             err.msg = 'Company not found';
@@ -72,7 +74,6 @@ class Company {
     }
 
     static async getCompanyLocations(companyId) {
-        const pool = getReadPool();
         const values = [companyId];
         let index = 1;
 
@@ -83,41 +84,27 @@ class Company {
             where company_id = $${index}
             `;
 
-        const { rows } = await pool.query(query, values);
-        if (!rows.length) {
-            const err = new Error('Company not found while retrieving company locations');
-            err.msg = 'Company not found';
-            err.status = 404;
-            throw err;
-        }
+        const { rows } = await Company.replicaPool.query(query, values);
         return rows
     }
 
     static async getCompanyIndustries(companyId) {
-        const pool = getReadPool();
         const values = [companyId];
         let index = 1;
 
         let query =
             `
-            select i.name
+            select c.industry_id as "id", i.name
             from Company_Industry c
             join industry i on c.industry_id = i.id
             where c.company_id = $${index}
             `;
 
-        const { rows } = await pool.query(query, values);
-        if (!rows.length) {
-            const err = new Error('Company not found while retrieving company industries');
-            err.msg = 'Company not found';
-            err.status = 404;
-            throw err;
-        }
-        return rows.map(({ name }) => name);
+        const { rows } = await Company.replicaPool.query(query, values);
+        return rows;
     }
 
     static async getCompanyJobs(companyId, filters, userId, limit = pagination_limit) {
-        const pool = getReadPool();
         const values = [companyId];
         let index = 1;
 
@@ -126,13 +113,12 @@ class Company {
             `
             select j.id, j.title, j.country, j.city, j.created_at as "createdAt"
             from job j
-            ${filters.industry ? 'join industry i on j.industry_id = i.id' : ''}
             where j.company_id = $${index++} ${userId !== companyId ? 'and j.closed = false' : ''} ${filters.remote ? 'and j.remote = true' : ''}
             `;
 
         // industry filter
         if (filters.industry) {
-            query += ` and name = $${index++}`
+            query += ` and j.industry_id = $${index++}`
             values.push(filters.industry);
         }
 
@@ -151,12 +137,11 @@ class Company {
         query += ` limit $${index++} offset $${index++} `;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Company.replicaPool.query(query, values);
         return rows;
     }
 
     static async getCompanyJobsFilterBar(companyId, userId) {
-        const pool = getReadPool();
         const values = [companyId];
         let index = 1;
 
@@ -171,13 +156,12 @@ class Company {
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         query += ' order by id desc';
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Company.replicaPool.query(query, values);
         return rows;
     }
 
     async update() {
-        const pool = getWritePool();
-        const client = await pool.connect();
+        const client = await Company.primaryPool.connect();
 
         try {
             await client.query('begin');

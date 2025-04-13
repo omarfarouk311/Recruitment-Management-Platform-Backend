@@ -11,11 +11,10 @@ class Job {
         let index = 1;
         let query =
             `
-            select j.title, c.name as "companyName", c.rating as "companyRating", j.country, j.city, j.created_at as "createdAt"
+            select j.id, j.title, c.name as "companyName", c.rating as "companyRating", j.country, j.city, j.created_at as "createdAt"
             from Recommendations r
             join job j on r.job_id = j.id
             join company c on j.company_id = c.id
-            ${filters.industry ? 'join industry i on j.industry_id = i.id' : ''}
             where r.seeker_id = $${index++}
             `;
 
@@ -31,7 +30,7 @@ class Job {
             query += ` and j.remote = true`;
         }
         if (filters.industry) {
-            query += ` and i.name = $${index++}`;
+            query += ` and j.industry_id = $${index++}`;
             values.push(filters.industry);
         }
         // company rating filter is from the lower bound up to (and not including) the upper bound
@@ -60,10 +59,9 @@ class Job {
         let index = 2;
         let query =
             `
-            select j.title, c.name as "companyName", c.rating as "companyRating", j.country, j.city, j.created_at as "createdAt"
+            select j.id, j.title, c.name as "companyName", c.rating as "companyRating", j.country, j.city, j.created_at as "createdAt"
             from job j
             join company c on j.company_id = c.id
-            ${filters.industry ? 'join industry i on j.industry_id = i.id' : ''}
             where similarity($1, j.title) >= 0.2 and closed = false
             `;
 
@@ -79,7 +77,7 @@ class Job {
             query += ` and j.remote = true`;
         }
         if (filters.industry) {
-            query += ` and i.name = $${index++}`;
+            query += ` and j.industry_id = $${index++}`;
             values.push(filters.industry);
         }
         if (filters.companyRating) {

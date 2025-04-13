@@ -19,3 +19,12 @@ exports.getCompanies = async (req, res, next) => {
        next(err); 
     }
 }
+
+exports.getCompaniesFilter = async (req, res, next) => {
+    try {
+        const result = await companyService.getCompaniesFilter(req.userId);
+        res.status(200).json(result);
+    } catch(err) {
+        next(err);
+    }
+}

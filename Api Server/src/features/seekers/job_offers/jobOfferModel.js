@@ -78,6 +78,7 @@ class JobOfferModel {
         if (!rows.length) {
             let error = new Error('Job offer not found');
             error.msg = 'Job offer not found';
+            error.status = 404;
             throw error;
         }
 

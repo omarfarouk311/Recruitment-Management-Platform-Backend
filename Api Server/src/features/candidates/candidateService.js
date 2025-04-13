@@ -19,7 +19,7 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
         result = CandidateQueryset.assignCandidatesToRecruiter(seekerIds, recruiterId, jobId);
         let companyName = CandidateQueryset.getCompanyName(companyId);
         [result, companyName] = await Promise.all([result, companyName]);
-        
+        let logId = uuid();
         await produce({
             id: uuid(),
             action_type: action_types.assign_candidate,
@@ -31,7 +31,18 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
                 seekerIds: result.updated_candidates.map((value) => value.seeker_id)
             }
         }, 'logs');
-        await result.client.query('COMMIT;');
+
+        try {
+            await result.client.query('COMMIT;');
+        } catch(error) {
+            console.log(logId);
+            if (logId)
+                await produce({
+                    id: logId,
+                    type: 0
+                }, 'logs');
+            throw error
+        }
         delete result.client;
         return { assignedCandidatesCnt: result.assigned_candidates_cnt };
     } catch (error) {

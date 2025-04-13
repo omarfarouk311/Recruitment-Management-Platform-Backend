@@ -67,8 +67,8 @@ exports.getCandidatesForJobValidator = [
 const candidates = body("candidates", "Invalid candidates property")
     .isArray({ min: 1 })
     .custom((value, { req }) => {
-        return value.every((candidate) => typeof candidate === "number");
-    }).withMessage("candidates must be an array of numbers");
+        return value.every((candidate) => typeof candidate === "number" && candidate > 0 && candidate <= 99999999);
+    }).withMessage("candidates must be an array of numbers between 1 and 99999999");
 
 const recruiterId = check("recruiterId", "Invalid recruiterId").isInt({ min: 1 });
 
