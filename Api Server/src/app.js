@@ -18,17 +18,26 @@ const reportRoutes = require('./features/reports/reportRoutes');
 const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
 const cvRoutes = require('./features/cvs/cvRoutes');
-
+const cors = require('cors');
 const app = express();
+
+app.use(
+    cors({
+        origin: '*'
+    })
+)
 
 minioConnect();
 
 // for testing
 app.use((req, res, next) => {
-    req.userId = 11;
-    req.userRole = role.company;
+    // console.log('request reached')
+    req.userId = 3;
+    req.userRole = role.recruiter;
     next();
 });
+
+
 
 app.use(express.json());
 

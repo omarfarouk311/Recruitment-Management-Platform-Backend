@@ -65,6 +65,6 @@ module.exports.getProfilePicService=async(recruiterId)=>{
         bucketName: imagesBucketName,
         objectName: `${role.recruiter}${recruiterId}`
     };
-    
+
     return await getImageService(imageData);
 }
