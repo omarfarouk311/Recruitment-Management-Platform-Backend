@@ -19,7 +19,7 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
         result = CandidateQueryset.assignCandidatesToRecruiter(seekerIds, recruiterId, jobId);
         let companyName = CandidateQueryset.getCompanyName(companyId);
         [result, companyName] = await Promise.all([result, companyName]);
-        
+        let logId = uuid();
         await produce({
             id: uuid(),
             action_type: action_types.assign_candidate,
@@ -31,7 +31,18 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
                 seekerIds: result.updated_candidates.map((value) => value.seeker_id)
             }
         }, 'logs');
-        await result.client.query('COMMIT;');
+
+        try {
+            await result.client.query('COMMIT;');
+        } catch(error) {
+            console.log(logId);
+            if (logId)
+                await produce({
+                    id: logId,
+                    type: 0
+                }, 'logs');
+            throw error
+        }
         delete result.client;
         return { assignedCandidatesCnt: result.assigned_candidates_cnt };
     } catch (error) {
@@ -54,11 +65,12 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
         let recProc = CandidateQueryset.getRecruitementPhases(jobId);
 
         [result, performed_by, recProc] = await Promise.all([result, performed_by, recProc]);
-        
+        let logId;
         if (result.updatedCandidates.length) {
+            logId = uuid();
             let promises = [];
             promises.push(produce({
-                id: uuid(),
+                id: logId,
                 action_type: action_types.move_candidate,
                 perfomed_by: performed_by.name,
                 created_at: new Date(),
@@ -90,7 +102,17 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
             await Promise.all(promises);
         }
 
-        await result.client.query('COMMIT;');
+        try {
+            await result.client.query('COMMIT;');
+        } catch(error) {
+            console.log(logId);
+            if (logId)
+                await produce({
+                    id: logId,
+                    type: 0
+                }, 'logs');
+            throw error
+        }
         delete result.client;
         delete result.decision;
         result.updatedCandidates = result.updatedCandidates.map((value) => {
@@ -117,9 +139,9 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
         result = CandidateQueryset.unassignCandidatesFromRecruiter(seekerIds, jobId);
         let companyName = CandidateQueryset.getCompanyName(companyId);
         [result, companyName] = await Promise.all([result, companyName]);
-
+        const logId = uuid();
         await produce({
-            id: uuid(),
+            id: logId,
             action_type: action_types.unassign_candidate,
             perfomed_by: companyName,
             created_at: new Date(),
@@ -129,8 +151,14 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
                 recruiterName: result.recruiter_name
             }
         }, 'logs');
-
-        await result.client.query('COMMIT;');
+        try {
+            await result.client.query('COMMIT;');
+        } catch(error) {
+            await produce({
+                id: logId,
+                type: 0
+            }, 'logs');
+        }
         delete result.client;
         delete result.seekerIds;
         return result;

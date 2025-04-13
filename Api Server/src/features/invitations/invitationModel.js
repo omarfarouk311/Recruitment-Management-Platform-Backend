@@ -1,21 +1,20 @@
 const { getReadPool, getWritePool } = require('../../../config/db');
-const { role: { recruiter }, logs_topic, emails_topic, action_types: { send_invitation },
-    email_types: { company_invitation } } = require('../../../config/config');
-const { produce } = require('../../common/kafka');
-const { v6: uuidv6 } = require('uuid');
+const { role: { recruiter }, pagination_limit } = require('../../../config/config');
 
 class Invitation {
-    constructor(recruiterEmail, companyId, department, createdAt, deadline, status) {
+    constructor(recruiterEmail, companyId, department, createdAt, deadline) {
         this.recruiterEmail = recruiterEmail;
         this.companyId = companyId;
         this.department = department;
         this.createdAt = createdAt;
         this.deadline = deadline;
-        this.status = status;
+        this.status = 2;
     }
 
-    static async getInvitations(userId, userRole, filters, limit = 10) {
-        const pool = getReadPool();
+    static primaryPool = getWritePool();
+    static replicaPool = getReadPool();
+
+    static async getInvitations(userId, userRole, filters, limit = pagination_limit) {
         const values = [userId];
         let index = 1;
 
@@ -72,14 +71,13 @@ class Invitation {
         query += ` limit $${index++} offset $${index++}`;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Invitation.replicaPool.query(query, values);
         return rows;
     }
 
-    async create() {
-        const pool = getWritePool();
+    async create(produce = null) {
         let values = [];
-        const client = await pool.connect();
+        const client = await Invitation.primaryPool.connect();
 
         try {
             await client.query('begin');
@@ -101,7 +99,6 @@ class Invitation {
                 throw err;
             }
             const { recruiter_id: recruiterId } = rows[0];
-            console.log(recruiterId);
 
             // retrieve the company name to add it to the produced message
             const getCompanyName =
@@ -113,29 +110,17 @@ class Invitation {
             values = [this.companyId];
             const { rows: [{ name: companyName }] } = await client.query(getCompanyName, values);
 
-            // produced message into logs topic
-            const logData = {
-                id: uuidv6(),
-                performed_by: companyName,
-                company_id: this.companyId,
-                created_at: this.createdAt,
-                extra_data: {
-                    to: this.recruiterEmail
-                },
-                action_type: send_invitation
+            if (produce) {
+                await produce(companyName, recruiterId);
             }
-            // produced message into emails topic
-            const emailData = {
-                type: company_invitation,
-                recruiterId,
-                companyId: this.companyId,
-                department: this.department,
-                deadline: this.deadline
-            }
-            // produce messages into their topics
-            await Promise.all[produce(logData, logs_topic), produce(emailData, emails_topic)];
 
-            await client.query('commit');
+            try {
+                await client.query('commit');
+            }
+            catch (err) {
+                err.removeLog = true;
+                throw err;
+            }
         }
         catch (err) {
             await client.query('rollback')
@@ -151,9 +136,8 @@ class Invitation {
     }
 
     static async replyToInvitation(recruiterId, companyId, status, date) {
-        const pool = getWritePool();
         let values = [];
-        const client = await pool.connect();
+        const client = await Invitation.primaryPool.connect();
 
         try {
             await client.query('begin');
@@ -166,13 +150,15 @@ class Invitation {
                 where recruiter_id = $1 and company_id = $2
                 `;
             values = [recruiterId, companyId];
-            const { rows: invitations, rowCount: invitationsCount } = await client.query(selectInvitation, values)
+            const { rows: invitations, rowCount: invitationsCount } = await client.query(selectInvitation, values);
+
             if (!invitationsCount) {
                 const err = new Error('Invitation not found');
                 err.msg = err.message;
                 err.status = 404;
                 throw err;
             }
+            
             const invitation = invitations[0];
             if (invitation.deadline.getTime() < date.getTime() || invitation.status !== 2) {
                 const err = new Error('Invitation expired');
@@ -196,12 +182,14 @@ class Invitation {
             if (status) {
                 const updateRecruiter =
                     `
-                update Recruiter
-                set company_id = $1, department = $2
-                where id = $3 and company_id is null
-                `;
+                    update Recruiter
+                    set company_id = $1, department = $2
+                    where id = $3 and company_id is null
+                    `;
                 values = [companyId, department, recruiterId];
                 const { rowCount } = await client.query(updateRecruiter, values);
+
+                // reject the reply if the recruiter is already hired
                 if (!rowCount) {
                     const err = new Error('Recruiter is already hired by a company');
                     err.msg = err.message;
@@ -220,7 +208,6 @@ class Invitation {
             client.release();
         }
     }
-
 }
 
 module.exports = Invitation;

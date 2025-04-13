@@ -8,7 +8,7 @@ const jobsAppliedForRoutes = require('./jobs_applied_for/jobsAppliedForRoutes');
 const experienceRoutes = require('./experience/experienceRoutes');
 const statsRoutes = require('./stats/statsRoutes');
 const jobRoutes = require('./jobs/jobRoutes');
-const profileRoutes = require('./profiles/profileRouter');
+const profileRoutes = require('./profiles/profileRoutes');
 const cvRoutes = require('./cvs/cvRoutes');
 
 router.use('/job-offers', jobOfferRoutes);

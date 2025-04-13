@@ -1,6 +1,6 @@
-
 const recruiterService = require('./recruiterService');
 const config = require('../../../config/config');
+
 
 module.exports.getRecruitersContoller = async (req, res, next) => {  
 
@@ -111,24 +111,21 @@ module.exports.getProfilePicController=async(req,res,next)=>{
 
     try {
         let recruiterId=req.userId
-        let recruiterRole=req.userRole
 
         const {
-            metaData: { 'content-type': contentType, filename: fileName },
+            metaData,
             size,
             stream
-        } = await getProfilePicService(recruiterId, recruiterRole); // once the object return the await will finish but the stream will not
+        } = await recruiterService.getProfilePicService(recruiterId); // once the object return the await will finish but the stream will not
                                                                                 // be fully read as it came in chunks and will resond it as soon as chunk came from the readable stream
+        res.setHeader("Content-Type", metaData['content-type']);
+        res.setHeader("Content-Length", size);
+        res.setHeader("Content-Disposition", `inline; filename="${metaData['filename']}"`);
 
-        res.header({
-            'Content-Type': contentType,
-            'Content-Length': size,
-            'Content-Disposition': `inline; filename = ${fileName}` // inline to display the image not download it
-        });
+        stream.pipe(res);
 
         stream.on('error', (err) => next(err));
 
-        stream.pipe(res);
     }
     catch (err) {
         if (err.code === 'NotFound') {

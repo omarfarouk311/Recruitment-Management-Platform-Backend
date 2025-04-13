@@ -7,7 +7,7 @@ const jobOfferAuthorization = require('./jobOfferAuthorization')
 
 router.get('/', jobOfferValidation.getOffers, handleValidationErrors, jobOfferAuthorization.isJobSeeker, jobOfferController.getJobOffers);
 
-router.get('/company-names', jobOfferValidation.validateStatus, jobOfferController.getCompanyNames);
+router.get('/company-names', jobOfferValidation.validateStatus, handleValidationErrors, jobOfferController.getCompanyNames);
 
 router.get('/:jobId', jobOfferValidation.jobOffer, handleValidationErrors, jobOfferAuthorization.isJobSeeker, jobOfferController.getJobOffer);
 
