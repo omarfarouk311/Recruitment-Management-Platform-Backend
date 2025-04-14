@@ -6,7 +6,8 @@ exports.getCandidatesForJob = async (req, res, next) => {
         const candidates = await candidateService.getCandidatesForJob(
             req.params.jobId,
             {
-                candidateLocation: req.query.candidateLocation,
+                country: req.query.country,
+                city: req.query.city,
                 phaseType: req.query.phaseType,
                 status: req.query.status,
             },
@@ -28,7 +29,8 @@ exports.getCandidatesForRecruiter = async (req, res, next) => {
             {
                 phaseType: req.query.phaseType, 
                 jobTitle: req.query.jobTitle, 
-                candidateLocation: req.query.caddidateLocation
+                country: req.query.country,
+                city: req.query.city,
             },
             req.query.sortBy,
             req.query.page

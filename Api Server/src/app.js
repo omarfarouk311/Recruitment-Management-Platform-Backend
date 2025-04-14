@@ -32,7 +32,7 @@ minioConnect();
 // for testing
 app.use((req, res, next) => {
     // console.log('request reached')
-    req.userId = 3;
+    req.userId = 2;
     req.userRole = role.recruiter;
     next();
 });
