@@ -24,11 +24,11 @@ const validateStatus = () => query('status')
     .optional()
     .trim()
     .custom(value => value === 'pending' || value === 'accepted' || value === 'rejected')
-    .withMessage('Invalid status, is must be pending, accepted, or rejected')
+    .withMessage('Invalid status, it must be pending, accepted, or rejected')
     .customSanitizer(value => {
         if (value === 'pending') return 2;
         else if (value === 'accepted') return 1;
-        else return 0;
+        return 0;
     });
 
 const validateEmail = () => body('recruiterEmail')

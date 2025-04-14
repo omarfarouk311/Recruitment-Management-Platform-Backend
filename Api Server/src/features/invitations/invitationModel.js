@@ -43,9 +43,9 @@ class Invitation {
                 where i.company_id = $${index++}
                 `;
 
-        if (filters.status) {
+        if (filters.status !== undefined) {
             query += ` and status = $${index++}`;
-            values.push(filters.status)
+            values.push(filters.status);
         }
 
         if (!Object.keys(filters).some(value => value === 'sortByDate' || value === 'sortByDeadline')) {
@@ -158,7 +158,7 @@ class Invitation {
                 err.status = 404;
                 throw err;
             }
-            
+
             const invitation = invitations[0];
             if (invitation.deadline.getTime() < date.getTime() || invitation.status !== 2) {
                 const err = new Error('Invitation expired');
