@@ -107,7 +107,7 @@ class JobOfferModel {
         if(status == constants.candidate_status_pending || !status) {
             const {rows} = await readPool.query(`
                 SELECT
-                    comp.name AS "companyName",
+                    DISTINCT comp.name AS "companyName",
                     comp.id AS "companyId"
                 FROM candidates c
                 JOIN job j ON c.job_id = j.id
@@ -119,7 +119,7 @@ class JobOfferModel {
         else {
             const {rows} = await readPool.query(`
                 SELECT
-                    comp.name AS "companyName",
+                    DISTINCT comp.name AS "companyName",
                     comp.id AS "companyId"
                 FROM candidate_history c
                 JOIN job j ON c.job_id = j.id
