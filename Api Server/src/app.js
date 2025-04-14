@@ -19,25 +19,23 @@ const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
 const cvRoutes = require('./features/cvs/cvRoutes');
 const cors = require('cors');
+const helmet = require('helmet');
 const app = express();
-
-app.use(
-    cors({
-        origin: '*'
-    })
-)
 
 minioConnect();
 
+app.use(helmet());
+
+/* To be removed after integration because api request and frontend files will be served from the
+same origin (the reverse proxy) */
+app.use(cors({ origin: '*' }));
+
 // for testing
 app.use((req, res, next) => {
-    // console.log('request reached')
-    req.userId = 3;
-    req.userRole = role.recruiter;
+    req.userId = 11;
+    req.userRole = role.company;
     next();
 });
-
-
 
 app.use(express.json());
 

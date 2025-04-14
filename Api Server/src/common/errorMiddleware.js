@@ -6,7 +6,6 @@ exports.notAllowed = (req, res, next) => {
 };
 
 exports.notFound = (req, res, next) => {
-    console.log("Url not found")
     const err = new Error('Resource not found');
     err.msg = 'Resource not found';
     err.status = 404;
