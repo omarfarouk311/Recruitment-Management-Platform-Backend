@@ -4,9 +4,8 @@ const { logs_topic, emails_topic, action_types: { send_invitation },
     email_types: { company_invitation } } = require('../../../config/config');
 const { v6: uuidv6 } = require('uuid');
 
-exports.getInvitations = async (userId, userRole, filters) => {
-    const result = await invitationModel.getInvitations(userId, userRole, filters);
-    return result;
+exports.getInvitations = (userId, userRole, filters) => {
+    return invitationModel.getInvitations(userId, userRole, filters);
 };
 
 exports.createInvitation = async (recruiterEmail, companyId, department, deadline) => {
@@ -39,7 +38,8 @@ exports.createInvitation = async (recruiterEmail, companyId, department, deadlin
 
     const invitation = new invitationModel(recruiterEmail, companyId, department, createdAt, deadline);
     try {
-        await invitation.create(kafkaProduce);
+        const invitationId = await invitation.create(kafkaProduce);
+        return invitationId;
     }
     catch (err) {
         // produce a message to remove the log in case of an error during committing the transaction
@@ -50,6 +50,6 @@ exports.createInvitation = async (recruiterEmail, companyId, department, deadlin
     }
 };
 
-exports.replyToInvitation = async (recruiterId, companyId, status, date) => {
-    await invitationModel.replyToInvitation(recruiterId, companyId, status, date);
+exports.replyToInvitation = (invitationId, recruiterId, status, date) => {
+    return invitationModel.replyToInvitation(invitationId, recruiterId, status, date);
 };

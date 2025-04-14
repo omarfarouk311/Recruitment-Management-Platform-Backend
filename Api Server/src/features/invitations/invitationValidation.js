@@ -1,6 +1,5 @@
-const { query, body } = require('express-validator');
+const { query, body, param } = require('express-validator');
 const { validatePage } = require('../../common/util');
-const { validateCompanyId } = require('../companies/companyValidation');
 const { minNameLength, maxNameLength } = require('../../../config/config');
 
 const validateSortByDate = () => query('sortByDate', "Invalid sort option, it must be 1 or -1")
@@ -24,18 +23,18 @@ const validateStatus = () => query('status')
     .optional()
     .trim()
     .custom(value => value === 'pending' || value === 'accepted' || value === 'rejected')
-    .withMessage('Invalid status, is must be pending, accepted, or rejected')
+    .withMessage('Invalid status, it must be pending, accepted, or rejected')
     .customSanitizer(value => {
         if (value === 'pending') return 2;
         else if (value === 'accepted') return 1;
-        else return 0;
+        return 0;
     });
 
 const validateEmail = () => body('recruiterEmail')
     .isEmail()
     .withMessage('invalid email format')
     .isLength({ max: 50 })
-    .withMessage("Email length can't exceed 50")
+    .withMessage("Email length can't exceed 50");
 
 const validateDepartment = () => body('department')
     .isString()
@@ -52,15 +51,21 @@ const validateDeadline = () => body('deadline')
 
 const validateReply = () => body('status')
     .custom(value => value === 1 || value === 0)
-    .withMessage('status must be 1 for accept or 0 for reject')
+    .withMessage('status must be 1 for accept or 0 for reject');
 
 const validateDate = () => body('date')
     .isISO8601()
     .withMessage('Invalid date format, it must be in ISO 8601 format')
-    .customSanitizer(isoString => new Date(isoString))
+    .customSanitizer(isoString => new Date(isoString));
+
+const validateInvitationId = () => param('invitationId', 'Invalid invitation ID')
+    .isString()
+    .notEmpty()
+    .isInt({ min: 1, allow_leading_zeroes: false })
+    .toInt();
 
 exports.validateGetInvitations = [validatePage(), validateStatus(), validateSortByDeadline(), validateSortByDate()];
 
 exports.validateCreateInvitation = [validateEmail(), validateDepartment(), validateDeadline()];
 
-exports.validateReplyToInvitation = [validateCompanyId, validateReply(), validateDate()];
+exports.validateReplyToInvitation = [validateInvitationId(), validateReply(), validateDate()];
