@@ -21,7 +21,8 @@ class Invitation {
         let query =
             userRole === recruiter ?
                 `
-                select i.company_id as "companyId", c.name, i.department, i.created_at as "dateRecieved", i.deadline,
+                select i.id, i.company_id as "companyId", c.name as "companyName", i.department, i.created_at as "dateRecieved",
+                i.deadline,
                 case
                     when i.status = 2 then 'Pending'
                     when i.status = 1 then 'Accepted'
@@ -32,7 +33,8 @@ class Invitation {
                 where i.recruiter_id = $${index++}
                 `:
                 `
-                select i.recruiter_id as "recruiterId", r.name, i.department, i.created_at as "dateSent", i.deadline,
+                select i.id, i.recruiter_id as "recruiterId", r.name as "recruiterName", i.department, i.created_at as "dateSent",
+                i.deadline,
                 case
                     when i.status = 2 then 'Pending'
                     when i.status = 1 then 'Accepted'
@@ -82,23 +84,40 @@ class Invitation {
         try {
             await client.query('begin');
 
+            const checkInvitation =
+                `
+                select 1
+                from Company_Invitations
+                where recruiter_id = (select id from users where email = $1) and company_id = $2 and status = 2
+                `;
+            values = [this.recruiterEmail, this.companyId];
+            const { rows: existingInvitations } = await client.query(checkInvitation, values);
+
+            if (existingInvitations.length) {
+                const err = new Error('An invitation to this recruiter has already been sent');
+                err.msg = err.message;
+                err.status = 409;
+                throw err;
+            }
+
             const insertInvitation =
                 `
                 INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline, status)
                 select id, $2, $3, $4, $5, $6
                 from users
                 where email = $1
-                returning recruiter_id
+                returning recruiter_id as "recruiterId", id as "invitationId"
                 `;
             values = [this.recruiterEmail, this.companyId, this.department, this.createdAt, this.deadline, this.status];
             const { rows, rowCount } = await client.query(insertInvitation, values);
+
             if (!rowCount) {
                 const err = new Error('recruiter not found while sending an invitation to him');
                 err.msg = 'recruiter not found';
                 err.status = 404;
                 throw err;
             }
-            const { recruiter_id: recruiterId } = rows[0];
+            const { recruiterId, invitationId } = rows[0];
 
             // retrieve the company name to add it to the produced message
             const getCompanyName =
@@ -116,6 +135,7 @@ class Invitation {
 
             try {
                 await client.query('commit');
+                return invitationId;
             }
             catch (err) {
                 err.removeLog = true;
@@ -124,10 +144,6 @@ class Invitation {
         }
         catch (err) {
             await client.query('rollback')
-            if (err.code === '23505') {
-                err.msg = 'An invitation to this recruiter has already been sent';
-                err.status = 409;
-            }
             throw err;
         }
         finally {
@@ -135,7 +151,7 @@ class Invitation {
         }
     }
 
-    static async replyToInvitation(recruiterId, companyId, status, date) {
+    static async replyToInvitation(invitationId, recruiterId, status, date) {
         let values = [];
         const client = await Invitation.primaryPool.connect();
 
@@ -145,22 +161,22 @@ class Invitation {
             // check if the invitation exists and not expired
             const selectInvitation =
                 `
-                select status, deadline
+                select status, deadline, company_id as "companyId"
                 from Company_Invitations
-                where recruiter_id = $1 and company_id = $2
+                where id = $1
                 `;
-            values = [recruiterId, companyId];
-            const { rows: invitations, rowCount: invitationsCount } = await client.query(selectInvitation, values);
+            values = [invitationId];
+            const { rows: invitations } = await client.query(selectInvitation, values);
 
-            if (!invitationsCount) {
+            if (!invitations.length) {
                 const err = new Error('Invitation not found');
                 err.msg = err.message;
                 err.status = 404;
                 throw err;
             }
 
-            const invitation = invitations[0];
-            if (invitation.deadline.getTime() < date.getTime() || invitation.status !== 2) {
+            const { status: invitationStatus, deadline: invitationDeadline, companyId } = invitations[0];
+            if (invitationDeadline.getTime() < date.getTime() || invitationStatus !== 2) {
                 const err = new Error('Invitation expired');
                 err.msg = err.message;
                 err.status = 400;
@@ -172,14 +188,14 @@ class Invitation {
                 `
                 update Company_Invitations
                 set status = $1
-                where recruiter_id = $2 and company_id = $3
+                where id = $2
                 returning department
                 `;
-            values = [status, recruiterId, companyId];
+            values = [status, invitationId];
             const { rows: [{ department }] } = await client.query(updateInvitation, values);
 
             // link the recruiter to the company with the department in the invitation in case of acception
-            if (status) {
+            if (status == 1) {
                 const updateRecruiter =
                     `
                     update Recruiter
@@ -193,7 +209,7 @@ class Invitation {
                 if (!rowCount) {
                     const err = new Error('Recruiter is already hired by a company');
                     err.msg = err.message;
-                    err.status = 400;
+                    err.status = 409;
                     throw err;
                 }
             }
@@ -206,6 +222,32 @@ class Invitation {
         }
         finally {
             client.release();
+        }
+    }
+
+    static async authorizeReplyToInvitation(invitationId, recruiterId) {
+        const values = [invitationId];
+        const query =
+            `
+            select recruiter_id as "recruiterId"
+            from Company_Invitations
+            where id = $1
+            `;
+        const { rows: invitations } = await Invitation.replicaPool.query(query, values);
+
+        if (!invitations.length) {
+            const err = new Error('Invitation not found');
+            err.msg = err.message;
+            err.status = 404;
+            throw err;
+        }
+
+        const { recruiterId: invitationRecruiterId } = invitations[0];
+        if (invitationRecruiterId !== recruiterId) {
+            const err = new Error('Unauthorized access on replying to an invitation');
+            err.msg = 'Unauthorized request';
+            err.status = 403;
+            throw err;
         }
     }
 }

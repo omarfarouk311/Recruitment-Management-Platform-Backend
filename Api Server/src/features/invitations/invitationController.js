@@ -18,8 +18,8 @@ exports.sendInvitation = async (req, res, next) => {
     const { userId } = req;
 
     try {
-        await invitationService.createInvitation(recruiterEmail, userId, department, deadline);
-        res.status(201).send();
+        const invitationId = await invitationService.createInvitation(recruiterEmail, userId, department, deadline);
+        res.status(201).json({ id: invitationId });
     }
     catch (err) {
         next(err);
@@ -28,14 +28,14 @@ exports.sendInvitation = async (req, res, next) => {
 
 exports.replyToInvitation = async (req, res, next) => {
     const { status, date } = req.body;
-    const { companyId } = req.params
+    const { invitationId } = req.params
     const { userId } = req;
 
     try {
-        await invitationService.replyToInvitation(userId, companyId, status, date);
+        await invitationService.replyToInvitation(invitationId, userId, status, date);
         res.status(200).send();
     }
     catch (err) {
         next(err);
     }
-}
+};
