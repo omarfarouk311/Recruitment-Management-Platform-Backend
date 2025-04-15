@@ -13,11 +13,14 @@ class interview {
             let index = 1;
             let query = `
 
-                        SELECT job_seeker.name as user_name,
-                        job.title as job_title,
-                        candidates.phase_deadline as deadline,
-                        job.country as location,
-                        job.remote as is_remote
+                        SELECT job_seeker.name as "userName",
+                        job.title as "jobTitle",
+                        candidates.phase_deadline as "date",
+                        job.country as "location",
+                        job.remote as "isRemote",
+                        job_seeker.country as "candidateLocation",
+                        job_seeker.id as "userId",
+                        job.id as "jobId"
                         FROM (
                                 SELECT seeker_id,
                                 phase, job_id,

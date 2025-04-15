@@ -61,10 +61,12 @@ module.exports.getRecruiterDataService=async(recruiterId)=>{
 }
 
 module.exports.getProfilePicService=async(recruiterId)=>{
+
+    // the function that will upload the photo, should configure the name without extension, that is why no extension here
     const imageData = {
         bucketName: imagesBucketName,
         objectName: `${role.recruiter}${recruiterId}`
     };
-
+    
     return await getImageService(imageData);
 }
