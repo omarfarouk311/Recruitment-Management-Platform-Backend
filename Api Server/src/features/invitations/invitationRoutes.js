@@ -21,11 +21,11 @@ router.route('/')
     )
     .all(notAllowed);
 
-router.route('/:companyId')
+router.route('/:invitationId')
     .patch(
-        invitationAuthorization.authorizeReplyToInvitation,
         invitationValidation.validateReplyToInvitation,
         handleValidationErrors,
+        invitationAuthorization.authorizeReplyToInvitation,
         invitationController.replyToInvitation
     )
     .all(notAllowed)

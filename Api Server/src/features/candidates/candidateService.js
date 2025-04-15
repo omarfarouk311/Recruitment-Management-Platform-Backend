@@ -61,10 +61,10 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
     let result; 
     try {
         result = CandidateQueryset.makeDecisionToCandidates(seekerIds, jobId, decision);
-        let performed_by = CandidateQueryset.getCompanyName(userId) || CandidateQueryset.getRecruiterName(userId);
+        let performed_by = (await CandidateQueryset.getCompanyName(userId)) || CandidateQueryset.getRecruiterName(userId);
         let recProc = CandidateQueryset.getRecruitementPhases(jobId);
-
         [result, performed_by, recProc] = await Promise.all([result, performed_by, recProc]);
+        
         let logId;
         if (result.updatedCandidates.length) {
             logId = uuid();
@@ -148,7 +148,7 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
             companyId: companyId,
             extra_data: {
                 seekerIds: result.seekerIds,
-                recruiterName: result.recruiter_name
+                recruiterName: result.recruiterName
             }
         }, 'logs');
         try {

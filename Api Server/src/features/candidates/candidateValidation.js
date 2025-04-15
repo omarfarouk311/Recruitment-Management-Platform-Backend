@@ -35,17 +35,22 @@ const phaseType = query("phaseType", "invalid phaseType query parameter")
     .optional()
     .isInt({ min: 1 }).toInt();
 
-const candidateLocation = query("candidateLocation", "invalid candidateLocation query parameter")
+const country = query("Country", "invalid Country query parameter")
     .optional()
     .isAlpha()
-    .withMessage("candidateLocation must be alphabetic");
+    .withMessage("Country must be alphabetic");
+
+const city = query("City", "invalid City query parameter")
+    .optional()
+    .isAlpha()
+    .withMessage("City must be alphabetic");
 
 exports.getCandidatesForRecruiterValidator = [
     sortBy,
     simplified,
     jobTitle,
     phaseType,
-    candidateLocation,
+    country,
     validatePage()
 ];
 
@@ -58,7 +63,7 @@ exports.getCandidatesForJobValidator = [
     sortByAssessmentScore,
     sortByRecommendation,
     phaseType,
-    candidateLocation,
+    country,
     status,
     validatePage()
 ]

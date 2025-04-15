@@ -74,13 +74,13 @@ CREATE TABLE Education (
 );
 
 CREATE TABLE Company_Invitations (
-  recruiter_id int,
-  company_id int,
+  id serial PRIMARY KEY,
+  recruiter_id int NOT NULL,
+  company_id int NOT NULL,
   department text NOT NULL,
   created_at TIMESTAMP NOT NULL,
   deadline TIMESTAMP NOT NULL,
-  status SMALLINT NOT NULL,
-  PRIMARY KEY (recruiter_id, company_id)
+  status SMALLINT NOT NULL
 );
 
 CREATE TABLE Candidates (
@@ -317,6 +317,8 @@ CREATE INDEX ON Company_Location (country, city);
 CREATE INDEX ON Company_Location (company_id);
 
 CREATE INDEX ON Company_Invitations (company_id);
+
+CREATE INDEX ON Company_Invitations (recruiter_id);
 
 CREATE INDEX ON Candidates (recruiter_id, phase);
 

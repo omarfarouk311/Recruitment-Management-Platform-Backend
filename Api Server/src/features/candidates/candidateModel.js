@@ -12,13 +12,13 @@ class CandidateModel {
             index+=2;
             query = ` 
                 SELECT 
-                    job_seeker.id as seeker_id,
-                    job_seeker.name as job_seeker_name,
-                    rp.name as phase_name,
-                    candidates.date_applied as date_applied,
-                    job_seeker.country as candidate_country,
-                    job_seeker.city as candidate_city,
-                    recruiter.name as recruiter_name,
+                    job_seeker.id as "seekerId",
+                    job_seeker.name as "seekerName",
+                    rp.name as "phase",
+                    candidates.date_applied as "dateApplied",
+                    job_seeker.country as "candidateCountry",
+                    job_seeker.city as "candidateCity",
+                    recruiter.name as "recruiterName",
                     CASE 
                         WHEN 
                             rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
@@ -26,7 +26,7 @@ class CandidateModel {
                             COALESCE(assessment.score, 0::smallint) 
                         ELSE 
                             assessment.score 
-                    END AS score, assessment.total_score as total_score,
+                    END AS score, assessment.total_score as "totalScore",
                     CASE WHEN rt.name = 'cv screening' THEN DENSE_RANK() OVER (ORDER BY similarity_score DESC) ELSE NULL END AS rank
                 FROM (
                     SELECT 
@@ -54,12 +54,12 @@ class CandidateModel {
             index += 3;
             query = `
             SELECT 
-                seeker_id, phase_name,
-                status, date_applied,
-                score, job_seeker.id as job_seeker_id,
-                job_seeker.name as job_seeker_name,
-                job_seeker.country as candidate_country,
-                job_seeker.city as candidate_city
+                seeker_id as "seekerId", phase_name as "phase",
+                status, date_applied as dateApplied,
+                score,
+                job_seeker.name as "seekerName",
+                job_seeker.country as "candidateCountry",
+                job_seeker.city as "candidateCity"
             FROM (
                 SELECT
                 job_id, seeker_id,
@@ -76,9 +76,14 @@ class CandidateModel {
         if(Object.keys(filters).length > 0) {
             query += `WHERE 1=1 `;
         }
-        if (filters.candidateLocation) {
+        if (filters.country) {
             query += `AND job_seeker.country = $${index} `;
-            params.push(filters.candidateLocation);
+            params.push(filters.country);
+            index++;
+        }
+        if (filters.city) {
+            query += `AND job_seeker.city = $${index} `;
+            params.push(filters.city);
             index++;
         }
         if(filters.status == constants.candidate_status_pending || !filters.status) {
@@ -123,17 +128,18 @@ class CandidateModel {
         let params = [recruiterId];
         let query = `
         SELECT
-         job_seeker.id as job_seeker_id,
-         job_seeker.name as job_seeker_name,
-         job.title as job_title, 
-         rp.name as phase_name `;
+         job_seeker.id as "seekerId",
+         job_seeker.name as "seekerName",
+         job.title as "jobTitle", 
+         job.id as "jobId",
+         rp.name as phase `;
         if (!simplified) {
             query += `,
-            candidates.date_applied as date_applied,
-            job_seeker.country as candidate_country,
-            job_seeker.city as candidate_city,
-            job.country as job_country,
-            job.city as job_city,
+            candidates.date_applied as "dateApplied",
+            job_seeker.country as "candidateCountry",
+            job_seeker.city as "candidateCity",
+            job.country as "jobCountry",
+            job.city as "jobCity",
             CASE 
                 WHEN 
                     rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
@@ -141,7 +147,7 @@ class CandidateModel {
                     COALESCE(assessment.score, 0::smallint) 
                 ELSE 
                     assessment.score 
-            END AS score, assessment.total_score as total_score `;
+            END AS score, assessment.total_score as "totalScore" `;
         }
         query += `
         FROM (
@@ -179,9 +185,14 @@ class CandidateModel {
             params.push(filters.phaseType);
             index++;
         }
-        if (filters.candidateLocation) {
+        if (filters.country) {
             query += `AND job_seeker.country = $${index} `
-            params.push(filters.candidateLocation);
+            params.push(filters.country);
+            index++;
+        }
+        if (filters.city) {
+            query += `AND job_seeker.city = $${index} `
+            params.push(filters.city);
             index++;
         }
         if (sortBy == constants.asc_order) {
@@ -360,7 +371,7 @@ class CandidateModel {
             `, [seekerIds, jobId]);
 
             
-            return {assigned_candidates_cnt: assigned_candidates_count, recruiter_name: recruiter_name, seekerIds: seekerIds, client: client};
+            return {assignedCandidatesCnt: assigned_candidates_count, recruiterName: recruiter_name, seekerIds: seekerIds, client: client};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
@@ -373,7 +384,9 @@ class CandidateModel {
             FROM company
             WHERE id = $1;
         `, [companyId]);
-
+        if(!results.rows.length) {
+            return undefined;
+        }
         return results.rows[0].name;
     }
 
