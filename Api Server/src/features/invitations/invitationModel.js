@@ -21,7 +21,7 @@ class Invitation {
         let query =
             userRole === recruiter ?
                 `
-                select i.id, i.company_id as "companyId", c.name as "companyName", i.department, i.created_at as "dateRecieved",
+                select i.id, i.company_id as "companyId", c.name as "companyName", i.department, i.created_at as "dateReceived",
                 i.deadline,
                 case
                     when i.status = 2 then 'Pending'
