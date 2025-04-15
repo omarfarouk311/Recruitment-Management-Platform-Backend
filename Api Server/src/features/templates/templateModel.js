@@ -34,7 +34,7 @@ class Templates {
     static async getAllTemplates(companyId, sortBy = 1, offset, limit, simplified) {
         const pool = getReadPool();
         const order = sortBy === 1 ? 'ASC' : 'DESC';
-        const limitQuery = offset ? 'OFFSET $2 LIMIT $3' : '';
+        const limitQuery = offset != undefined ? 'OFFSET $2 LIMIT $3' : '';
         let params = offset ? [companyId, offset, limit] : [companyId];
         const columns = simplified ? 'id, name' : 'id, name, updated_at';
         
@@ -172,7 +172,8 @@ class Templates {
             SELECT 
                 c.placeholders_params AS placeholders_params, 
                 j.name AS template_name,
-                j.description AS template_description
+                j.description AS template_description,
+                j.id AS template_id
             FROM candidates c
             JOIN job_offer_template j ON c.template_id = j.id
             WHERE c.job_id = $1 AND c.seeker_id = $2

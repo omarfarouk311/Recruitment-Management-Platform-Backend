@@ -16,9 +16,9 @@ exports.getTemplateDetails = async (req, res, next) => {
         const { id } = req.params;
         const template = await Templates.getTemplateById(id, req.query.simplified);
         if (!template) {
-            return res.status(404).json({ success: false, message: 'Template not found' });
+            return res.sendStatus(404);
         }
-        res.status(200).json({ success: true, data: template });
+        res.status(200).json(template);
     } catch (error) {
         next(error);
     }
