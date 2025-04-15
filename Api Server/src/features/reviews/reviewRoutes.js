@@ -7,22 +7,26 @@ const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
 router.route('/:companyId')
-    .post(reviewValidation.createReviewValidator,
-    handleValidationErrors,
-    reviewController.createReview);
+    .post(
+        reviewValidation.createReviewValidator,
+        handleValidationErrors,
+        reviewController.createReview
+    )
+    .all(notAllowed);
 
 router.route('/:reviewId')
-    .put(reviewValidation.updateReviewValidator,
-    handleValidationErrors,
-    reviewAuth.authUpdateReview,
-    reviewController.updateReview)
-    .delete(reviewValidation.deleteReviewValidator,
-    handleValidationErrors,
-    reviewAuth.authDeleteReview,
-    reviewController.deleteReview);
-
-router.route('/:companyId')
-    .get(reviewValidation.validateGetReviews, handleValidationErrors, reviewController.getReviews)
+    .put(
+        reviewValidation.updateReviewValidator,
+        handleValidationErrors,
+        reviewAuth.authUpdateReview,
+        reviewController.updateReview
+    )
+    .delete(
+        reviewValidation.deleteReviewValidator,
+        handleValidationErrors,
+        reviewAuth.authDeleteReview,
+        reviewController.deleteReview
+    )
     .all(notAllowed);
 
 module.exports = router;

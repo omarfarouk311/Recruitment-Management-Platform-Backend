@@ -79,6 +79,24 @@ const validateLocationsArray = () => body('locations.*')
         return true;
     });
 
+const validateReviewRating = () => query('rating', "Invalid rating option, it must be a number between 1 and 5")
+    .optional()
+    .isString()
+    .trim()
+    .isInt({ allow_leading_zeroes: false, min: 1, max: 5 })
+    .toInt();
+
+const validateSortByRating = () => query('sortByRating')
+    .optional()
+    .isString()
+    .trim()
+    .custom((value, { req }) => req.query.sortByDate === undefined)
+    .withMessage("Sort is only allowed by one option at a time")
+    .isInt()
+    .toInt()
+    .custom(value => value === 1 || value === -1)
+    .withMessage('sortByRating parameter value must be 1 or -1');
+
 exports.validateCompanyId = validateCompanyId();
 
 exports.validateGetCompanyJobs = [
@@ -100,4 +118,12 @@ exports.validateUpdateCompanyData = [
     validateLocations(),
     validateIndustriesArray(),
     validateLocationsArray()
+];
+
+exports.validateGetCompanyReviews = [
+    validateCompanyId(),
+    validatePage(),
+    validateReviewRating(),
+    validateSortByDate(),
+    validateSortByRating()
 ];
