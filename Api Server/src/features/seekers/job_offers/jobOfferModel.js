@@ -23,7 +23,7 @@ class JobOfferModel {
                 SELECT
                     j.title AS "jobTitle", comp.name AS "companyName", j.id AS "jobId",
                     j.country AS country, j.city AS city, c.last_status_update AS "dateRecieved",
-                    ${constants.candidate_status_pending} AS "status"
+                    ${status} AS "status"
                 FROM candidate_history c
                 JOIN job j ON c.job_id = j.id
                 JOIN company comp ON j.company_id = comp.id
