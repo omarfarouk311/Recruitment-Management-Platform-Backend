@@ -39,3 +39,17 @@ module.exports.deleteUpdateJobAuthorization = async (req, res, next) => {
         next(err);
     }
 }
+
+module.exports.similarJobs = async (req, res, next) => {
+    try {
+       if(req.userRole == role.jobSeeker) {
+           return next();
+        } 
+        const error = new Error('You are not authorized to access this job');
+        error.status = 403;
+        error.msg = 'Authorization Error';
+        throw error;
+    } catch (err) {
+        next(err);
+    }
+}

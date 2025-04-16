@@ -124,3 +124,10 @@ module.exports.getJobDataForEditing = async (jobId) => {
     const job = await jobModel.getJobDataForEditing(jobId)
     return job
 }
+
+
+
+module.exports.getSimilarJobs = async (jobId) => {
+    const jobs = await jobModel.getSimilarJobs(jobId)
+    return jobs
+}

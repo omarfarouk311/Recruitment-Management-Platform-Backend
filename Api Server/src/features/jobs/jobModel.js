@@ -314,6 +314,43 @@ class jobModel {
         }
     }
 
+
+    static async getSimilarJobs(jobId) {
+        let client = Pool.getReadPool();
+        try {
+            const query = `
+                            SELECT c.name as companyName,
+                            c.rating as companyRating,
+                            j.title as jobTitle,
+                            j.country as country,
+                            j.city as city,
+                            CURRENT_DATE - j.created_at as days_ago
+
+
+                            FROM  ( 
+                                    SELECT embedding, job_id
+                                    FROM job_embedding
+                                    WHERE job_id = $1
+                                ) as t1
+                            JOIN job_embedding t2
+                            ON t1.job_id != t2.job_id
+                            JOIN job j
+                            ON t2.job_id = j.id
+                            JOIN company c
+                            ON j.company_id  = c.id
+                            ORDER BY t1.embedding <=> t2.embedding
+                            LIMIT 3;
+
+                        `
+            const values = [jobId];
+            const { rows } = await client.query(query, values);
+            return rows;
+            
+        } catch (err) {
+            throw err;
+        }
+    }
+
     //////////// helper function
 
     static async getSkillMatches(jobId, seekerId) {
