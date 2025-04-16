@@ -7,7 +7,6 @@ const { v6: uuid } = require('uuid');
 
 class jobModel {
 
-
     static async createJob(client, companyId, jobData) {
         let index = 1;
 
@@ -50,8 +49,6 @@ class jobModel {
             throw err;
         }
     }
-
-
 
     static async getAllCompanyJobs(companyId, filters) {
         let client = Pool.getReadPool();
@@ -125,7 +122,7 @@ class jobModel {
                 throw err;
             }
 
-            let hasReported = false, hasApplied = false;
+            let hasReported = false, hasApplied = false, skillMaches = 0;
 
             if (userRole === role.jobSeeker) {
                 const statusQuery = `
@@ -143,10 +140,11 @@ class jobModel {
                 const status = statusRes.rows[0];
                 hasReported = status.has_reported;
                 hasApplied = status.has_applied || status.has_applied_history;
+                skillMaches = await this.getSkillMatches(jobId, userId);
             }
 
             return userRole === role.jobSeeker
-                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied }
+                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied, skillMaches }
                 : { jobDetails: jobRes.rows[0] };
 
         } catch (err) {
@@ -312,6 +310,34 @@ class jobModel {
             const { rows } = await client.query(query, values);
             return rows[0].company_id;
         } catch (err) {
+            throw err;
+        }
+    }
+
+    //////////// helper function
+
+    static async getSkillMatches(jobId, seekerId) {
+        let client = Pool.getReadPool();
+        try {
+            const query = `
+                SELECT 1
+                FROM (
+                        SELECT skill_id
+                        FROM job_skill 
+                        WHERE job_id = $1    
+                    ) as js
+                join (
+                        SELECT skill_id
+                        FROM user_skills 
+                        WHERE user_id = $2
+                ) as us
+                ON js.skill_id = us.skill_id
+            `;
+            const values = [jobId, seekerId];
+            const { rowCount } = await client.query(query, values);
+            return rowCount;
+        } catch (err) {
+            console.error('Error in getSkillMatches:', err);
             throw err;
         }
     }
