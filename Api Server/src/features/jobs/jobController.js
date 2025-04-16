@@ -28,7 +28,7 @@ module.exports.getAllCompanyJobs = async (req, res, next) => {
 module.exports.getJobDetailsById = async (req, res, next) => {
     const jobId = req.params.id;
     try {
-        const job = await jobService.getJobDetailsById(jobId);
+        const job = await jobService.getJobDetailsById(jobId, req.userId, req.userRole);
         res.status(200).json({ job });
     } catch (err) {
         next(err);

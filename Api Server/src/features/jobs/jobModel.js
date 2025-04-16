@@ -1,6 +1,6 @@
 const Pool = require('../../../config/db')
 const Kafka = require('../../common/kafka')
-const { asc_order, desc_order } = require('../../../config/config')
+const { asc_order, desc_order, role } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 
 
@@ -48,7 +48,7 @@ class jobModel {
         } catch (err) {
             console.error('Error in createJob:', err);
             throw err;
-        } 
+        }
     }
 
 
@@ -60,7 +60,7 @@ class jobModel {
             let query = `SELECT id, title, country, city, CURRENT_DATE - created_at as days_ago
                         FROM job
                         WHERE company_id = $${index++}`;
-        
+
             const { title, sort } = filters;
             const values = [companyId];
             if (title) {
@@ -82,32 +82,19 @@ class jobModel {
         }
     }
 
-    static async getJobDetailsById(jobId) {
+    static async getJobDetailsById(jobId, userId, userRole) {
         let client = Pool.getReadPool();
         try {
-            const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
-            const { rowCount } = await client.query(isExistQuery, [jobId]);
-            if (rowCount == 0) {
-                const err = new Error('Job id is not in database');
-                err.msg = 'Job not found';
-                err.status = 404;
-                throw err;
-            }
-            const query = `
-                        SELECT j.title as job_title,
-                        j.description as job_description,
-                        CURRENT_DATE - j.created_at as days_ago,
-                        j.country as country,
-                        j.city as city,
+            const jobDetailsQuery = `
+                        SELECT j.description as job_description,
                         j.remote as remote,
                         j.applied_cnt as applied_cnt,
                         j.closed as closed,
-                        
+
                         c.name as company_name,
-                        c.rating as company_rating,
-                        c.founded_on as founded_on,
+                        c.founded_in as founded_in,
                         c.overview as overview,
-                        c.company_size as company_size,
+                        c.size as company_size,
                         c.type as type ,
 
                         r.title as review_title,
@@ -126,14 +113,47 @@ class jobModel {
                         ON c.id = r.company_id
                         JOIN industry i
                         ON i.id = j.industry_id;
-                     `
-            const values = [jobId, false];
-            const { rows } = await client.query(query, values);
-            return rows[0];
+                `;      
+
+            const jobValues = [jobId, false];
+            const jobRes = await client.query(jobDetailsQuery, jobValues);
+
+            if (jobRes.rows.length === 0) {
+                const err = new Error('Job id is not in database');
+                err.msg = 'Job not found';
+                err.status = 404;
+                throw err;
+            }
+
+            let hasReported = false, hasApplied = false;
+
+            if (userRole === role.jobSeeker) {
+                const statusQuery = `
+            SELECT 
+                EXISTS(SELECT 1 FROM report WHERE job_id = $1 AND creator_id = $2 limit 1) AS has_reported,
+                EXISTS(SELECT 1 FROM candidates WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied,
+                EXISTS(SELECT 1 FROM candidate_history WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied_history;
+        `;
+
+                // Run in parallel using Promise.all
+                const [statusRes] = await Promise.all([
+                    client.query(statusQuery, [jobId, userId])
+                ]);
+
+                const status = statusRes.rows[0];
+                hasReported = status.has_reported;
+                hasApplied = status.has_applied || status.has_applied_history;
+            }
+
+            return userRole === role.jobSeeker
+                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied }
+                : { jobDetails: jobRes.rows[0] };
+
         } catch (err) {
-            console.log('Error in getJobById')
+            console.log('Error in getJobById');
             throw err;
         }
+
     }
 
     static async closeJobById(client, companyId, jobId) {
@@ -196,7 +216,7 @@ class jobModel {
         }
     }
 
-    
+
     static async getJobDataForEditing(jobId) {
         let client = await Pool.getReadPool().connect();
         try {
@@ -231,7 +251,7 @@ class jobModel {
                         LEFT JOIN Recruitment_Process rp
                         ON rp.id = j.recruitment_process_id;
                      `
-            
+
             const values = [jobId];
             let jobData = await client.query(query, values);
             jobData = jobData.rows;
@@ -250,7 +270,7 @@ class jobModel {
                         `
             let skillsData = await client.query(query2, values);
             skillsData = skillsData.rows
-            const returnedObject = {jobData, skillsData}
+            const returnedObject = { jobData, skillsData }
             return returnedObject;
         } catch (err) {
             console.log('Error in getJobDataForEditing')
@@ -259,10 +279,10 @@ class jobModel {
         } finally {
             client.release();
         }
-        
+
     }
 
-    
+
     static async getCompanyName(companyId) {
         let client = Pool.getReadPool();
         try {

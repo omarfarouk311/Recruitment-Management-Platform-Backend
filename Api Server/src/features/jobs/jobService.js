@@ -50,8 +50,8 @@ module.exports.getAllCompanyJobs = async (companyId, filters) => {
     return jobs
 }
 
-module.exports.getJobDetailsById = async (jobId) => {
-    const job = await jobModel.getJobDetailsById(jobId)
+module.exports.getJobDetailsById = async (jobId, userId, userRole) => {
+    const job = await jobModel.getJobDetailsById(jobId, userId, userRole)
     return job
 }
 

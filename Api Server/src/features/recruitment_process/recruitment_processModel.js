@@ -102,15 +102,25 @@ class recruitment_process {
             const query = `SELECT name FROM company WHERE id = $1`;
             const result = await pool.query(query, [companyId]);
             const companyName = result.rows[0].name;
+            const id = uuid();
             const processObject = {
-                id: uuid(),
+                id,
                 performed_by: companyName,
                 company_id: companyId,
+                created_at: new Date(),
                 extra_data: null,
                 action_type: action_types.create_recruitement_process
             }
             await produce.produce(processObject, logs_topic);
-            await pool.query('COMMIT');
+            try {
+                await pool.query('COMMIT');
+            } catch (err) {
+                await produce({
+                        id,
+                        type: 0
+                }, logs_topic);
+                throw err;
+            }
             return { message: 'Recruitment process created successfully' };
         } catch (error) {
             await pool.query('ROLLBACK');
@@ -191,16 +201,25 @@ class recruitment_process {
             const query = `SELECT name FROM company WHERE id = $1`;
             const result = await pool.query(query, [companyId]);
             const companyName = result.rows[0].name;
+            const id = uuid();
             const processObject = {
                 id: uuid(),
                 performed_by: companyName,
                 company_id: companyId,
+                created_at: new Date(),
                 extra_data: null,
                 action_type: action_types.update_recruitment_process
             }
             await produce.produce(processObject, logs_topic);
-
-            await pool.query('COMMIT');
+            try {
+                await pool.query('COMMIT');
+            } catch (err) {
+                await produce({
+                    id,
+                    type: 0
+                }, logs_topic);
+                throw err;
+            }
             return { message: 'Recruitment process updated successfully' };
 
         } catch (error) {
@@ -218,18 +237,29 @@ class recruitment_process {
             const deleteQuery = `DELETE FROM recruitment_process WHERE id = $1`;
             const values = [processId];
             let pool = Pool.getWritePool();
-            await pool.query(deleteQuery, values);
             const query = `SELECT name FROM company WHERE id = $1`;
             const result = await pool.query(query, [companyId]);
             const companyName = result.rows[0].name;
+            const id = uuid();
             const processObject = {
-                id: uuid(),
+                id,
                 performed_by: companyName,
                 company_id: companyId,
+                created_at: new Date(),
                 extra_data: null,
                 action_type: action_types.remove_recruitement_process
             }
             await produce.produce(processObject, logs_topic);
+            try {
+                await pool.query(deleteQuery, values);
+            } catch (err) {
+                await produce({
+                    id,
+                    type: 0
+                }, logs_topic);
+                
+                throw err;
+            }
             return { message: 'Recruitment process deleted successfully' };
         } catch (error) {
             console.log('Error in deleteRecruitmentProcess');
