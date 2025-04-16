@@ -13,8 +13,13 @@ class Company {
         this.industries = industries;
     }
 
-    static replicaPool = getReadPool();
-    static primaryPool = getWritePool();
+    static getReplicaPool() {
+        return getReadPool();
+    }
+
+    static getMasterPool() {
+        return getWritePool();
+    }
 
     static async getCompanyData(companyId) {
         const values = [companyId];
@@ -63,7 +68,7 @@ class Company {
             where id = $1
             `;
 
-        const { rows } = await Company.replicaPool.query(query, values);
+        const { rows } = await Company.getReplicaPool().query(query, values);
         if (!rows.length) {
             const err = new Error('Company not found while retrieving company data');
             err.msg = 'Company not found';
@@ -84,7 +89,7 @@ class Company {
             where company_id = $${index}
             `;
 
-        const { rows } = await Company.replicaPool.query(query, values);
+        const { rows } = await Company.getReplicaPool().query(query, values);
         return rows
     }
 
@@ -100,7 +105,7 @@ class Company {
             where c.company_id = $${index}
             `;
 
-        const { rows } = await Company.replicaPool.query(query, values);
+        const { rows } = await Company.getReplicaPool().query(query, values);
         return rows;
     }
 
@@ -137,7 +142,7 @@ class Company {
         query += ` limit $${index++} offset $${index++} `;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await Company.replicaPool.query(query, values);
+        const { rows } = await Company.getReplicaPool().query(query, values);
         return rows;
     }
 
@@ -156,12 +161,12 @@ class Company {
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         query += ' order by id desc';
 
-        const { rows } = await Company.replicaPool.query(query, values);
+        const { rows } = await Company.getReplicaPool().query(query, values);
         return rows;
     }
 
     async update() {
-        const client = await Company.primaryPool.connect();
+        const client = await Company.getMasterPool().connect();
 
         try {
             await client.query('begin');
@@ -264,7 +269,7 @@ class Company {
         query += ` limit $${index++} offset $${index++}`;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await Company.replicaPool.query(query, values);
+        const { rows } = await Company.getReplicaPool().query(query, values);
         return rows;
     }
 
