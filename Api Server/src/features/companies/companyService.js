@@ -28,3 +28,7 @@ exports.updateCompanyData = async (companyId, { name, overview, type, foundedIn,
     const company = new Company(companyId, overview, type, foundedIn, size, name, locations, industries);
     await company.update();
 };
+
+exports.getCompanyReviews = (companyId, filters) => {
+    return Company.getCompanyReviews(companyId, filters);
+};

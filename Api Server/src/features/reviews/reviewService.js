@@ -1,24 +1,34 @@
-const reviewModel = require('./reviewModel');
-
-
-exports.getReviews = async (companyId, filters) => {
-    const result = await reviewModel.getReviews(companyId, filters);
-    return result;
-};
+const Review = require('./reviewModel');
 
 exports.createReview = async (reviewData) => {
-    result = await reviewModel.createReview(reviewData);
+    const { creatorId, companyId, title, description, rating, role } = reviewData;
+    const review = new Review({
+        creatorId,
+        companyId,
+        title,
+        description,
+        rating,
+        role,
+        createdAt: new Date()
+    });
+
+    result = await review.create()
     return result;
 };
 
 exports.updateReview = async (reviewData) => {
+    const { id, title, description, rating, role } = reviewData;
+    const review = new Review({
+        id,
+        title,
+        description,
+        rating,
+        role
+    });
 
-    result = await reviewModel.updateReview(reviewData);
-    return result;
+    await review.update();
 };
 
 exports.deleteReview = async (reviewId) => {
-    
-    const result = await reviewModel.deleteReview(reviewId);
-    return result;
+    await Review.delete(reviewId);
 };
