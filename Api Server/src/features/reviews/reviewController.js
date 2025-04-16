@@ -1,16 +1,49 @@
 const reviewService = require('./reviewService');
 
-exports.getReviews = async (req, res, next) => {
-    const { companyId } = req.params;
-    const filters = req.query;
-
+exports.createReview = async (req, res, next) => {
     try {
-        const reviews = await reviewService.getReviews(companyId, filters);
-        res.status(200).json(reviews);
+        const reviewData = {
+            creatorId: req.userId,
+            companyId: req.body.companyId,
+            title: req.body.title,
+            description: req.body.description,
+            rating: req.body.rating,
+            role: req.body.role
+        };
+
+        const review = await reviewService.createReview(reviewData);
+        res.status(201).json(review);
     }
-    catch (err) {
-        err.status = 500;
-        err.msg = 'Internal server error';
-        return next(err)
+    catch (error) {
+        next(error);
+    }
+};
+
+exports.updateReview = async (req, res, next) => {
+    try {
+        const reviewData = {
+            id: req.params.reviewId,
+            title: req.body.title,
+            description: req.body.description,
+            rating: req.body.rating,
+            role: req.body.role
+        };
+
+        await reviewService.updateReview(reviewData);
+        res.status(204).send();
+    }
+    catch (error) {
+        next(error);
+    }
+};
+
+exports.deleteReview = async (req, res, next) => {
+    try {
+        const { params: { reviewId } } = req;
+        await reviewService.deleteReview(reviewId);
+        res.status(204).send();
+    }
+    catch (error) {
+        next(error);
     }
 };

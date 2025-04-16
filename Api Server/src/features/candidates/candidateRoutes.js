@@ -43,4 +43,22 @@ router.patch(
     candidateController.unassignCandidatesFromRecruiter
 );
 
+router.get(
+    '/locations',
+    candidateValidation.getCandidateLocationsValidator,
+    handleValidationErrors,
+    candidateAuth.authGetCandidateLocations,
+    candidateController.getCandidateLocations
+);
+
+router.get(
+    '/phase-types',
+    candidateController.getPhaseTypes
+);
+
+router.get(
+    '/job-title-filter',
+    candidateController.getJobTitleFilter
+)
+
 module.exports = router;

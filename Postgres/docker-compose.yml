@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
     - "5432:5432"
+    ports:
+      - "5432:5432"
     container_name: master
     volumes:
       - ./master/data:/var/lib/postgresql/data

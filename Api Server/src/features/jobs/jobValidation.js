@@ -35,7 +35,7 @@ const importanceValidation = () => body('skills.*.importance')
 
 const processIdValidation = () => body('processId')
     .exists().withMessage('process ID is required')
-    .isInt({ min: 1 }).withMessage('process ID must be an integer greater than 0')
+    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('process ID must be an integer greater than 0')
     .toInt()
 
 const countryValidation = () => body('country')
@@ -57,9 +57,13 @@ const remoteValidation = () => body('remote')
 
 const industryIdValidation = () => body('industryId')
     .exists().withMessage('industry ID is required')
-    .isInt({ min: 1 }).withMessage('industry ID must be an integer greater than 0')
+    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('industry ID must be an integer greater than 0')
     .toInt();
 
+const appliedCntLimitValidation = () => body('appliedCntLimit')
+    .exists().withMessage('There should be a limit on applicants apply for this job')
+    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Applied cnt limit must be an integer greater than 0')
+    .toInt();
 
 const jobsQueryValidate = [
     query('sort')
@@ -121,7 +125,8 @@ const newJobValidation = [
     countryValidation(),
     cityValidation(),
     remoteValidation(),
-    industryIdValidation()
+    industryIdValidation(),
+    appliedCntLimitValidation()
 ]
 
 module.exports = {

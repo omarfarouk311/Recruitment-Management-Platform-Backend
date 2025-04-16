@@ -1,0 +1,17 @@
+services:
+  logs-writing:
+    image: node:22.13.1-bookworm-slim
+    container_name: logs-writing
+    volumes:
+      - .:/src
+    networks:
+      - internal-net
+    env_file:
+      - .env
+    working_dir: /src
+    command: ["npm", "start"]
+
+networks:
+  internal-net:
+    name: internal-net
+    external: true

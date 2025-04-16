@@ -9,7 +9,7 @@ const validateName=()=>{
 }
 
 const validateSorted=()=>{
-    return query('sorted').optional().isInt().isIn(['1','2']).toInt().withMessage('sorted query paraemeter should be 1 or 2')
+    return query('sorted').optional().isInt().isIn(['-1','1']).toInt().withMessage('sorted query paraemeter should be 1 or -1')
 }
 
 const validateDepartment=()=>{
@@ -22,27 +22,20 @@ const validateId=()=>{
 
 
 
-const validateEmail=()=>{
-    return body('email').notEmpty().withMessage('Email is required').bail().isEmail().withMessage('Email is not valid')
-}
-
-const validateDepartmentInvitation=()=>{
-    return body('department').notEmpty().withMessage('department is required in req body')
-}
-
-const validateDate=()=>{
-    return body('deadline').notEmpty().withMessage('deadline is required in req body').isDate().withMessage('deadline should be valid date')
+const validateJobTitle=()=>{
+    return query('jobTitle').optional().isAlphanumeric().withMessage('jobTitle query parameter should be between [a-z]/[A-Z]/[0-9]')
 }
 
 
-module.exports.validateInvitationData=[
-    validateEmail(),
-    validateDepartmentInvitation(),
-    validateDate()
+module.exports.validateJobOffer=[
+    validateJobTitle(),
+    validateSorted(),
+    validatePage(),
 ]
 
+
 module.exports.validateRecruiterId=[
-  validateId()
+    validateId()
 ]
 
 
@@ -52,5 +45,6 @@ module.exports.validateParams=[
     validateDepartment(),
     validatePage(),
 ]
+
 
 

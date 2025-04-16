@@ -1,0 +1,15 @@
+services:
+  nginx:
+    image: nginx:1.27.4-bookworm
+    networks:
+      - internal-net
+    container_name: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./proxy.conf:/etc/nginx/proxy.conf
+    ports:
+      - 8080:80
+
+networks:
+  internal-net:
+    external: true

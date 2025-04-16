@@ -1,28 +1,34 @@
-const companyModel = require('./companyModel');
+const Company = require('./companyModel');
 
 exports.getCompanyData = async (companyId) => {
-    const result = await companyModel.getCompanyData(companyId);
+    const result = await Company.getCompanyData(companyId);
     return result;
 };
 
 exports.getCompanyLocations = async (companyId) => {
-    const result = await companyModel.getCompanyLocations(companyId);
+    const result = await Company.getCompanyLocations(companyId);
     return result;
 };
 
 exports.getCompanyIndustries = async (companyId) => {
-    const result = await companyModel.getCompanyIndustries(companyId);
+    const result = await Company.getCompanyIndustries(companyId);
     return result;
 };
 
-exports.getCompanyJobs = async (companyId, filters, userRole) => {
+exports.getCompanyJobs = async (companyId, filters, userId) => {
     let result;
-    if (filters.simplified) {
-        result = await companyModel.getCompanyJobsSimplified(companyId, filters, userRole);
+    if (filters.filterBar) {
+        result = await Company.getCompanyJobsFilterBar(companyId, userId);
     }
-    else if (filters.filterBar) {
-        result = await companyModel.getCompanyJobsFilterBar(companyId, userRole);
-    }
-    else result = await companyModel.getCompanyJobs(companyId, filters, userRole);
+    else result = await Company.getCompanyJobs(companyId, filters, userId);
     return result;
+};
+
+exports.updateCompanyData = async (companyId, { name, overview, type, foundedIn, size, locations, industries }) => {
+    const company = new Company(companyId, overview, type, foundedIn, size, name, locations, industries);
+    await company.update();
+};
+
+exports.getCompanyReviews = (companyId, filters) => {
+    return Company.getCompanyReviews(companyId, filters);
 };

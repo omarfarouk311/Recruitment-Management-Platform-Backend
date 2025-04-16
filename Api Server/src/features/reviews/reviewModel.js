@@ -1,4 +1,4 @@
-const { getReadPool } = require('../../../config/db');
+const { getWritePool, getReadPool } = require('../../../config/db');
 
 class Review {
     constructor({ id, creatorId, companyId, title, description, rating, role, createdAt }) {
@@ -12,50 +12,127 @@ class Review {
         this.createdAt = createdAt;
     }
 
-    static async getReviews(companyId, filters, limit = 5) {
-        const pool = getReadPool();
-        const values = [companyId];
-        let index = 1;
+    static getReplicaPool() {
+        return getReadPool();
+    }
 
-        // base query
-        let query =
-            `select company_id as "companyId", title, description, rating, role, created_at as "createdAt"
-            from reviews
-            where company_id = $${index++}`;
+    static getMasterPool() {
+        return getWritePool();
+    }
 
-        //specific rating & up
-        if (filters.rating) {
-            query += ` and rating >= $${index++}`;
-            values.push(filters.rating);
+    async create() {
+        const pool = Review.getMasterPool();
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const query =
+                `
+                INSERT INTO reviews (creator_id, company_id, title, description, rating, role, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id
+                `;
+            const values = [this.creatorId, this.companyId, this.title, this.description, this.rating, this.role, this.createdAt];
+            const { rows } = await client.query(query, values);
+
+            await Review.updateCompanyAvgRating(this.companyId, client);
+
+            await client.query('COMMIT');
+
+            return rows[0];
         }
-
-        //sorting
-        //rating asc
-        if (filters.sortByRating === 1) {
-            query += ` order by rating asc`;
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
         }
-
-        //rating desc
-        if (filters.sortByRating === -1) {
-            query += ` order by rating desc`;
+        finally {
+            client.release();
         }
+    };
 
-        // oldest
-        if (filters.sortByDate === 1) {
-            query += ` order by created_at asc`;
+    async update() {
+        const pool = Review.getMasterPool();
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            const query =
+                `
+                UPDATE reviews
+                SET title = $1, description = $2, rating = $3, role = $4
+                WHERE id = $5
+                RETURNING company_id as "companyId"
+                `;
+            const values = [this.title, this.description, this.rating, this.role, this.id];
+            const { rows } = await client.query(query, values);
+
+            await Review.updateCompanyAvgRating(rows[0].companyId, client);
+
+            await client.query('COMMIT');
         }
-
-        // newest
-        if (filters.sortByDate === -1) {
-            query += ` order by created_at desc`;
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
         }
+        finally {
+            client.release();
+        }
+    }
 
-        // pagination
-        query += ` limit $${index++} offset $${index++}`;
-        values.push(limit, (filters.page - 1) * limit);
+    static async delete(reviewId) {
+        const pool = Review.getMasterPool();
+        const client = await pool.connect();
 
+        try {
+            await client.query('BEGIN');
+
+            const query =
+                `
+                DELETE FROM reviews
+                WHERE id = $1
+                RETURNING company_id as "companyId"
+                `;
+            const values = [reviewId];
+            const { rows } = await client.query(query, values);
+
+            await Review.updateCompanyAvgRating(rows[0].companyId, client);
+
+            await client.query('COMMIT');
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+
+    static async getReviewById(reviewId) {
+        const pool = Review.getReplicaPool();
+        const query = `
+            SELECT id, creator_id as "creatorId"
+            FROM reviews
+            WHERE id = $1;
+        `;
+        const values = [reviewId];
         const { rows } = await pool.query(query, values);
-        return rows;
+        return rows[0];
+    }
+
+    static async updateCompanyAvgRating(companyId, client) {
+        const updateRating = `
+            UPDATE company
+            SET rating = (
+                SELECT AVG(rating)
+                FROM reviews
+                WHERE company_id = $1
+            )
+            WHERE id = $1
+        `;
+        await client.query(updateRating, [companyId]);
     }
 
 }

@@ -1,19 +1,21 @@
 const { Kafka } = require('kafkajs')
+const { brokers } = require('./config');
 
 const kafka = new Kafka({
   clientId: 'my-app',
-  brokers: ['kafka1:9092', 'kafka2:9092']
-})
+  brokers
+});
 
 const producer = kafka.producer();
 
 const connetProducer = async () => {
   try {
     await producer.connect();
-  } catch(error) {
+  } catch (error) {
     console.error(error)
   }
 }
 
 connetProducer();
+
 module.exports = producer;

@@ -1,45 +1,47 @@
-const { getReadPool } = require('../../../config/db');
+const { getReadPool, getWritePool } = require('../../../config/db');
+const { pagination_limit } = require('../../../config/config');
 
 class Company {
-    constructor({ id, overview, type, foundedIn, size, rating, name }) {
+    constructor(id, overview, type, foundedIn, size, name, locations, industries) {
         this.id = id;
         this.overview = overview;
         this.type = type;
-        this.founded_in = founded_in;
+        this.foundedIn = foundedIn;
         this.size = size;
-        this.rating = rating;
         this.name = name;
+        this.locations = locations;
+        this.industries = industries;
     }
 
-    static async getCompanyData(companyId) {
-        const pool = getReadPool();
-        const values = [companyId];
-        let index = 1;
+    static replicaPool = getReadPool();
+    static primaryPool = getWritePool();
 
-        let query =
+    static async getCompanyData(companyId) {
+        const values = [companyId];
+        const query =
             `
             with jobs_count as (
                 select company_id as id, count(id)::int as job_count
                 from job
-                where company_id = $${index}
+                where company_id = $1
                 group by company_id
             ),
             reviews_count as (
                 select company_id as id, count(id)::int as review_count
                 from reviews
-                where company_id = $${index}
+                where company_id = $1
                 group by company_id
             ),
             industries_count as (
                 select company_id as id, count(company_id)::int as industry_count
                 from Company_Industry
-                where company_id = $${index}
+                where company_id = $1
                 group by company_id
             ),
             locations_count as (
                 select company_id as id, count(company_id)::int as location_count
                 from Company_Location
-                where company_id = $${index}
+                where company_id = $1
                 group by company_id
             )
             
@@ -58,15 +60,20 @@ class Company {
             left join reviews_count r using(id)
             left join industries_count i using(id)
             left join locations_count l using(id)
-            where id = $${index}
+            where id = $1
             `;
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Company.replicaPool.query(query, values);
+        if (!rows.length) {
+            const err = new Error('Company not found while retrieving company data');
+            err.msg = 'Company not found';
+            err.status = 404;
+            throw err;
+        }
         return rows;
     }
 
     static async getCompanyLocations(companyId) {
-        const pool = getReadPool();
         const values = [companyId];
         let index = 1;
 
@@ -77,131 +84,190 @@ class Company {
             where company_id = $${index}
             `;
 
-        const { rows } = await pool.query(query, values)
+        const { rows } = await Company.replicaPool.query(query, values);
         return rows
     }
 
     static async getCompanyIndustries(companyId) {
-        const pool = getReadPool();
         const values = [companyId];
         let index = 1;
 
         let query =
             `
-            select i.name as industry
+            select c.industry_id as "id", i.name
             from Company_Industry c
             join industry i on c.industry_id = i.id
             where c.company_id = $${index}
             `;
 
-        const { rows } = await pool.query(query, values)
-        return rows
+        const { rows } = await Company.replicaPool.query(query, values);
+        return rows;
     }
 
-    static async getCompanyJobs(companyId, filters, userRole, limit = 6) {
-        const pool = getReadPool();
+    static async getCompanyJobs(companyId, filters, userId, limit = pagination_limit) {
         const values = [companyId];
         let index = 1;
 
-        // job seeker isn't allowed to see the closed jobs
+        // only the company is allowed to see its closed jobs
         let query =
             `
-            select j.id, j.company_id as "companyId", j.title, j.country, j.city, j.created_at as "createdAt", c.rating as "companyRating"
-            from (
-                select id, company_id, title, country, city, created_at, industry_id
-                from job
-                where company_id = $${index++} ${userRole === 'jobSeeker' ? 'and closed = false' : ''} ${filters.remote ? 'and remote = true' : ''}
-            ) j
-            join company c on j.company_id = c.id
+            select j.id, j.title, j.country, j.city, j.created_at as "createdAt"
+            from job j
+            where j.company_id = $${index++} ${userId !== companyId ? 'and j.closed = false' : ''} ${filters.remote ? 'and j.remote = true' : ''}
             `;
 
         // industry filter
         if (filters.industry) {
-            query +=
-                ` 
-                join (
-                    select id, name
-                    from industry
-                    where name = $${index++}
-                ) i on j.industry_id = i.id
-                `;
+            query += ` and j.industry_id = $${index++}`
             values.push(filters.industry);
         }
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         if (!Object.keys(filters).includes('sortByDate')) {
-            query += ' order by j.id';
+            query += ' order by j.id desc';
         }
-        else {
-            if (filters.sortByDate === 1) {
-                query += ' order by j.created_at';
-            }
-
-            else if (filters.sortByDate === -1) {
-                query += ' order by j.created_at desc';
-            }
+        else if (filters.sortByDate === 1) {
+            query += ' order by j.created_at';
+        }
+        else if (filters.sortByDate === -1) {
+            query += ' order by j.created_at desc';
         }
 
         //pagination
-        query += ` limit $${index++} offset $${index++}`;
+        query += ` limit $${index++} offset $${index++} `;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Company.replicaPool.query(query, values);
         return rows;
     }
 
-    static async getCompanyJobsSimplified(companyId, filters, userRole, limit = 5) {
-        const pool = getReadPool();
+    static async getCompanyJobsFilterBar(companyId, userId) {
         const values = [companyId];
         let index = 1;
 
-        // job seeker isn't allowed to see the closed jobs
-        let query =
-            `select id, title, country, city, created_at as "createdAt"
-            from job
-            where company_id = $${index++} ${userRole === 'jobSeeker' ? 'and closed = false' : ''}
-            `;
-
-        // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
-        if (!Object.keys(filters).includes('sortByDate')) {
-            query += ' order by id';
-        }
-        else {
-            if (filters.sortByDate === 1) {
-                query += ' order by created_at';
-            }
-            else if (filters.sortByDate === -1) {
-                query += ' order by created_at desc';
-            }
-        }
-
-        //pagination
-        query += ` limit $${index++} offset $${index++}`;
-        values.push(limit, (filters.page - 1) * limit);
-
-        const { rows } = await pool.query(query, values);
-        return rows;
-    }
-
-    static async getCompanyJobsFilterBar(companyId, userRole) {
-        const pool = getReadPool();
-        const values = [companyId];
-        let index = 1;
-
-        // job seeker isn't allowed to see the closed jobs
+        // only the company is allowed to see its closed jobs
         let query =
             `
             select id, title
             from job
-            where company_id = $${index++} ${userRole === 'jobSeeker' ? 'and closed = false' : ''}
+            where company_id = $${index++} ${userId !== companyId ? 'and closed = false' : ''}
             `;
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
-        query += ' order by id';
+        query += ' order by id desc';
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Company.replicaPool.query(query, values);
         return rows;
     }
+
+    async update() {
+        const client = await Company.primaryPool.connect();
+
+        try {
+            await client.query('begin');
+
+            // delete current locations and industries
+            await client.query('delete from Company_Industry where company_id = $1', [this.id]);
+            await client.query('delete from Company_Location where company_id = $1', [this.id]);
+
+            // update company info
+            let values = [this.id, this.overview, this.type, this.foundedIn, this.size, this.name];
+            let index = 2;
+            const updateQuery =
+                `update company
+                set overview = $${index++}, type = $${index++}, founded_in = $${index++}, size = $${index++}, name = $${index++}
+                where id = $1
+                `;
+            await client.query(updateQuery, values);
+
+            // insert new industries
+            const insertIndustries =
+                `
+                insert into Company_Industry
+                select $1, id
+                from industry
+                where name = any($2)
+                `;
+            const { rowCount } = await client.query(insertIndustries, [this.id, this.industries]);
+            if (rowCount < this.industries.length) {
+                const err = new Error('Invalid industries array');
+                err.msg = 'one or more of the industries not found';
+                err.status = 400;
+                throw err;
+            }
+
+            // insert new locations
+            values = [this.id];
+            index = 2;
+            let insertLocations = 'insert into Company_Location (company_id, country, city) values';
+            this.locations.forEach(({ country, city }, i) => {
+                insertLocations += `($1, $${index++}, $${index++})` + (i < this.locations.length - 1 ? ',' : '');
+                values.push(country, city);
+            });
+            await client.query(insertLocations, values);
+
+            await client.query('commit');
+        }
+        catch (err) {
+            await client.query('rollback');
+            throw err;
+        }
+        finally {
+            client.release();
+        }
+    }
+
+    static async getCompanyReviews(companyId, filters, limit = pagination_limit) {
+        const values = [companyId];
+        let index = 1;
+
+        // base query
+        let query =
+            `
+            select id, company_id as "companyId", title, description, rating, role, created_at as "createdAt"
+            from reviews
+            where company_id = $${index++}
+            `;
+
+        //specific rating
+        if (filters.rating) {
+            query += ` and rating = $${index++}`;
+            values.push(filters.rating);
+        }
+
+        // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
+        if (!Object.keys(filters).some(value => value === 'sortByDate' || value === 'sortByRating')) {
+            query += ' order by id desc';
+        }
+
+        //rating asc
+        else if (filters.sortByRating === 1) {
+            query += ` order by rating`;
+        }
+
+        //rating desc
+        else if (filters.sortByRating === -1) {
+            query += ` order by rating desc`;
+        }
+
+        // oldest
+        else if (filters.sortByDate === 1) {
+            query += ` order by created_at`;
+        }
+
+        // newest
+        else if (filters.sortByDate === -1) {
+            query += ` order by created_at desc`;
+        }
+
+        // pagination
+        query += ` limit $${index++} offset $${index++}`;
+        values.push(limit, (filters.page - 1) * limit);
+
+        const { rows } = await Company.replicaPool.query(query, values);
+        return rows;
+    }
+
 }
 
 module.exports = Company;

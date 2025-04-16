@@ -12,11 +12,11 @@ done;
 # List of topics to create
 topics=(
 "cv_parsing"
-"job_parsing"
 "cv_embedding_generation"
 "job_embedding_generation"
 "profile_embedding_generation"
 "logs"
+"emails"
 )
 
 # Function to check if a topic exists

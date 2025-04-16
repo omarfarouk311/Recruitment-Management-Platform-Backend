@@ -1,4 +1,4 @@
-const { check, param, body, query } = require("express-validator");
+const { check, body, query } = require("express-validator");
 const constants = require("../../../config/config");
 const {validatePage} = require('../../common/util');
 
@@ -8,6 +8,17 @@ const sortBy = query("sortBy", "invalid sortBy query parameter")
     .custom((value, { req }) => {
         return value == 1 || value == -1;
     }, "Invalid value for sortBy").toInt();
+
+
+const sortByAssessmentScore = query("sortByAssessmentScore", "invalid sortByAssessmentScore query parameter")
+                                .optional()
+                                .isInt([-1, 1])
+                                .withMessage("Value for sortByAssessmentScore must be -1 or 1").toInt();
+
+const sortByRecommendation = query("sortByRecommendation", "invalid sortByRecommendation query parameter")
+                                .optional()
+                                .isInt([-1, 1])
+                                .withMessage("Value for sortByRecommendation must be -1 or 1").toInt();
 
 const simplified = query("simplified", "invalid simplified query parameter")
     .optional()
@@ -24,17 +35,22 @@ const phaseType = query("phaseType", "invalid phaseType query parameter")
     .optional()
     .isInt({ min: 1 }).toInt();
 
-const candidateLocation = query("candidateLocation", "invalid candidateLocation query parameter")
+const country = query("Country", "invalid Country query parameter")
     .optional()
     .isAlpha()
-    .withMessage("candidateLocation must be alphabetic");
+    .withMessage("Country must be alphabetic");
+
+const city = query("City", "invalid City query parameter")
+    .optional()
+    .isAlpha()
+    .withMessage("City must be alphabetic");
 
 exports.getCandidatesForRecruiterValidator = [
     sortBy,
     simplified,
     jobTitle,
     phaseType,
-    candidateLocation,
+    country,
     validatePage()
 ];
 
@@ -44,9 +60,10 @@ const status = query("status", "Invalid status query parameter")
     .withMessage(`Value for status must be between ${constants.candidate_status_pending} and ${constants.candidate_status_rejected}`).toInt();
 
 exports.getCandidatesForJobValidator = [
-    sortBy,
+    sortByAssessmentScore,
+    sortByRecommendation,
     phaseType,
-    candidateLocation,
+    country,
     status,
     validatePage()
 ]
@@ -55,12 +72,14 @@ exports.getCandidatesForJobValidator = [
 const candidates = body("candidates", "Invalid candidates property")
     .isArray({ min: 1 })
     .custom((value, { req }) => {
-        return value.every((candidate) => typeof candidate === "number");
-    }).withMessage("candidates must be an array of numbers");
+        return value.every((candidate) => typeof candidate === "number" && candidate > 0 && candidate <= 99999999);
+    }).withMessage("candidates must be an array of numbers between 1 and 99999999");
 
-const recruiterId = body("recruiterId", "Invalid recruiterId").isInt({ min: 1 });
+const recruiterId = check("recruiterId", "Invalid recruiterId").isInt({ min: 1 });
 
-const jobId = body("jobId", "jobId must be positive integer.").isInt({ min: 1 }).toInt();
+const jobId = check("jobId", "jobId must be positive integer.").isInt({ min: 1 }).toInt();
+
+const jobIdQuery = query("jobId", "jobId must be positive integer.").optional().isInt({ min: 1 }).toInt();
 
 
 exports.assignCandidatesToRecruiterValidator = [
@@ -80,4 +99,8 @@ exports.makeDecisionToCandidatesValidator = [
     candidates,
     decision,
     jobId
+];
+
+exports.getCandidateLocationsValidator = [
+    jobIdQuery
 ];

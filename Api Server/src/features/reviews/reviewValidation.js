@@ -1,38 +1,50 @@
-const { query, buildCheckFunction } = require('express-validator');
-const { validatePage } = require('../../common/util');
-const checkCompanyId = buildCheckFunction(['body', 'params']);
+const { param, body } = require('express-validator');
+const { maxNameLength, maxDescriptionLength } = require('../../../config/config');
 
-const validateCompanyId = () => checkCompanyId('companyId')
-    .trim()
-    .notEmpty()
-    .withMessage("Company ID must be passed as a route patameter")
-    .isInt({ min: 1, allow_leading_zeroes: false })
-    .withMessage("Invalid Company ID")
-    .toInt();
+const validateTitle = () => body('title')
+    .isString()
+    .withMessage('Title is required')
+    .isLength({ min: 1, max: maxNameLength })
+    .withMessage(`Title must be between 1 and ${maxNameLength} characters`);
 
-const validateRating = () => query('rating')
-    .optional()
-    .trim()
-    .isInt({ allow_leading_zeroes: false })
-    .withMessage("Invalid rating option")
-    .toInt();
+const validateDecription = () => body('description')
+    .isString()
+    .withMessage('Description is required')
+    .isLength({ min: 1, max: maxDescriptionLength })
+    .withMessage(`Description must be between 1 and ${maxDescriptionLength} characters`);
 
-const validateSortByRating = () => query('sortByRating', "Invalid sort option")
-    .optional()
-    .trim()
-    .custom((value, { req }) => req.query.sortByDate === undefined)
-    .withMessage("Sort is only allowed by one option at a time")
-    .isInt()
-    .toInt()
-    .custom(value => value === 1 || value === -1);
+const validateRating = () => body('rating')
+    .isInt({ min: 1, max: 5 })
+    .withMessage('Rating must be an integer between 1 and 5');
 
-const validateSortByDate = () => query('sortByDate', "Invalid sort option")
-    .optional()
-    .trim()
-    .custom((value, { req }) => req.query.sortByRating === undefined)
-    .withMessage("Sort is only allowed by one option at a time")
-    .isInt()
-    .toInt()
-    .custom(value => value === 1 || value === -1);
+const validateRole = () => body('role')
+    .isString()
+    .withMessage('Role is required')
+    .isLength({ min: 1, max: maxNameLength })
+    .withMessage(`Role must be between 1 and ${maxNameLength} characters`);
 
-exports.validateGetReviews = [validateCompanyId(), validatePage(), validateRating(), validateSortByDate(), validateSortByRating()];
+const validateCompanyId = () => body('companyId')
+    .isInt({ min: 1 })
+    .withMessage('Invalid company ID');
+
+const validateReviewId = () => param('reviewId')
+    .isInt({ min: 1 })
+    .withMessage('Invalid review ID');
+
+exports.createReviewValidator = [
+    validateTitle(),
+    validateDecription(),
+    validateRating(),
+    validateRole(),
+    validateCompanyId()
+];
+
+exports.updateReviewValidator = [
+    validateReviewId(),
+    validateTitle(),
+    validateDecription(),
+    validateRating(),
+    validateRole(),
+];
+
+exports.deleteReviewValidator = validateReviewId();
