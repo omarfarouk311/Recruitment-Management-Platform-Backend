@@ -60,9 +60,22 @@ exports.deleteCV = async (req, res, next) => {
     const { userId } = req;
 
     try {
-        await cvService.deleteCV(cvId, userId);
+        const msg = await cvService.deleteCV(cvId, userId);
         console.log('CV deleted successfully');
-        res.status(200).json({ msg: 'CV deleted successfully' });
+        res.status(200).json({ msg });
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+
+exports.getCvsForJob = async (req, res, next) => {
+    const { jobId } = req.params;
+    const { userId: seekedId } = req;
+    try {
+        const cvs = await cvService.getCvsForJob(jobId, seekedId);
+        return res.status(200).json({ cvs });
     } catch (err) {
         next(err);
     }

@@ -181,7 +181,35 @@ class CV {
                 SET deleted = $1
                 WHERE id = $2 and user_id = $3;
             `, [true, cvId, userId]);
-            return;
+            return 'CV deleted successfully';
+        } catch (err) {
+            throw err;
+        }
+    }
+
+
+    static async getCvsForJob(jobId, seekerId) {
+        const client = getReadPool();
+        try {
+            const query = `
+                SELECT c.id, c.name
+                FROM (
+                    SELECT id, name
+                    FROM cv
+                    WHERE user_id = $1 and deleted = $2
+                ) as c
+                JOIN cv_embedding ce
+                ON ce.cv_id = c.id
+                CROSS JOIN (
+                    SELECT embedding
+                    FROM job_embedding 
+                    WHERE job_id = $3
+                ) as j
+                ORDER BY ce.vector <=> j.embedding
+            `;
+            const values = [seekerId, false, jobId];
+            const { rows } = await client.query(query, values);
+            return rows;
         } catch (err) {
             throw err;
         }

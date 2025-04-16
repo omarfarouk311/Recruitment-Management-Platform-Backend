@@ -84,8 +84,18 @@ exports.downloadCV = async (cvId, userId, userRole, seekerId, jobId) => {
 
 exports.deleteCV = async (cvId, userId) => {
     try {
-        await CV.deleteCV(cvId, userId);
-        return;
+        const msg = await CV.deleteCV(cvId, userId);
+        return msg;
+    } catch (err) {
+        throw err;
+    }
+}
+
+
+exports.getCvsForJob = async (jobId, seekerId) => {
+    try {
+        const cvs = await CV.getCvsForJob(jobId, seekerId);
+        return cvs;
     } catch (err) {
         throw err;
     }

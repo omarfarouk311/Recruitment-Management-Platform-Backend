@@ -22,4 +22,10 @@ router.route('/:cvId')
     .delete(authorizeAccess, cvIdValidation(), handleValidationErrors, cvController.deleteCV)
     .all(notAllowed);
 
+
+router.route('/job/:jobId')
+    .get(authorizeAccess, jobIdValidation(), handleValidationErrors, cvController.getCvsForJob)
+    .all(notAllowed);
+
+
 module.exports = router;

@@ -321,6 +321,7 @@ class jobModel {
             const query = `
                             SELECT c.name as companyName,
                             c.rating as companyRating,
+                            j.id as jobId,
                             j.title as jobTitle,
                             j.country as country,
                             j.city as city,
