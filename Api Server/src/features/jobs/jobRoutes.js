@@ -3,7 +3,7 @@ const router = express.Router();
 const jobValidation = require('./jobValidation')
 const jobController = require('./jobController')
 const { handleValidationErrors } = require('../../common/util')
-const { jobOfCompanyAuthorization, deleteUpdateJobAuthorization } = require('./jobAuthorization')
+const { jobOfCompanyAuthorization, deleteUpdateJobAuthorization, similarJobs } = require('./jobAuthorization')
 const { notAllowed } = require('../../common/errorMiddleware');
 
 
@@ -20,6 +20,12 @@ router.route('/')
         
 router.route('/:id/edit')
         .get(jobValidation.jobIdValidation, handleValidationErrors, deleteUpdateJobAuthorization, jobController.getJobDataForEditing)
+        .all(notAllowed)
+
+
+router.route('/:id/similar')
+        .get(jobValidation.jobIdValidation, handleValidationErrors, similarJobs, jobController.getSimilarJobs)
+        .all(notAllowed)
 
 router.route('/:id')
         .get(jobValidation.jobIdValidation, handleValidationErrors, jobController.getJobDetailsById)

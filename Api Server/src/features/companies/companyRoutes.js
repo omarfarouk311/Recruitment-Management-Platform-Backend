@@ -40,4 +40,12 @@ router.route('/:companyId/image')
     )
     .all(notAllowed);
 
+router.route('/:companyId/reviews')
+    .get(
+        companyValidation.validateGetCompanyReviews,
+        handleValidationErrors,
+        companyController.getCompanyReviews
+    )
+    .all(notAllowed);
+
 module.exports = router;

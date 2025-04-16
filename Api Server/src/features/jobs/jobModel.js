@@ -1,12 +1,11 @@
 const Pool = require('../../../config/db')
 const Kafka = require('../../common/kafka')
-const { asc_order, desc_order } = require('../../../config/config')
+const { asc_order, desc_order, role } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 
 
 
 class jobModel {
-
 
     static async createJob(client, companyId, jobData) {
         let index = 1;
@@ -48,10 +47,8 @@ class jobModel {
         } catch (err) {
             console.error('Error in createJob:', err);
             throw err;
-        } 
+        }
     }
-
-
 
     static async getAllCompanyJobs(companyId, filters) {
         let client = Pool.getReadPool();
@@ -60,7 +57,7 @@ class jobModel {
             let query = `SELECT id, title, country, city, CURRENT_DATE - created_at as days_ago
                         FROM job
                         WHERE company_id = $${index++}`;
-        
+
             const { title, sort } = filters;
             const values = [companyId];
             if (title) {
@@ -82,32 +79,19 @@ class jobModel {
         }
     }
 
-    static async getJobDetailsById(jobId) {
+    static async getJobDetailsById(jobId, userId, userRole) {
         let client = Pool.getReadPool();
         try {
-            const isExistQuery = `select 1 FROM job WHERE id = $1 ;`
-            const { rowCount } = await client.query(isExistQuery, [jobId]);
-            if (rowCount == 0) {
-                const err = new Error('Job id is not in database');
-                err.msg = 'Job not found';
-                err.status = 404;
-                throw err;
-            }
-            const query = `
-                        SELECT j.title as job_title,
-                        j.description as job_description,
-                        CURRENT_DATE - j.created_at as days_ago,
-                        j.country as country,
-                        j.city as city,
+            const jobDetailsQuery = `
+                        SELECT j.description as job_description,
                         j.remote as remote,
                         j.applied_cnt as applied_cnt,
                         j.closed as closed,
-                        
+
                         c.name as company_name,
-                        c.rating as company_rating,
-                        c.founded_on as founded_on,
+                        c.founded_in as founded_in,
                         c.overview as overview,
-                        c.company_size as company_size,
+                        c.size as company_size,
                         c.type as type ,
 
                         r.title as review_title,
@@ -126,14 +110,48 @@ class jobModel {
                         ON c.id = r.company_id
                         JOIN industry i
                         ON i.id = j.industry_id;
-                     `
-            const values = [jobId, false];
-            const { rows } = await client.query(query, values);
-            return rows[0];
+                `;      
+
+            const jobValues = [jobId, false];
+            const jobRes = await client.query(jobDetailsQuery, jobValues);
+
+            if (jobRes.rows.length === 0) {
+                const err = new Error('Job id is not in database');
+                err.msg = 'Job not found';
+                err.status = 404;
+                throw err;
+            }
+
+            let hasReported = false, hasApplied = false, skillMaches = 0;
+
+            if (userRole === role.jobSeeker) {
+                const statusQuery = `
+            SELECT 
+                EXISTS(SELECT 1 FROM report WHERE job_id = $1 AND creator_id = $2 limit 1) AS has_reported,
+                EXISTS(SELECT 1 FROM candidates WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied,
+                EXISTS(SELECT 1 FROM candidate_history WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied_history;
+        `;
+
+                // Run in parallel using Promise.all
+                const [statusRes] = await Promise.all([
+                    client.query(statusQuery, [jobId, userId])
+                ]);
+
+                const status = statusRes.rows[0];
+                hasReported = status.has_reported;
+                hasApplied = status.has_applied || status.has_applied_history;
+                skillMaches = await this.getSkillMatches(jobId, userId);
+            }
+
+            return userRole === role.jobSeeker
+                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied, skillMaches }
+                : { jobDetails: jobRes.rows[0] };
+
         } catch (err) {
-            console.log('Error in getJobById')
+            console.log('Error in getJobById');
             throw err;
         }
+
     }
 
     static async closeJobById(client, companyId, jobId) {
@@ -196,7 +214,7 @@ class jobModel {
         }
     }
 
-    
+
     static async getJobDataForEditing(jobId) {
         let client = await Pool.getReadPool().connect();
         try {
@@ -231,7 +249,7 @@ class jobModel {
                         LEFT JOIN Recruitment_Process rp
                         ON rp.id = j.recruitment_process_id;
                      `
-            
+
             const values = [jobId];
             let jobData = await client.query(query, values);
             jobData = jobData.rows;
@@ -250,7 +268,7 @@ class jobModel {
                         `
             let skillsData = await client.query(query2, values);
             skillsData = skillsData.rows
-            const returnedObject = {jobData, skillsData}
+            const returnedObject = { jobData, skillsData }
             return returnedObject;
         } catch (err) {
             console.log('Error in getJobDataForEditing')
@@ -259,10 +277,10 @@ class jobModel {
         } finally {
             client.release();
         }
-        
+
     }
 
-    
+
     static async getCompanyName(companyId) {
         let client = Pool.getReadPool();
         try {
@@ -292,6 +310,71 @@ class jobModel {
             const { rows } = await client.query(query, values);
             return rows[0].company_id;
         } catch (err) {
+            throw err;
+        }
+    }
+
+
+    static async getSimilarJobs(jobId) {
+        let client = Pool.getReadPool();
+        try {
+            const query = `
+                            SELECT c.name as companyName,
+                            c.rating as companyRating,
+                            j.title as jobTitle,
+                            j.country as country,
+                            j.city as city,
+                            CURRENT_DATE - j.created_at as days_ago
+
+
+                            FROM  ( 
+                                    SELECT embedding, job_id
+                                    FROM job_embedding
+                                    WHERE job_id = $1
+                                ) as t1
+                            JOIN job_embedding t2
+                            ON t1.job_id != t2.job_id
+                            JOIN job j
+                            ON t2.job_id = j.id
+                            JOIN company c
+                            ON j.company_id  = c.id
+                            ORDER BY t1.embedding <=> t2.embedding
+                            LIMIT 3;
+
+                        `
+            const values = [jobId];
+            const { rows } = await client.query(query, values);
+            return rows;
+            
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    //////////// helper function
+
+    static async getSkillMatches(jobId, seekerId) {
+        let client = Pool.getReadPool();
+        try {
+            const query = `
+                SELECT 1
+                FROM (
+                        SELECT skill_id
+                        FROM job_skill 
+                        WHERE job_id = $1    
+                    ) as js
+                join (
+                        SELECT skill_id
+                        FROM user_skills 
+                        WHERE user_id = $2
+                ) as us
+                ON js.skill_id = us.skill_id
+            `;
+            const values = [jobId, seekerId];
+            const { rowCount } = await client.query(query, values);
+            return rowCount;
+        } catch (err) {
+            console.error('Error in getSkillMatches:', err);
             throw err;
         }
     }

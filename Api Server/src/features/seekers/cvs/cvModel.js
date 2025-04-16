@@ -29,10 +29,10 @@ class CV {
     async create() {
         const query =
             `
-            insert into cv (id, name, user_id, created_at, deleted)
+            insert into cv (id, user_id, name, created_at, deleted)
             values ($1, $2, $3, $4, $5)
             `;
-        const values = [this.id, this.name, this.seekerId, this.createdAt, this.deleted];
+        const values = [this.id, this.seekerId, this.name, this.createdAt, this.deleted];
 
         await CV.primaryPool.query(query, values);
     }

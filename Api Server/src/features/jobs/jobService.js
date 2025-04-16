@@ -50,8 +50,8 @@ module.exports.getAllCompanyJobs = async (companyId, filters) => {
     return jobs
 }
 
-module.exports.getJobDetailsById = async (jobId) => {
-    const job = await jobModel.getJobDetailsById(jobId)
+module.exports.getJobDetailsById = async (jobId, userId, userRole) => {
+    const job = await jobModel.getJobDetailsById(jobId, userId, userRole)
     return job
 }
 
@@ -123,4 +123,11 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
 module.exports.getJobDataForEditing = async (jobId) => {
     const job = await jobModel.getJobDataForEditing(jobId)
     return job
+}
+
+
+
+module.exports.getSimilarJobs = async (jobId) => {
+    const jobs = await jobModel.getSimilarJobs(jobId)
+    return jobs
 }

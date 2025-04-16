@@ -28,7 +28,7 @@ module.exports.getAllCompanyJobs = async (req, res, next) => {
 module.exports.getJobDetailsById = async (req, res, next) => {
     const jobId = req.params.id;
     try {
-        const job = await jobService.getJobDetailsById(jobId);
+        const job = await jobService.getJobDetailsById(jobId, req.userId, req.userRole);
         res.status(200).json({ job });
     } catch (err) {
         next(err);
@@ -65,6 +65,17 @@ module.exports.getJobDataForEditing = async (req, res, next) => {
     try {
         const job = await jobService.getJobDataForEditing(jobId);
         res.status(200).send(job);
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+module.exports.getSimilarJobs = async (req, res, next) => {
+    const jobId = req.params.id;
+    try {
+        const jobs = await jobService.getSimilarJobs(jobId);
+        res.status(200).json({ jobs });
     } catch (err) {
         next(err);
     }

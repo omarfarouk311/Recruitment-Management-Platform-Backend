@@ -1,40 +1,44 @@
-const reviewModel = require('./reviewModel');
+const Review = require('./reviewModel');
+const { role: { jobSeeker } } = require('../../../config/config');
 
+exports.authorizeModifyReview = (operation) => {
+    return async (req, res, next) => {
+        try {
+            // Check if the user is the creator of the review they are trying to modify
+            const { params: { reviewId }, userId } = req;
+            const review = await Review.getReviewById(reviewId);
 
-exports.authUpdateReview = async (req, res, next) => {
-    try {
-        // Assuming the user is authenticated and req.userId is available
-        // Check if the user is the creator of the review they are trying to update
-        const reviewId = req.params.reviewId;
-        const userId = req.userId;
+            if (!review) {
+                const err = new Error(`Review not found while trying to ${operation == 1 ? 'update' : 'delete'} it`);
+                err.msg = 'Review not found';
+                err.status = 404;
+                throw err;
+            }
 
-        const review = await reviewModel.getReviewById(reviewId);
-        if (!review || review.creatorId !== userId) {
-            return res.status(403).json({ message: 'Unauthorized Access!' });
+            if (review.creatorId !== userId) {
+                const err = new Error(`Unauthorized attempt to ${operation == 1 ? 'update' : 'delete'} a review`);
+                err.msg = 'Unauthorized Access';
+                err.status = 403;
+                throw err;
+            }
+
+            next();
         }
-
-        next();
-    } catch (error) {
-        console.error("Error in authUpdateReview middleware", error);
-        next(error);
+        catch (error) {
+            next(error);
+        }
     }
 };
 
-exports.authDeleteReview = async (req, res, next) => {
-    try {
-        // Assuming the user is authenticated and req.userId is available
-        // Check if the user is the creator of the review they are trying to delete
-        const reviewId = req.params.reviewId;
-        const userId = req.userId;
+exports.authorizeCreateReview = (req, res, next) => {
+    const { userRole } = req;
 
-        const review = await reviewModel.getReviewById(reviewId);
-        if (!review || review.creatorId !== userId) {
-            return res.status(403).json({ message: 'Unauthorized Access!' });
-        }
-
-        next();
-    } catch (error) {
-        console.error("Error in authDeleteReview middleware", error);
-        next(error);
+    if (userRole !== jobSeeker) {
+        const err = new Error('Unauthorized attempt to create a review');
+        err.msg = 'Unauthorized Access';
+        err.status = 403;
+        return next(err);
     }
+
+    next();
 };

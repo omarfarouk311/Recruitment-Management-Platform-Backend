@@ -134,3 +134,16 @@ exports.uploadCompanyImage = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getCompanyReviews = async (req, res, next) => {
+    const { companyId } = req.params;
+    const filters = req.query;
+
+    try {
+        const reviews = await companyService.getCompanyReviews(companyId, filters);
+        res.status(200).json(reviews);
+    }
+    catch (err) {
+        return next(err)
+    }
+};
