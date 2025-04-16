@@ -11,8 +11,13 @@ class Invitation {
         this.status = 2;
     }
 
-    static primaryPool = getWritePool();
-    static replicaPool = getReadPool();
+    static getReplicaPool() {
+        return getReadPool();
+    }
+
+    static getMasterPool() {
+        return getWritePool();
+    }
 
     static async getInvitations(userId, userRole, filters, limit = pagination_limit) {
         const values = [userId];
@@ -73,13 +78,13 @@ class Invitation {
         query += ` limit $${index++} offset $${index++}`;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await Invitation.replicaPool.query(query, values);
+        const { rows } = await Invitation.getReplicaPool().query(query, values);
         return rows;
     }
 
     async create(produce = null) {
         let values = [];
-        const client = await Invitation.primaryPool.connect();
+        const client = await Invitation.getMasterPool().connect();
 
         try {
             await client.query('begin');
@@ -153,7 +158,7 @@ class Invitation {
 
     static async replyToInvitation(invitationId, recruiterId, status, date) {
         let values = [];
-        const client = await Invitation.primaryPool.connect();
+        const client = await Invitation.getMasterPool().connect();
 
         try {
             await client.query('begin');
@@ -225,30 +230,15 @@ class Invitation {
         }
     }
 
-    static async authorizeReplyToInvitation(invitationId, recruiterId) {
-        const values = [invitationId];
+    static async getInvitationReceiver(invitationId) {
         const query =
             `
             select recruiter_id as "recruiterId"
             from Company_Invitations
             where id = $1
             `;
-        const { rows: invitations } = await Invitation.replicaPool.query(query, values);
-
-        if (!invitations.length) {
-            const err = new Error('Invitation not found');
-            err.msg = err.message;
-            err.status = 404;
-            throw err;
-        }
-
-        const { recruiterId: invitationRecruiterId } = invitations[0];
-        if (invitationRecruiterId !== recruiterId) {
-            const err = new Error('Unauthorized access on replying to an invitation');
-            err.msg = 'Unauthorized request';
-            err.status = 403;
-            throw err;
-        }
+        const { rows } = await Invitation.getReplicaPool().query(query, [invitationId]);
+        return rows;
     }
 }
 
