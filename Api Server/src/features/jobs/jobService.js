@@ -17,9 +17,9 @@ module.exports.createJob = async (companyId, jobData) => {
         const response = await jobModel.createJob(client, companyId, jobData);
         const companyName = await jobModel.getCompanyName(companyId);
         const { message, jobId } = response;
-
+        const id = uuid();
         const processObject = {
-            id: uuid(),
+            id,
             performed_by: companyName,
             company_id: companyId,
             extra_data: null,
@@ -29,9 +29,15 @@ module.exports.createJob = async (companyId, jobData) => {
 
         await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
-
-        await client.query('COMMIT');
         console.log('Ack from Kafka');
+        try {
+            await client.query('COMMIT');
+        } catch (err) {
+            await produceToKafka({ id, type: 0 }, logs_topic);
+            console.log('Error in committing transaction:', err);
+            throw err;
+        }
+      
         return message;
 
     } catch (error) {
@@ -62,9 +68,9 @@ module.exports.closeJobById = async (companyId, jobId) => {
 
         await jobModel.closeJobById(client, companyId, jobId);
         const companyName = await jobModel.getCompanyName(companyId);
-
+        const id = uuid();
         const processObject = {
-            id: uuid(),
+            id,
             performed_by: companyName,
             company_id: companyId,
             extra_data: null,
@@ -73,9 +79,15 @@ module.exports.closeJobById = async (companyId, jobId) => {
         };
 
         await produceToKafka(processObject, logs_topic);
-
-        await client.query('COMMIT');
         console.log('Ack from Kafka');
+
+        try {
+            await client.query('COMMIT');
+        } catch (err) {
+            await produceToKafka({ id, type: 0 }, logs_topic);
+            throw err;
+        }
+
         return { message: 'Job closed successfully' };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -94,8 +106,9 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
 
         await jobModel.updateJobById(client, companyId, jobId, jobData);
         const companyName = await jobModel.getCompanyName(companyId);
+        const id = uuid();
         const processObject = {
-            id: uuid(),
+            id,
             performed_by: companyName,
             company_id: companyId,
             extra_data: null,
@@ -105,9 +118,15 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
 
         await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
-
-        await client.query('COMMIT');
         console.log('Ack from Kafka');
+
+        try {
+            await client.query('COMMIT');
+        } catch (err) {
+            await produceToKafka({ id, type: 0 }, logs_topic);
+            throw err;
+        }
+   
 
         return { message: 'Job updated successfully' };
     } catch (error) {

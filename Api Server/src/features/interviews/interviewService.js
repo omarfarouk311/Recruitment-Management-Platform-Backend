@@ -25,9 +25,10 @@ module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timest
     try {
         await client.query('BEGIN');
         await interviewModel.modifyInterviewDate(jobId, seekerId, timestamp, client);
-        const {name: recruiterName, company_id: companyId} = await interviewModel.getRecruiterNameAndCompanyId(recruiterId)
+        const { name: recruiterName, company_id: companyId } = await interviewModel.getRecruiterNameAndCompanyId(recruiterId)
+        const id = uuid();
         const logs =  Kafka.produce({
-            id: uuid(),
+            id,
             performed_by: recruiterName,
             company_id: companyId,
             extra_data: null,
@@ -44,7 +45,12 @@ module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timest
         }, emails_topic)
         await Promise.all([logs, dateUpdate])
         console.log('ack from kafka');
-        await client.query('COMMIT');
+        try {
+            await client.query('COMMIT');
+        } catch (err) {
+            await Kafka.produce({ id, type: 0 }, logs_topic);
+            throw err;
+        }
         return {message: 'Interview date modified successfully'}
 
     } catch (err) {
