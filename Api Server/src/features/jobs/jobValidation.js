@@ -62,7 +62,7 @@ const industryIdValidation = () => body('industryId')
 
 const appliedCntLimitValidation = () => body('appliedCntLimit')
     .exists().withMessage('There should be a limit on applicants apply for this job')
-    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Applied cnt limit must be an integer greater than 0')
+    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Applied cnt limit must be an integer greater than or equal to 1')
     .toInt();
 
 const jobsQueryValidate = [

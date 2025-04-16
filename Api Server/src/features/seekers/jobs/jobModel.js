@@ -190,7 +190,6 @@ class Job {
             else {
                 similarityScore = similarityData[0].similarityScore;
             }
-
             // add the seeker to the applicants of the job
             const now = new Date();
             const insertCandidate =
