@@ -12,86 +12,108 @@ class Review {
         this.createdAt = createdAt;
     }
 
-    static async createReview({ creatorId, companyId, title, description, rating, role }) {
-        const pool = getWritePool().connect();
+    static getReplicaPool() {
+        return getReadPool();
+    }
 
-        await pool.query('BEGIN');
+    static getMasterPool() {
+        return getWritePool();
+    }
+
+    async create() {
+        const pool = Review.getMasterPool();
+        const client = await pool.connect();
 
         try {
-            const query = `
-            INSERT INTO reviews (creator_id, company_id, title, description, rating, role, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
-            RETURNING id, company_id as "companyId", title, description, rating, role, created_at as "createdAt";
-        `;
-            const values = [creatorId, companyId, title, description, rating, role];
-            const { rows } = await pool.query(query, values);
-            this.updateCompanyAvgRating(companyId, pool);
-            await pool.query('COMMIT');
+            await client.query('BEGIN');
+
+            const query =
+                `
+                INSERT INTO reviews (creator_id, company_id, title, description, rating, role, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id
+                `;
+            const values = [this.creatorId, this.companyId, this.title, this.description, this.rating, this.role, this.createdAt];
+            const { rows } = await client.query(query, values);
+
+            await Review.updateCompanyAvgRating(this.companyId, client);
+
+            await client.query('COMMIT');
+
             return rows[0];
         }
-
         catch (error) {
-            await pool.query('ROLLBACK');
-            return error;
+            await client.query('ROLLBACK');
+            throw error;
         }
         finally {
-            pool.release();
+            client.release();
         }
     };
 
-    static async updateReview({ reviewId, title, description, rating, role }) {
-        const pool = getWritePool().connect();
-        await pool.query('BEGIN');
-        try {
-            const query = `
-            UPDATE reviews
-            SET title = $1, description = $2, rating = $3, role = $4, created_at = NOW()
-            WHERE id = $5
-            RETURNING id, company_id as "companyId", title, description, rating, role, created_at as "createdAt", created_at as "createdAt";`;
-            const values = [title, description, rating, role, reviewId];
-            const { rows } = await pool.query(query, values);
-            this.updateCompanyAvgRating(rows[0].companyId, pool);
-            await pool.query('COMMIT');
-            return rows[0];
+    async update() {
+        const pool = Review.getMasterPool();
+        const client = await pool.connect();
 
+        try {
+            await client.query('BEGIN');
+
+            const query =
+                `
+                UPDATE reviews
+                SET title = $1, description = $2, rating = $3, role = $4
+                WHERE id = $5
+                RETURNING company_id as "companyId"
+                `;
+            const values = [this.title, this.description, this.rating, this.role, this.id];
+            const { rows } = await client.query(query, values);
+
+            await Review.updateCompanyAvgRating(rows[0].companyId, client);
+
+            await client.query('COMMIT');
         }
         catch (error) {
-            await pool.query('ROLLBACK');
-            return error;
+            await client.query('ROLLBACK');
+            throw error;
         }
         finally {
-            pool.release();
+            client.release();
         }
     }
 
-    static async deleteReview(reviewId) {
-        const pool = getWritePool().connect();
-        await pool.query('BEGIN');
+    static async delete(reviewId) {
+        const pool = Review.getMasterPool();
+        const client = await pool.connect();
+
         try {
-            const query = `
-            DELETE FROM reviews
-            WHERE id = $1
-            RETURNING id, company_id as "companyId", title, description, rating, role, created_at as "createdAt";
-        `;
+            await client.query('BEGIN');
+
+            const query =
+                `
+                DELETE FROM reviews
+                WHERE id = $1
+                RETURNING company_id as "companyId"
+                `;
             const values = [reviewId];
-            const { rows } = await pool.query(query, values);
-            this.updateCompanyAvgRating(rows[0].companyId, pool);
-            await pool.query('COMMIT');
-            return rows[0];
+            const { rows } = await client.query(query, values);
+
+            await Review.updateCompanyAvgRating(rows[0].companyId, client);
+
+            await client.query('COMMIT');
         }
         catch (error) {
-            await pool.query('ROLLBACK');
-            return error;
+            await client.query('ROLLBACK');
+            throw error;
         }
         finally {
-            pool.release();
+            client.release();
         }
     }
 
     static async getReviewById(reviewId) {
-        const pool = getReadPool();
+        const pool = Review.getReplicaPool();
         const query = `
-            SELECT id, creator_id as "creatorId", company_id as "companyId", title, description, rating, role, created_at as "createdAt"
+            SELECT id, creator_id as "creatorId"
             FROM reviews
             WHERE id = $1;
         `;
@@ -100,11 +122,8 @@ class Review {
         return rows[0];
     }
 
-    static async updateCompanyAvgRating(companyId, pool) {
-
-        const query = `select id from company where id = $1 select for update`;
-        await pool.query(query, [companyId]);
-        query = `
+    static async updateCompanyAvgRating(companyId, client) {
+        const updateRating = `
             UPDATE company
             SET rating = (
                 SELECT AVG(rating)
@@ -112,11 +131,8 @@ class Review {
                 WHERE company_id = $1
             )
             WHERE id = $1
-            RETURNING id, rating;
         `;
-        const values = [companyId];
-        const { rows } = await pool.query(query, values);
-        return rows[0];
+        await client.query(updateRating, [companyId]);
     }
 
 }
