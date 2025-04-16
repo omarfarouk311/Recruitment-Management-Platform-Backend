@@ -17,14 +17,6 @@ module.exports.add_AssessmentService=async (assessmentData) => {
         let companyName=await assessmentsModel.getCompanyName(assessmentData.companyId,client)
 
         let numOfQuestions=assessmentData.metaData.length // get num of questions based on the number of elements in the array of json(meta data)
-    const primary_DB=primaryPool.getWritePool();
-    const client=await primary_DB.connect();  // to open a connection to the database and do not close it until the transaction is done
-    try{
-
-        client.query('BEGIN')
-        let companyName=await assessmentsModel.getCompanyName(assessmentData.companyId,client)
-
-        let numOfQuestions=assessmentData.metaData.length // get num of questions based on the number of elements in the array of json(meta data)
         assessmentData.numberOfQuestions=numOfQuestions;
 
         const assessment=await assessmentsModel.save(assessmentData,client);
@@ -39,27 +31,7 @@ module.exports.add_AssessmentService=async (assessmentData) => {
         }, logs_topic)
 
         client.query('COMMIT')
-        const assessment=await assessmentsModel.save(assessmentData,client);
-
-        Kafka.produce({
-            id: uuid(),
-            performed_by: companyName,
-            company_id: assessmentData.companyId,
-            extra_data: null,
-            action_type: action_types.create_assessment,
-            created_at: new Date(),
-        }, logs_topic)
-
-        client.query('COMMIT')
         return assessment;
-
-    }catch(err){
-        client.query('ROLLBACK')
-        throw err
-    }finally{
-        client.release()
-    }
-     
 
     }catch(err){
         client.query('ROLLBACK')
@@ -127,6 +99,7 @@ module.exports.delete_AssessmentByIdService=async(assessmentId,companyId)=>{
     }finally{
         client.release()
     }
+}
     
 module.exports.delete_AssessmentByIdService=async(assessmentId,companyId)=>{
     const primary_DB=primaryPool.getWritePool();
