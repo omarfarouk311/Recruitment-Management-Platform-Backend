@@ -1,6 +1,5 @@
 const { getWritePool, getReadPool } = require('../../../../config/db');
 const { role } = require('../../../../config/config');
-const e = require('express');
 
 class CV {
     constructor(id, name, seekerId, createdAt) {
@@ -11,7 +10,9 @@ class CV {
         this.deleted = false;
     }
 
-    static primaryPool = getWritePool();
+    static getMasterPool() {
+        return getWritePool();
+    }
 
     // use the primary instance pool to get the latest count in case of replication delay
     static async getCVsCount(seekerId) {
@@ -22,7 +23,7 @@ class CV {
             where user_id = $1
             `;
 
-        const { rows: [{ cnt }] } = await CV.primaryPool.query(query, [seekerId]);
+        const { rows: [{ cnt }] } = await CV.getMasterPool().query(query, [seekerId]);
         return cnt;
     }
 
@@ -34,11 +35,11 @@ class CV {
             `;
         const values = [this.id, this.name, this.seekerId, this.createdAt, this.deleted];
 
-        await CV.primaryPool.query(query, values);
+        await CV.getMasterPool().query(query, values);
     }
 
     static async getIdFromSequence() {
-        const { rows: [{ id }] } = await CV.primaryPool.query("select nextval('cv_id_seq') as id");
+        const { rows: [{ id }] } = await CV.getMasterPool().query("select nextval('cv_id_seq') as id");
         return id;
     }
 
