@@ -7,7 +7,7 @@ class ProfileModel {
             SELECT 
                 users.email as email,
                 seeker.name as name, seeker.city as city, seeker.country as country,
-                seeker.phone_number as "phoneNumber", seeker.date_of_birth as "dateOfBirth"
+                seeker.phone_number as "phoneNumber", seeker.date_of_birth as "dateOfBirth", seeker.gender
             FROM job_seeker seeker
             JOIN users USING(id) 
             WHERE seeker.id = $1`, [userId]);

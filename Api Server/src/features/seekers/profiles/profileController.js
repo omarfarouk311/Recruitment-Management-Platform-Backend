@@ -45,7 +45,7 @@ exports.getProfileImage = async (req, res, next) => {
     }
     catch (err) {
         if (err.code === 'NotFound') {
-            err.msg = 'Company photo not found';
+            err.msg = 'Seeker photo not found';
             err.status = 404;
         }
         next(err);
@@ -60,11 +60,6 @@ exports.uploadProfileImage = async (req, res, next) => {
         fileSize: req.get('content-length'),
         mimeType: req.get('content-type'),
         dataStream: req
-    };
-
-    const retrievedImageData = {
-        objectName: `${role.jobSeeker}${req.userId}`,
-        bucketName: imagesBucketName
     };
 
     try {

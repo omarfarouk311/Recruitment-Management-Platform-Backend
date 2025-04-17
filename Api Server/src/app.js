@@ -24,7 +24,11 @@ const app = express();
 
 minioConnect();
 
-app.use(helmet());
+app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+    }),
+);
 
 /* To be removed after integration because api request and frontend files will be served from the
 same origin (the reverse proxy) */

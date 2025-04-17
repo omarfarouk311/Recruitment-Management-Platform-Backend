@@ -1,7 +1,7 @@
 const CV = require('./cvModel');
 const { client } = require('../../../../config/MinIO');
 const { fileSizeLimit, cvsBucketName } = require('../../../../config/config');
-const { getPhotoService } = require('../../../common/util');
+const { getImageService } = require('../../../common/util');
 
 
 exports.uploadCV = async ({ seekerId, mimeType, fileName, fileSize, dataStream }) => {
@@ -76,7 +76,7 @@ module.exports.getCvName = async (jobId, seekerId, userId, userRole) => {
 exports.downloadCV = async (cvId, userId, userRole, seekerId, jobId) => {
     try {
         await CV.downloadCV(cvId, userId, userRole, seekerId, jobId);
-        return await getPhotoService(cvsBucketName, cvId);
+        return await getImageService({bucketName: cvsBucketName, objectName: cvId});
     } catch (err) {
         throw err;
     }

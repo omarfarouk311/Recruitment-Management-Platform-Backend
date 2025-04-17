@@ -49,7 +49,7 @@ class CV {
             let query;
             if (userRole == role.jobSeeker) {
                 query = await client.query(`
-                    SELECT id, name
+                    SELECT id, name, created_at
                     FROM CV
                     WHERE user_id = $1 
                     AND deleted = $2;

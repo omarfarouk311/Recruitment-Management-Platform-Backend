@@ -40,7 +40,7 @@ exports.downloadCV = async (req, res, next) => {
         const { metaData, size, stream } = await cvService.downloadCV(cvId, userId, userRole, seekerId, jobId);
 
         // set response headers to allow the browser to display the file in the browser
-        res.setHeader("Content-Type", metaData['content-type']);
+        res.setHeader("Content-Type", `${metaData['content-type']}; charset=binary`);
         res.setHeader("Content-Length", size);
         res.setHeader("Content-Disposition", `inline; filename="${metaData['filename']}"`);
 
