@@ -17,10 +17,8 @@ exports.signUp = async (data) => {
     }
     catch (err) {
         if (err.code === '23505') {
-            const err = new Error('Email already exists');
-            err.msg = err.message;
+            err.msg = 'Email already exists';
             err.status = 409;
-            throw err;
         }
         throw err;
     }
@@ -88,7 +86,31 @@ exports.refreshToken = (data) => {
         if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError') {
             err.msg = 'Invalid refresh token';
             err.status = 401;
-            throw err;
+        }
+        throw err;
+    }
+};
+
+exports.authenticateUser = (data) => {
+    const { token } = data;
+
+    // Check if the token is provided
+    if (!token) {
+        const err = new Error('Invalid token');
+        err.msg = err.message;
+        err.status = 401;
+        throw err;
+    }
+
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const { userId, userRole } = decodedToken;
+        return { userId, userRole };
+    }
+    catch (err) {
+        if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError') {
+            err.msg = 'Invalid token';
+            err.status = 401;
         }
         throw err;
     }

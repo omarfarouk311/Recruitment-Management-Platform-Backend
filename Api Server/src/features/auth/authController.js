@@ -93,3 +93,23 @@ exports.refreshToken = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.authenticateUser = async (req, res, next) => {
+    const data = {
+        token: req.signedCookies.JWT
+    };
+
+    try {
+        const {
+            userId,
+            userRole
+        } = authService.authenticateUser(data);
+
+        req.userId = userId;
+        req.userRole = userRole;
+        next();
+    }
+    catch (err) {
+        next(err);
+    }
+};
