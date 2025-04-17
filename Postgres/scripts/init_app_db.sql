@@ -15,8 +15,7 @@ CREATE TABLE Job_Seeker (
   gender BOOLEAN NOT NULL,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
-  name TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  name TEXT NOT NULL
 );
 
 CREATE TABLE Recruiter (

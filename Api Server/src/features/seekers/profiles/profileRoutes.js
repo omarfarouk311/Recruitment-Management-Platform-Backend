@@ -6,28 +6,42 @@ const { handleValidationErrors } = require('../../../common/util');
 const { authorizeUpdateProfile, authorizeUpdateProfileImage } = require('./profileAuthorization');
 const { notAllowed } = require('../../../common/errorMiddleware');
 
-router.get('/:userId', 
-    profileValidation.validateGetUser, 
-    handleValidationErrors, 
-    profileController.getProfile
-);
+router.route('/finish-profile')
+    .post(
+        profileValidation.validateUserProfile,
+        handleValidationErrors,
+        authorizeUpdateProfile,
+        profileController.insertProfile
+    )
+    .all(notAllowed);
 
-router.put('/', 
-    profileValidation.validateUserProfile, 
-    handleValidationErrors, 
-    authorizeUpdateProfile,
-    profileController.updateProfile
-);
+router.route('/')
+    .put(
+        profileValidation.validateUserProfile,
+        handleValidationErrors,
+        authorizeUpdateProfile,
+        profileController.updateProfile
+    )
+    .all(notAllowed);
+
+router.route('/:userId')
+    .get(
+        profileValidation.validateGetUser,
+        handleValidationErrors,
+        profileController.getProfile
+    )
+    .all(notAllowed);
 
 router.route('/:seekerId/image')
     .get(
-        profileValidation.validateGetUser, 
+        profileValidation.validateGetUser,
         profileController.getProfileImage
     )
     .post(
         profileValidation.validateGetUser,
         authorizeUpdateProfileImage,
         profileController.uploadProfileImage
-    ).all(notAllowed);
+    )
+    .all(notAllowed);
 
 module.exports = router;

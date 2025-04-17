@@ -30,8 +30,19 @@ class ProfileModel {
         }
         return rows[0];
     }
+
+    static async insertProfile(userId, profileData) {
+        const writePool = getWritePool();
+        const { name, city, country, phoneNumber, dateOfBirth, gender } = profileData;
+        const query = `
+            INSERT INTO Job_Seeker (id, name, city, country, phone_number, date_of_birth, gender)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `;
+        const values = [userId, name, city, country, phoneNumber, dateOfBirth, gender];
+        await writePool.query(query, values);
+    }
 }
 
-module.exports = { 
-    ProfileModel 
+module.exports = {
+    ProfileModel
 };
