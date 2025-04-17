@@ -2,7 +2,9 @@ const { getReadPool } = require('../../../config/db');
 const { pagination_limit } = require('../../../config/config');
 
 class Log {
-    static replicaPool = getReadPool();
+    static getReplicaPool() {
+        return getReadPool();
+    }
 
     static async getLogs(companyId, filters, limit = pagination_limit) {
         const values = [companyId];
@@ -42,7 +44,7 @@ class Log {
         query += ` limit $${index++} offset $${index++}`
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await Log.replicaPool.query(query, values);
+        const { rows } = await Log.getReplicaPool().query(query, values);
         return rows;
     }
 
@@ -54,7 +56,7 @@ class Log {
             order by id
             `;
 
-        const { rows } = await Log.replicaPool.query(query);
+        const { rows } = await Log.getReplicaPool().query(query);
         return rows;
     }
 }

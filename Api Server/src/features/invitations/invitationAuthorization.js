@@ -27,6 +27,7 @@ exports.authorizecreateInvitation = (req, res, next) => {
 
 exports.authorizeReplyToInvitation = async (req, res, next) => {
     const { userRole } = req;
+
     if (userRole !== recruiter) {
         const err = new Error('Unauthorized acess on replying to an invitation');
         err.status = 403;
@@ -34,9 +35,25 @@ exports.authorizeReplyToInvitation = async (req, res, next) => {
         return next(err);
     }
 
-    const { userId: recruiterId, params: { invitationId } } = req;
     try {
-        await Invitation.authorizeReplyToInvitation(invitationId, recruiterId);
+        const { userId: recruiterId, params: { invitationId } } = req;
+        const invitations = await Invitation.getInvitationReceiver(invitationId);
+
+        if (!invitations.length) {
+            const err = new Error('Invitation not found');
+            err.msg = err.message;
+            err.status = 404;
+            throw err;
+        }
+
+        const { recruiterId: invitationReceiverId } = invitations[0];
+        if (invitationReceiverId !== recruiterId) {
+            const err = new Error('Unauthorized access on replying to an invitation');
+            err.msg = 'Unauthorized request';
+            err.status = 403;
+            throw err;
+        }
+
         next();
     }
     catch (err) {

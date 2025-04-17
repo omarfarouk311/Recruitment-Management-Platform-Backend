@@ -2,7 +2,9 @@ const { getReadPool } = require('../../../../config/db');
 const { pagination_limit } = require('../../../../config/config');
 
 class SeekerReview {
-    static replicaPool = getReadPool();
+    static getReplicaPool() {
+        return getReadPool();
+    }
 
     static async getSeekerReviews(seekerId, filters, limit = pagination_limit) {
         const values = [seekerId, limit, (filters.page - 1) * limit];
@@ -16,7 +18,7 @@ class SeekerReview {
             limit $2 offset $3
             `;
 
-        const { rows } = await SeekerReview.replicaPool.query(query, values);
+        const { rows } = await SeekerReview.getReplicaPool().query(query, values);
         return rows;
     }
 }

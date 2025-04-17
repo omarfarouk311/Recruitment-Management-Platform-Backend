@@ -25,11 +25,13 @@ const validateRole = () => body('role')
 
 const validateCompanyId = () => body('companyId')
     .isInt({ min: 1 })
-    .withMessage('Invalid company ID');
+    .withMessage('Invalid company ID')
+    .toInt();
 
 const validateReviewId = () => param('reviewId')
     .isInt({ min: 1 })
-    .withMessage('Invalid review ID');
+    .withMessage('Invalid review ID')
+    .toInt();
 
 exports.createReviewValidator = [
     validateTitle(),
@@ -44,7 +46,7 @@ exports.updateReviewValidator = [
     validateTitle(),
     validateDecription(),
     validateRating(),
-    validateRole(),
+    validateRole()
 ];
 
 exports.deleteReviewValidator = validateReviewId();

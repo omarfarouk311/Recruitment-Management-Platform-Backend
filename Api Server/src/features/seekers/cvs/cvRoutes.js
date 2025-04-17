@@ -1,16 +1,11 @@
 const { Router } = require('express');
 const { notAllowed } = require('../../../common/errorMiddleware');
 const { authorizeAccess } = require('../jobs_applied_for/jobsAppliedForAuthorization');
-const { checkLimit } = require('./cvMiddlewares');
+const { checkLimit } = require('./cvAuthorization');
 const cvController = require('./cvController')
 const { cvIdValidation, jobIdValidation, seekerIdValidation } = require('./cvValidation');
 const { handleValidationErrors } = require('../../../common/util')
 const router = Router();
-
-
-
-
-
 
 router.route('/')
     .post(authorizeAccess, checkLimit, cvController.uploadCV)
@@ -18,7 +13,7 @@ router.route('/')
     .all(notAllowed);
 
 router.route('/:cvId')
-    .get(cvIdValidation(), jobIdValidation(), seekerIdValidation(),handleValidationErrors, cvController.downloadCV)
+    .get(cvIdValidation(), jobIdValidation(), seekerIdValidation(), handleValidationErrors, cvController.downloadCV)
     .delete(authorizeAccess, cvIdValidation(), handleValidationErrors, cvController.deleteCV)
     .all(notAllowed);
 

@@ -2,7 +2,7 @@ const { getWritePool, getReadPool } = require('../../../config/db');
 const { pagination_limit } = require('../../../config/config');
 
 class Report {
-    constructor(jobId, creatorId, createdAt, title, description) {
+    constructor({ jobId, creatorId, createdAt, title, description }) {
         this.jobId = jobId;
         this.creatorId = creatorId;
         this.createdAt = createdAt;
@@ -10,18 +10,26 @@ class Report {
         this.description = description;
     }
 
+    static getReplicaPool() {
+        return getReadPool();
+    }
+
+    static getMasterPool() {
+        return getWritePool();
+    }
+
     async create() {
-        const pool = getWritePool();
+        const client = await Report.getMasterPool().connect();
         let values = [];
-        const client = await pool.connect();
 
         try {
             await client.query('begin');
 
             const getJob = 'select 1 from job where id = $1';
             values = [this.jobId];
-            const { rows: { length } } = await client.query(getJob, values);
-            if (!length) {
+            const { rows } = await client.query(getJob, values);
+
+            if (!rows.length) {
                 const err = new Error('Job not found while creating a report');
                 err.msg = 'Job not found';
                 err.status = 404;
@@ -52,7 +60,6 @@ class Report {
     }
 
     static async getReports(userId, filters, limit = pagination_limit) {
-        const pool = getReadPool();
         const values = [userId, limit, (filters.page - 1) * limit];
         const query =
             `
@@ -67,7 +74,7 @@ class Report {
             limit $2 offset $3
             `;
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Report.getReplicaPool().query(query, values);
         return rows;
     }
 }

@@ -2,8 +2,11 @@ const { getReadPool } = require('../../../../config/db');
 const { phase_types } = require('../../../../config/config');
 
 class Stats {
+    static getReplicaPool() {
+        return getReadPool();
+    }
+
     static async getStats(seekerId) {
-        const pool = getReadPool();
         const values = [seekerId];
         const query =
             `
@@ -17,7 +20,7 @@ class Stats {
             where c.seeker_id = $1 and p.name != '${phase_types.cv_screening}'
             `;
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await Stats.getReplicaPool().query(query, values);
         return rows[0];
     }
 }
