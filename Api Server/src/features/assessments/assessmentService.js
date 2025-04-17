@@ -1,8 +1,9 @@
 const assessmentsModel = require('./assessmentModel');
 const Kafka = require('../../common/kafka')
-const { action_types, logs_topic } = require('../../../config/config')
+const { action_types, logs_topic,candidate_status_pending,candidate_status_accepted,candidate_status_rejected } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 const primaryPool=require('../../../config/db')
+
 
 
 
@@ -17,8 +18,10 @@ module.exports.add_AssessmentService=async (assessmentData) => {
 
         let numOfQuestions=assessmentData.metaData.length // get num of questions based on the number of elements in the array of json(meta data)
         assessmentData.numberOfQuestions=numOfQuestions;
+       
 
         const assessment=await assessmentsModel.save(assessmentData,client);
+
 
         Kafka.produce({
             id: uuid(),
@@ -98,6 +101,35 @@ module.exports.delete_AssessmentByIdService=async(assessmentId,companyId)=>{
     }finally{
         client.release()
     }
+}
+    
+module.exports.delete_AssessmentByIdService=async(assessmentId,companyId)=>{
+    const primary_DB=primaryPool.getWritePool();
+    const client=await primary_DB.connect();
+    try{
+
+        client.query('BEGIN')
+        let companyName=await assessmentsModel.getCompanyName(companyId,client)
+        await assessmentsModel.delete(assessmentId,client);
+        Kafka.produce({
+            id: uuid(),
+            performed_by: companyName,
+            company_id:companyId,
+            extra_data: null,
+            action_type: action_types.remove_assessment,
+            created_at: new Date(),
+        }, logs_topic)
+
+        client.query('COMMIT')
+        return true;
+
+
+    }catch(err){
+        client.query('ROLLBACK')
+        throw err
+    }finally{
+        client.release()
+    }
     
 }
 
@@ -136,4 +168,31 @@ module.exports.get_JobSeekerScoreService=async(jobId,jobSeekerId)=>{
     return jobSeekerScore
 
 }
+
+module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,city,status,companyName,sorted,page)=>{
+    let result
+    
+    if(status==null|| status==candidate_status_pending){
+        result=assessmentsModel.get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page);
+    }
+    else{
+        if(status==2)status=1;
+        else status=0;
+        result=assessmentsModel.get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page);
+    }
+    return result
+    
+}
+
+module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,jobId)=>{
+
+    let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
+    console.log(checkTimme)
+    if(!checkTimme){
+        return false;
+    }
+    let result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId);
+    return result
+}
+
 

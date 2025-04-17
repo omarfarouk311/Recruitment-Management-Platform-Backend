@@ -1,6 +1,7 @@
 const assessmentService=require('./assessmentService');
 
 
+
 module.exports.add_AssessmentController = async (req, res,next) => {
    try{
     const assessmentData=req.body;
@@ -13,7 +14,7 @@ module.exports.add_AssessmentController = async (req, res,next) => {
     
     return res.status(201).json({
         success: true,
-      //  assessment: assessment, in case front will need the assessment data
+        assessment: assessment,// in case front will need the assessment data
         message:"Assessment added successfully"
     })
     }catch(err){
@@ -142,5 +143,49 @@ module.exports.get_JobSeekerScore=async(req,res,next)=>{
         next(err)
     }
 
+
+}
+module.exports.get_Seeker_Assessment_Dashboard=async(req,res,next)=>{
+    try{
+        let seekerId=req.userId;
+        let{country,city,status,companyName,sorted,page}=req.query;
+        let result=await assessmentService.get_Seeker_Assessment_DashboardService(seekerId,country,city,status,companyName,sorted,page);
+        return res.status(200).json({
+            success: true,
+            result: result 
+        })
+
+    }catch(err){
+        console.log("Error in get_Seeker_Assessment_Dashboard", err.message)
+        next(err);
+    }
+}
+
+module.exports.get_Seeker_Assessment_Details=async(req,res,next)=>{
+
+    try{
+
+        let assesmentId=req.params.assessmentId;
+        let seekerId=req.params.seekerId;
+        let jobId=req.params.jobId;
+
+        let assessmentDetails=await assessmentService.get_Seeker_Assessment_DetailsService(assesmentId,seekerId,jobId);
+        if(!assessmentDetails){
+            let err=new Error()
+            err.status=404;
+            err.msg="Assessment not found"
+            throw err;
+        }
+        return res.status(200).json({
+            success: true,
+            assessmentDetails: assessmentDetails
+        })
+
+
+
+    }catch(err){
+        console.log("Error in get_Seeker_Assessment_Details", err.message)
+        next(err);
+    }
 
 }

@@ -88,7 +88,8 @@ class interview {
             let index = 1;
             let query = `
                         SELECT rec.name as recruiterName,
-                        job.title as job_title,
+                        job.title as job_title,job.city as job_city,
+                        job.id as job_id,comp.id as company_id,
                         candidates.phase_deadline as deadline,
                         job.country as location,
                         comp.name as companyName
