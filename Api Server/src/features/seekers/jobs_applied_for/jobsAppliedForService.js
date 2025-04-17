@@ -1,13 +1,13 @@
 const JobsAppliedFor = require('./jobsAppliedForModel');
 
-exports.getCompaniesFilter = async (seekerId) => {
-    return await JobsAppliedFor.getCompaniesFilter(seekerId);
+exports.getCompaniesFilter = (seekerId) => {
+    return JobsAppliedFor.getCompaniesFilter(seekerId);
 };
 
-exports.getLocationsFilter = async (seekerId) => {
-    return await JobsAppliedFor.getLocationsFilter(seekerId);
+exports.getLocationsFilter = (seekerId) => {
+    return JobsAppliedFor.getLocationsFilter(seekerId);
 };
 
-exports.getJobsAppliedFor = async (seekerId, filters) => {
-    return await JobsAppliedFor.getJobsAppliedFor(seekerId, filters);
+exports.getJobsAppliedFor = (seekerId, filters) => {
+    return JobsAppliedFor.getJobsAppliedFor(seekerId, filters);
 };

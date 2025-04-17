@@ -2,8 +2,11 @@ const { getReadPool } = require('../../../../config/db');
 const { pagination_limit } = require('../../../../config/config');
 
 class JobsAppliedFor {
+    static getReplicaPool() {
+        return getReadPool();
+    }
+
     static async getJobsAppliedFor(seekerId, filters, limit = pagination_limit) {
-        const pool = getReadPool();
         const values = [seekerId];
         let index = 1;
         let query;
@@ -89,12 +92,11 @@ class JobsAppliedFor {
         query += ` limit $${index++} offset $${index++}`;
         values.push(limit, (filters.page - 1) * limit);
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await JobsAppliedFor.getReplicaPool().query(query, values);
         return rows;
     }
 
     static async getCompaniesFilter(seekerId) {
-        const pool = getReadPool();
         const values = [seekerId];
         const query =
             `
@@ -113,12 +115,11 @@ class JobsAppliedFor {
             order by company_name
             `;
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await JobsAppliedFor.getReplicaPool().query(query, values);
         return rows.map(({ companyName }) => companyName);
     }
 
     static async getLocationsFilter(seekerId) {
-        const pool = getReadPool();
         const values = [seekerId];
         const query =
             `
@@ -136,7 +137,7 @@ class JobsAppliedFor {
             order by country, city
             `;
 
-        const { rows } = await pool.query(query, values);
+        const { rows } = await JobsAppliedFor.getReplicaPool().query(query, values);
         return rows;
     }
 }
