@@ -19,6 +19,7 @@ const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
 const cvRoutes = require('./features/cvs/cvRoutes');
 const authRoutes = require('./features/auth/authRoutes');
+const { authenticateUser } = require('./features/auth/authController');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
@@ -38,13 +39,11 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 
-// for testing
-app.use((req, res, next) => {
-    // console.log('request reached')
-    req.userId = 1;
-    req.userRole = role.company;
-    next();
-});
+// parse the cv when the user uploads it, doesn't need to be authenticated
+app.use('/api/cvs', cvRoutes);
+
+// this middleware will authenticate the user for all the routes below it
+app.use(authenticateUser);
 
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/templates', templatesRoutes);
@@ -60,7 +59,6 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
-app.use('/api/cvs', cvRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);
