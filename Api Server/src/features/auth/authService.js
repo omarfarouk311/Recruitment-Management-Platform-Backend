@@ -61,3 +61,35 @@ exports.login = async (data) => {
         name
     };
 };
+
+exports.refreshToken = (data) => {
+    const { oldRefreshToken } = data;
+
+    // Check if the refresh token is provided
+    if (!oldRefreshToken) {
+        const err = new Error('Invalid refresh token');
+        err.msg = err.message;
+        err.status = 401;
+        throw err;
+    }
+
+    try {
+        const decodedToken = jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const { userId, userRole } = decodedToken;
+        const token = jwt.sign({ userId, userRole }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        const refreshToken = jwt.sign({ userId, userRole }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+
+        return {
+            token,
+            refreshToken,
+        };
+    }
+    catch (err) {
+        if (err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError') {
+            err.msg = 'Invalid refresh token';
+            err.status = 401;
+            throw err;
+        }
+        throw err;
+    }
+};

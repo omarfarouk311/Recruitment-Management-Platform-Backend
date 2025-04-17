@@ -58,3 +58,38 @@ exports.login = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.refreshToken = async (req, res, next) => {
+    const data = {
+        oldRefreshToken: req.signedCookies.refreshToken
+    };
+
+    try {
+        const {
+            token,
+            refreshToken
+        } = authService.refreshToken(data);
+
+        // change samesite to 'Lax' after completing development
+        res
+            .status(204)
+            .cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                sameSite: 'None',
+                signed: true,
+                secure: false,
+                expires: new Date(Date.now() + 604800 * 1000)
+            })
+            .cookie('JWT', token, {
+                httpOnly: true,
+                sameSite: 'None',
+                signed: true,
+                secure: false,
+                expires: new Date(Date.now() + 900 * 1000)
+            })
+            .end();
+    }
+    catch (err) {
+        next(err);
+    }
+};
