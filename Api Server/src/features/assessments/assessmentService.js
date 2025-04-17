@@ -18,8 +18,10 @@ module.exports.add_AssessmentService=async (assessmentData) => {
 
         let numOfQuestions=assessmentData.metaData.length // get num of questions based on the number of elements in the array of json(meta data)
         assessmentData.numberOfQuestions=numOfQuestions;
+       
 
         const assessment=await assessmentsModel.save(assessmentData,client);
+
 
         Kafka.produce({
             id: uuid(),
@@ -180,6 +182,17 @@ module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,cit
     }
     return result
     
+}
+
+module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,jobId)=>{
+
+    let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
+    console.log(checkTimme)
+    if(!checkTimme){
+        return false;
+    }
+    let result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId);
+    return result
 }
 
 

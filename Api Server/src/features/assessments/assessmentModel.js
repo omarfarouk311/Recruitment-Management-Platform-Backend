@@ -39,10 +39,10 @@ class assessmentsModel{
             INSERT INTO Assessment (company_id,name,assessment_time,job_title,num_of_questions) 
             VALUES($1,$2,$3,$4,$5) RETURNING *`;
           //  companyId,name,assessmentTime,jobTitle,numberOfQuestions
-
+          console.log(assessmentData.numberOfQuestions)
             const Questionquery=
-            `INSERT INTO Questions (assessment_id,question,answers,correct_answers)
-             VALUES($1,$2,$3,$4) RETURNING *`
+            `INSERT INTO Questions (assessment_id,question_num,question,answers,correct_answers)
+             VALUES($1,$2,$3,$4,$5) RETURNING *`
 
             let assessmentvalues=[
                 assessmentData.companyId,
@@ -53,6 +53,7 @@ class assessmentsModel{
 
            
             const assessmentResult = await client.query(assessmentQuery,assessmentvalues); 
+           
             const assessmentId = assessmentResult.rows[0].id;
             if(!assessmentId){
                 throw new Error()
@@ -66,8 +67,9 @@ class assessmentsModel{
                 let question=Obj.questions;
                 let answers=Obj.answers;
                 let correctAnswers=Obj.correctAnswers;
+                let questionNum=Obj.questionNum
 
-                const Questionvalues=[assessmentId,question,answers,correctAnswers]
+                const Questionvalues=[assessmentId,questionNum,question,answers,correctAnswers]
                 const questionResult=await client.query(Questionquery,Questionvalues)
 
                 const questionId = questionResult.rows[0].id;
@@ -422,11 +424,12 @@ class assessmentsModel{
             WHERE seeker_id=$${cnt++}
             )
             SELECT Job.title,Company.name,Job.country,Job.city,
-            getSeekerData.date_applied,getSeekerData.phase_deadline,'Pending' as status
+            getSeekerData.date_applied,getSeekerData.phase_deadline,t1.assessment_id,Job.id as jobId,Company.id as companyId,a.assessment_time,'Pending' as status
             FROM getSeekerData 
-            JOIN (SELECT recruitment_process_id,phase_num FROM Recruitment_Phase WHERE assessment_id is not null) as t1 ON getSeekerData.recruitment_process_id=t1.recruitment_process_id AND getSeekerData.phase=t1.phase_num
+            JOIN (SELECT recruitment_process_id,assessment_id,phase_num FROM Recruitment_Phase WHERE assessment_id is not null) as t1 ON getSeekerData.recruitment_process_id=t1.recruitment_process_id AND getSeekerData.phase=t1.phase_num
             JOIN Job ON getSeekerData.job_id=Job.id
             JOIN Company ON Job.company_id=Company.id
+            JOIN Assessment a on a.id=t1.assessment_id
             WHERE 1=1
             `
             values.push(seekerId);
@@ -470,7 +473,7 @@ class assessmentsModel{
             let cnt=1;
             let values=[];
             let query=
-            `SELECT job_title,company_name,country,city,date_applied,CASE WHEN ${status}=1 THEN 'Accepted' ELSE 'Rejected' END as status 
+            `SELECT job_title,company_name,country,city,date_applied,job_id,CASE WHEN ${status}=1 THEN 'Accepted' ELSE 'Rejected' END as status 
             FROM Candidate_History 
             WHERE seeker_id=$${cnt++} AND status=$${cnt++}
             `
@@ -503,6 +506,70 @@ class assessmentsModel{
         }catch(err){
             console.log("Error in get_Seeker_Assessment_Dashboard_AcceptedModel",err.message)
             throw err
+        }
+
+    }
+    static async get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId){
+        const primary_DB=primaryPool.getWritePool();
+        const client=await primary_DB.connect();  
+        try{
+
+            await client.query("BEGIN")
+            let cnt=1,cnt2=1;;
+            let query1=
+            `SELECT id,question_num,question,answers
+            FROM Questions 
+            WHERE assessment_id=$${cnt++}
+            `
+            let values1=[assessmentId];
+
+
+            let currentTime= new Date();
+            const timestamp = currentTime.toISOString().slice(0, 19).replace('T', ' ');
+            
+           
+            let query2 = `
+            UPDATE candidates
+            SET assessment_deadline = $${cnt2++}
+            WHERE seeker_id = $${cnt2++} AND job_id = $${cnt2++};
+            `;
+
+            let values2 = [timestamp, seekerId, jobId]; 
+
+            let result1=await client.query(query1,values1);
+            await client.query(query2,values2);
+
+            await client.query("COMMIT")
+            return result1.rows;
+
+        }catch(err){
+            await client.query("ROLLBACK")
+            console.log("Error in get_Seeker_Assessment_DetailsModel",err.message)
+            throw err;
+        }finally{
+            client.release();
+        }
+    }
+    static async checkStartTime_assessmet(seekedId,jobId){
+        let replica_DB=replicaPool.getReadPool();
+        try{
+
+            let cnt=1;
+            let values=[seekedId,jobId];
+            let query=
+            `SELECT assessment_deadline
+            FROM candidates
+            WHERE seeker_id=$${cnt++} AND job_id=$${cnt++}
+            `
+            let time=await replica_DB.query(query,values);
+            if(time.rows[0]!=null){
+                return false;
+            }
+            return time.rows[0];
+
+        }catch(err){
+            console.log("Err in checkStartTime_assessmet",err.message)
+            throw(err);
         }
 
     }

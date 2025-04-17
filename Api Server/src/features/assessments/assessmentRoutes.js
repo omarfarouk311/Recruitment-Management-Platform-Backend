@@ -15,6 +15,9 @@ router.route('/')
 router.route('/seeker-assessment-dashboard')
         .get(authorizeSeeker,assessmentController.get_Seeker_Assessment_Dashboard) 
 
+router.route('/seeker-assessment-details/:assessmentId/:jobId/:seekerId')
+        .get(authorizeSeeker,assessmentController.get_Seeker_Assessment_Details)
+
 
 router.route('/:id')
         .get(authorizeCompanyAssessment,assessmentController.get_AssessmentByIdController) // get assessment by id   // erify token of company later
