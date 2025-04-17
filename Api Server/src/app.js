@@ -18,8 +18,10 @@ const reportRoutes = require('./features/reports/reportRoutes');
 const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
 const cvRoutes = require('./features/cvs/cvRoutes');
+const authRoutes = require('./features/auth/authRoutes');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const app = express();
 
 minioConnect();
@@ -30,6 +32,12 @@ app.use(helmet());
 same origin (the reverse proxy) */
 app.use(cors({ origin: '*' }));
 
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+
 // for testing
 app.use((req, res, next) => {
     // console.log('request reached')
@@ -37,8 +45,6 @@ app.use((req, res, next) => {
     req.userRole = role.company;
     next();
 });
-
-app.use(express.json());
 
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/templates', templatesRoutes);

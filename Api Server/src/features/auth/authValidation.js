@@ -1,6 +1,5 @@
 const { body } = require('express-validator');
 const { role } = require('../../../config/config');
-const User = require('./authModel');
 
 const validateEmail = () => body('email')
     .isString()
@@ -12,8 +11,11 @@ const validateEmail = () => body('email')
     .withMessage('Invalid Email address')
 
 const validatePassword = () => body('password')
-    .isStrongPassword()
-    .withMessage('Password length must be atleast 8 and contains numbers, symbols, uppercase and lowercase letters');
+    .isString()
+    .withMessage('Password must be a string')
+    .isLength({ max: 30 })
+    .withMessage('Password is too long')
+    .trim();
 
 const validateConfirmationPassword = () => body('confirmationPassword')
     .custom((value, { req }) => value === req.body.password)
@@ -25,7 +27,12 @@ const validateRole = () => body('role')
 
 exports.validateSignup = [
     validateEmail(),
-    validatePassword(),
+    validatePassword().isStrongPassword().withMessage('Password length must be atleast 8 and contains numbers, symbols, uppercase and lowercase letters'),
     validateConfirmationPassword(),
     validateRole()
+];
+
+exports.validateLogin = [
+    validateEmail(),
+    validatePassword()
 ];

@@ -13,4 +13,12 @@ router.route('/signup')
     )
     .all(notAllowed);
 
+router.route('/login')
+    .post(
+        authValidation.validateLogin,
+        handleValidationErrors,
+        authController.login
+    )
+    .all(notAllowed);
+
 module.exports = router;
