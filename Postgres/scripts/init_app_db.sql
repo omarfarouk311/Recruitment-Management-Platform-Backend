@@ -68,8 +68,8 @@ CREATE TABLE Education (
   field TEXT NOT NULL,
   degree TEXT NOT NULL,
   grade TEXT,
-  start_date TEXT,
-  end_date TEXT
+  start_date Date,
+  end_date Date
 );
 
 CREATE TABLE Company_Invitations (
@@ -130,8 +130,8 @@ CREATE TABLE User_Experience (
   id serial PRIMARY KEY,
   user_id int NOT NULL,
   company_name text NOT NULL,
-  start_date TEXT,
-  end_date TEXT,
+  start_date Date,
+  end_date Date,
   description text,
   job_title text NOT NULL,
   country text,

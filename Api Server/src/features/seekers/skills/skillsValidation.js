@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 
 
@@ -18,6 +18,9 @@ const skillIdValidation = () => body('skills.*.skillId')
     .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Skill ID must be an integer greater than 0')
     .toInt()
 
+const skillIdParamValidation = () => param('id')
+    .isInt({ min: 1, allow_leading_zeroes: false }).withMessage('Skill ID must be an integer greater than 0')
+    .toInt()
 
 
 
@@ -27,5 +30,6 @@ const skills = [
 ]
     
 module.exports = {
-    skills
+    skills,
+    skillIdParamValidation
 }

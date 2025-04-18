@@ -12,6 +12,19 @@ const validateDegree=()=>{
     return body('degree').notEmpty().withMessage('Degree is required') 
 }
 
+const validateStartDate = ()=> 
+    body('start_date', 'Start date is required')
+    .notEmpty()
+    .isISO8601()
+    .toDate();
+
+
+const validateEndDate = ()=> 
+    body('end_date', 'End date is required')
+    .notEmpty()
+    .isISO8601()
+    .withMessage('End date must be ISO string')
+    .toDate();
 
 module.exports.validateEducationId=[
     param('educationId').notEmpty().withMessage('Education Id is required').bail().isInt().toInt().withMessage("Education Id should be integer")
@@ -19,8 +32,12 @@ module.exports.validateEducationId=[
 module.exports.validatSeekerId=[
     param('seekerId').notEmpty().withMessage('Seeker Id is required').bail().isInt().toInt().withMessage("seeker Id should be integer")
 ]
+
+
 module.exports.validateEducation=[
     validateEducationName(),
     validateFieldName(),
     validateDegree(),
+    validateStartDate(),
+    validateEndDate(),
 ]

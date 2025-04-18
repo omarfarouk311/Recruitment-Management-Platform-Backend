@@ -20,15 +20,25 @@ class ProfileModel {
     static async updateProfile(userId, profileData) {
         const writePool = getWritePool();
         let { name, city, country, phoneNumber, dateOfBirth, gender } = profileData;
-        const { rows } = await writePool.query(`
-            UPDATE job_seeker
-            SET name = $1, city = $2, country = $3, phone_number = $4, date_of_birth = $5, gender = $6
-            WHERE id = $7
-            RETURNING id`, [name, city, country, phoneNumber, dateOfBirth, gender, userId]);
-        if (rows.length === 0) {
-            return null;
+        try {
+            const { rows } = await writePool.query(`
+                UPDATE job_seeker
+                SET name = $1, city = $2, country = $3, phone_number = $4, date_of_birth = $5, gender = $6
+                WHERE id = $7
+                RETURNING id`, [name, city, country, phoneNumber, dateOfBirth, gender, userId]);
+            if (rows.length === 0) {
+                return null;
+            }
+            return rows[0];
+        } catch (err) {
+            if(err.code === '23505') {
+                const error = new Error('Phone number already exists');
+                error.msg = 'Phone number already exists';
+                error.status = 400;
+                throw error;
+            }
         }
-        return rows[0];
+        
     }
 
     static async insertProfile(userId, profileData) {

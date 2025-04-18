@@ -4,8 +4,14 @@ class Experience {
     static async getAllExperiences(userId) {
         const pool = getReadPool();
         const query = `
-            SELECT * FROM User_Experience
-            WHERE user_id = $1;
+            SELECT 
+                id, company_name as "companyName",
+                start_date as "startDate", end_date as "endDate",
+                description, job_title as "jobTitle",
+                country, city
+            FROM User_Experience
+            WHERE user_id = $1
+            ORDER BY end_date DESC;
         `;
         const values = [userId];
         const { rows } = await pool.query(query, values);

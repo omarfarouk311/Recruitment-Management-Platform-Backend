@@ -35,11 +35,11 @@ module.exports.addSeekerSkills = async (seekerId, skills) => {
     }
 }
 
-module.exports.deleteSeekerSkillById = async (seekerId, skills) => {
+module.exports.deleteSeekerSkillById = async (seekerId, skillId) => {
     let client = await Pool.getWritePool().connect();
     try {
         await client.query('BEGIN');
-        const deleteMsg = SkillModel.deleteSeekerSkillById(client, seekerId, skills)
+        const deleteMsg = SkillModel.deleteSeekerSkillById(client, seekerId, skillId)
         const promise = Kafka.produce(
             {
                 id: null,
