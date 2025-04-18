@@ -11,7 +11,7 @@ router.route('/finish-profile')
         profileValidation.validateUserProfile,
         handleValidationErrors,
         authorizeUpdateProfile,
-        profileController.insertProfile
+        profileController.finishProfile
     )
     .all(notAllowed);
 

@@ -20,7 +20,7 @@ exports.updateProfile = async (req, res, next) => {
     }
 }
 
-exports.insertProfile = async (req, res, next) => {
+exports.finishProfile = async (req, res, next) => {
     const data = {
         name: req.body.name,
         city: req.body.city,
@@ -31,7 +31,7 @@ exports.insertProfile = async (req, res, next) => {
     };
 
     try {
-        await profileService.insertProfile(req.userId, data);
+        await profileService.finishProfile(req.userId, data);
         res.status(201).end();
     } catch (error) {
         next(error);

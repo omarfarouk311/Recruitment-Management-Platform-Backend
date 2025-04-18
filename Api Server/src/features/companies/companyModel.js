@@ -2,7 +2,7 @@ const { getReadPool, getWritePool } = require('../../../config/db');
 const { pagination_limit } = require('../../../config/config');
 
 class Company {
-    constructor(id, overview, type, foundedIn, size, name, locations, industries) {
+    constructor({ id, overview, type, foundedIn, size, name, locations, industriesIds }) {
         this.id = id;
         this.overview = overview;
         this.type = type;
@@ -10,7 +10,7 @@ class Company {
         this.size = size;
         this.name = name;
         this.locations = locations;
-        this.industries = industries;
+        this.industriesIds = industriesIds;
     }
 
     static getReplicaPool() {
@@ -167,6 +167,7 @@ class Company {
 
     async update() {
         const client = await Company.getMasterPool().connect();
+        let values = [], index;
 
         try {
             await client.query('begin');
@@ -176,45 +177,91 @@ class Company {
             await client.query('delete from Company_Location where company_id = $1', [this.id]);
 
             // update company info
-            let values = [this.id, this.overview, this.type, this.foundedIn, this.size, this.name];
-            let index = 2;
-            const updateQuery =
-                `update company
+            index = 2;
+            const updateQuery = `
+                update company
                 set overview = $${index++}, type = $${index++}, founded_in = $${index++}, size = $${index++}, name = $${index++}
                 where id = $1
-                `;
+            `;
+            values = [this.id, this.overview, this.type, this.foundedIn, this.size, this.name];
             await client.query(updateQuery, values);
 
             // insert new industries
-            const insertIndustries =
-                `
-                insert into Company_Industry
-                select $1, id
-                from industry
-                where name = any($2)
-                `;
-            const { rowCount } = await client.query(insertIndustries, [this.id, this.industries]);
-            if (rowCount < this.industries.length) {
-                const err = new Error('Invalid industries array');
-                err.msg = 'one or more of the industries not found';
-                err.status = 400;
-                throw err;
-            }
+            const insertIndustries = `
+                insert into Company_Industry (company_id, industry_id)
+                values ${this.industriesIds.map((_, i) => `($1, $${i + 2})`).join(',')}
+            `;
+            values = [this.id, ...this.industriesIds];
+            await client.query(insertIndustries, values);
 
             // insert new locations
-            values = [this.id];
             index = 2;
-            let insertLocations = 'insert into Company_Location (company_id, country, city) values';
-            this.locations.forEach(({ country, city }, i) => {
-                insertLocations += `($1, $${index++}, $${index++})` + (i < this.locations.length - 1 ? ',' : '');
-                values.push(country, city);
-            });
+            let insertLocations = `
+                insert into Company_Location (company_id, country, city)
+                values ${this.locations.map((_) => `($1, $${index++}, $${index++})`).join(',')}
+            `;
+            values = [this.id, ...this.locations.flatMap(({ country, city }) => [country, city])];
             await client.query(insertLocations, values);
 
             await client.query('commit');
         }
         catch (err) {
             await client.query('rollback');
+            if (err.code === '23503') {
+                err.msg = 'one or more of the industries not found';
+                err.status = 400;
+            }
+            throw err;
+        }
+        finally {
+            client.release();
+        }
+    }
+
+    async create() {
+        const client = await Company.getMasterPool().connect();
+        let values = [], index;
+
+        try {
+            await client.query('begin');
+
+            // insert company info
+            const insertProfileInfo = `
+            insert into company(id, overview, type, founded_in, size, name, rating)
+            values($1, $2, $3, $4, $5, $6, 0)
+            `;
+            values = [this.id, this.overview, this.type, this.foundedIn, this.size, this.name];
+            await client.query(insertProfileInfo, values);
+
+            // insert new industries
+            const insertIndustries = `
+                insert into Company_Industry (company_id, industry_id)
+                values ${this.industriesIds.map((_, i) => `($1, $${i + 2})`).join(',')}
+            `;
+            values = [this.id, ...this.industriesIds];
+            await client.query(insertIndustries, values);
+
+            // insert new locations
+            index = 2;
+            let insertLocations = `
+                insert into Company_Location (company_id, country, city)
+                values ${this.locations.map((_) => `($1, $${index++}, $${index++})`).join(',')}
+            `;
+            values = [this.id, ...this.locations.flatMap(({ country, city }) => [country, city])];
+            await client.query(insertLocations, values);
+
+            await client.query('commit');
+        }
+        catch (err) {
+            await client.query('rollback');
+            if (err.code === '23503') {
+                err.msg = 'one or more of the industries not found';
+                err.status = 400;
+            }
+            else if (err.code === '23505') {
+                err.msg = 'company already exists';
+                err.status = 409;
+            }
             throw err;
         }
         finally {
@@ -232,11 +279,11 @@ class Company {
             select id, company_id as "companyId", title, description, rating, role, created_at as "createdAt"
             from reviews
             where company_id = $${index++}
-            `;
+`;
 
         //specific rating
         if (filters.rating) {
-            query += ` and rating = $${index++}`;
+            query += ` and rating = $${index++} `;
             values.push(filters.rating);
         }
 
@@ -266,7 +313,7 @@ class Company {
         }
 
         // pagination
-        query += ` limit $${index++} offset $${index++}`;
+        query += ` limit $${index++} offset $${index++} `;
         values.push(limit, (filters.page - 1) * limit);
 
         const { rows } = await Company.getReplicaPool().query(query, values);

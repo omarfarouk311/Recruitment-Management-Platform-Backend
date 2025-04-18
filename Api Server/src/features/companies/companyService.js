@@ -24,9 +24,14 @@ exports.getCompanyJobs = async (companyId, filters, userId) => {
     return result;
 };
 
-exports.updateCompanyData = async (companyId, { name, overview, type, foundedIn, size, locations, industries }) => {
-    const company = new Company(companyId, overview, type, foundedIn, size, name, locations, industries);
+exports.updateCompanyProfile = async (companyData) => {
+    const company = new Company(companyData);
     await company.update();
+};
+
+exports.finishCompanyProfile = async (companyData) => {
+    const company = new Company(companyData);
+    await company.create();
 };
 
 exports.getCompanyReviews = (companyId, filters) => {

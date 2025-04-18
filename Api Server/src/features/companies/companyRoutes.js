@@ -6,12 +6,21 @@ const { handleValidationErrors, validateFileNameHeader } = require('../../common
 const { notAllowed } = require('../../common/errorMiddleware');
 const router = Router();
 
+router.route('/finish-profile')
+    .post(
+        companyAuthorization.authorizeUpdateCompanyData,
+        companyValidation.validateUpdateCompanyData,
+        handleValidationErrors,
+        companyController.finishCompanyProfile
+    )
+    .all(notAllowed);
+
 router.route('/profile')
     .put(
         companyAuthorization.authorizeUpdateCompanyData,
         companyValidation.validateUpdateCompanyData,
         handleValidationErrors,
-        companyController.updateCompanyData
+        companyController.updateCompanyProfile
     )
     .all(notAllowed);
 
