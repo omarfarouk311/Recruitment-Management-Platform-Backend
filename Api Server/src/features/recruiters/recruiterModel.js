@@ -264,6 +264,24 @@ class RecruiterModel {
             throw err;
         }
     }
+
+    static async getAllRecruiters(companyId){
+        let replica_DB=replicaPool.getReadPool()
+        try{
+            let query=
+            `SELECT id,name
+            FROM Recruiter
+            WHERE company_id=$1`
+
+            let value=[companyId]
+            let queryResult=await replica_DB.query(query,value)
+            return queryResult.rows
+
+        }catch(err){
+            console.log('err in getAllRecruiters model',err.message)
+            throw err;
+        }
+    }
 }
 
    

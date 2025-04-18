@@ -70,3 +70,8 @@ module.exports.getProfilePicService=async(recruiterId)=>{
     
     return await getImageService(imageData);
 }
+
+module.exports.getAllRecruitersService=async(companyId)=>{
+    return await recruiterModel.getAllRecruiters(companyId)
+
+}

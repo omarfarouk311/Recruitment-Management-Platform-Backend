@@ -43,5 +43,13 @@ router.route('/profile-data')
 router.route('/profile-pic')
         .get(authorizeRecruiter
             ,recruiterController.getProfilePicController)
+        .put(authorizeRecruiter,
+                recruiterController.updateProfilePicController)
+
+
+
+router.route('/allRecruiters')
+        .get(authorizeCompany,
+            recruiterController.getAllRecruitersController)
 
 module.exports=router

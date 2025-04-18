@@ -1,5 +1,7 @@
 const recruiterService = require('./recruiterService');
 const config = require('../../../config/config');
+const { uploadImageService } = require('../../common/util');
+const { imagesBucketName, role } = require('../../../config/config');
 
 
 module.exports.getRecruitersContoller = async (req, res, next) => {  
@@ -115,7 +117,7 @@ module.exports.getProfilePicController=async(req,res,next)=>{
         const {
             metaData,
             size,
-            stream
+            stream 
         } = await recruiterService.getProfilePicService(recruiterId); // once the object return the await will finish but the stream will not
                                                                                 // be fully read as it came in chunks and will resond it as soon as chunk came from the readable stream
         res.setHeader("Content-Type", metaData['content-type']);
@@ -135,4 +137,40 @@ module.exports.getProfilePicController=async(req,res,next)=>{
         }
         next(err);
     }
+}
+
+module.exports.getAllRecruitersController=async(req,res,next)=>{
+
+    try{
+        let companyId=req.userId
+        let result=await recruiterService.getAllRecruitersService(companyId)
+        res.status(200).json(
+            result
+ )
+    }catch(err){
+        console.log("err in getAllRecruitersController")
+        next(err)
+    }
+
+}
+
+module.exports.updateProfilePicController=async(req,res,next)=>{
+  
+        const uploadedImageData = {
+            objectName: `${role.recruiter}${req.userId}`,
+            bucketName: imagesBucketName,
+            fileName: req.get('file-name'),
+            fileSize: req.get('content-length'),
+            mimeType: req.get('content-type'),
+            dataStream: req
+        }
+      
+         try{
+                await uploadImageService(uploadedImageData);
+        
+                return res.sendStatus(200)
+            }
+            catch (err) {
+                next(err);
+            }
 }
