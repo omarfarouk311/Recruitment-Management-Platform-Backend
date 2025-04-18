@@ -466,7 +466,7 @@ class assessmentsModel{
 
     }
 
-    static async get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page){
+    static async get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page,phase_types){
         let replica_DB=replicaPool.getReadPool();
         try{
 
@@ -475,9 +475,9 @@ class assessmentsModel{
             let query=
             `SELECT job_title,company_name,country,city,date_applied,job_id,CASE WHEN ${status}=1 THEN 'Accepted' ELSE 'Rejected' END as status 
             FROM Candidate_History 
-            WHERE seeker_id=$${cnt++} AND status=$${cnt++}
+            WHERE seeker_id=$${cnt++} AND status=$${cnt++} AND phase_type=$${cnt++}
             `
-            values.push(seekerId,status);
+            values.push(seekerId,status,phase_types);
             
             if(country){
                 query+=` AND country=$${cnt++}`
