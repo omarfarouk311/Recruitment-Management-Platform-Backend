@@ -1,6 +1,6 @@
 const assessmentsModel = require('./assessmentModel');
 const Kafka = require('../../common/kafka')
-const { action_types, logs_topic,candidate_status_pending,candidate_status_accepted,candidate_status_rejected } = require('../../../config/config')
+const { action_types, logs_topic,candidate_status_pending,candidate_status_accepted,candidate_status_rejected,phase_types } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 const primaryPool=require('../../../config/db')
 
@@ -178,7 +178,7 @@ module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,cit
     else{
         if(status==2)status=1;
         else status=0;
-        result=assessmentsModel.get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page);
+        result=assessmentsModel.get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page,phase_types.assessment);
     }
     return result
     
