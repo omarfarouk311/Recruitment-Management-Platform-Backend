@@ -23,7 +23,6 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-  has_image BOOLEAN NOT NULL,
   department text
 );
 
