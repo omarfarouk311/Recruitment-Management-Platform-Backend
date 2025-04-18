@@ -17,7 +17,7 @@ class educationModel {
             let query=
             `INSERT INTO Education (user_id,school_name,field,degree
             `
-            placeHolder=[`&1`,`$2`,`$3`,`$4`]
+            placeHolder=[`$1`,`$2`,`$3`,`$4`]
             values.push(userId,school_name,field,degree);
 
             let cnt=5;
@@ -56,6 +56,7 @@ class educationModel {
             `SELECT id,school_name,field,degree,grade,start_date,end_date
             FROM Education 
             WHERE user_id=$1
+            ORDER BY end_date DESC
             `
             let value=[seekerId]
             let queryResult=await replica_DB.query(query,value)

@@ -52,12 +52,42 @@ exports.getCompanyJobs = async (req, res, next) => {
     }
 };
 
-exports.updateCompanyData = async (req, res, next) => {
-    const { userId, body } = req;
+exports.updateCompanyProfile = async (req, res, next) => {
+    const data = {
+        id: req.userId,
+        overview: req.body.overview,
+        type: req.body.type,
+        foundedIn: req.body.foundedIn,
+        size: req.body.size,
+        name: req.body.name,
+        locations: req.body.locations,
+        industriesIds: req.body.industriesIds
+    };
 
     try {
-        await companyService.updateCompanyData(userId, body);
-        res.status(204).send();
+        await companyService.updateCompanyProfile(data);
+        res.status(204).end();
+    }
+    catch (err) {
+        next(err);
+    }
+};
+
+exports.finishCompanyProfile = async (req, res, next) => {
+    const data = {
+        id: req.userId,
+        overview: req.body.overview,
+        type: req.body.type,
+        foundedIn: req.body.foundedIn,
+        size: req.body.size,
+        name: req.body.name,
+        locations: req.body.locations,
+        industriesIds: req.body.industriesIds
+    };
+
+    try {
+        await companyService.finishCompanyProfile(data);
+        res.status(201).end();
     }
     catch (err) {
         next(err);

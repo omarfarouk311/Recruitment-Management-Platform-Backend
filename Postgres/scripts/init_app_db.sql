@@ -2,9 +2,10 @@ CREATE EXTENSION pg_trgm;
 CREATE EXTENSION vector;
 
 CREATE TABLE Users (
-  id serial PRIMARY KEY NOT NULL,
+  id serial PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
+  password TEXT NOT NULL,
+  role smallint NOT NULL
 );
 
 CREATE TABLE Job_Seeker (
@@ -14,8 +15,7 @@ CREATE TABLE Job_Seeker (
   gender BOOLEAN NOT NULL,
   country TEXT NOT NULL,
   city TEXT NOT NULL,
-  name TEXT NOT NULL,
-  has_image BOOLEAN NOT NULL
+  name TEXT NOT NULL
 );
 
 CREATE TABLE Recruiter (
@@ -23,7 +23,6 @@ CREATE TABLE Recruiter (
   company_id int,
   name TEXT NOT NULL,
   assigned_candidates_cnt smallint NOT NULL,
-  has_image BOOLEAN NOT NULL,
   department text
 );
 
@@ -69,8 +68,8 @@ CREATE TABLE Education (
   field TEXT NOT NULL,
   degree TEXT NOT NULL,
   grade TEXT,
-  start_date TEXT,
-  end_date TEXT
+  start_date Date,
+  end_date Date
 );
 
 CREATE TABLE Company_Invitations (
@@ -131,8 +130,8 @@ CREATE TABLE User_Experience (
   id serial PRIMARY KEY,
   user_id int NOT NULL,
   company_name text NOT NULL,
-  start_date TEXT,
-  end_date TEXT,
+  start_date Date,
+  end_date Date,
   description text,
   job_title text NOT NULL,
   country text,
@@ -377,6 +376,8 @@ CREATE INDEX ON Logs (company_id, performed_by);
 CREATE INDEX ON Logs (company_id, created_at);
 
 CREATE INDEX ON Recruitment_Phase (type);
+
+CREATE INDEX ON Users (email);
 
 ALTER TABLE Candidate_History ADD FOREIGN KEY (seeker_id) REFERENCES Job_Seeker (id) ON DELETE CASCADE;
 

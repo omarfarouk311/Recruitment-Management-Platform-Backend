@@ -2,32 +2,49 @@ const express = require('express');
 const router = express.Router();
 const profileController = require('./profileController');
 const profileValidation = require('./profileValidation');
-const { handleValidationErrors } = require('../../../common/util');
+const { handleValidationErrors, validateFileNameHeader } = require('../../../common/util');
 const { authorizeUpdateProfile, authorizeUpdateProfileImage } = require('./profileAuthorization');
 const { notAllowed } = require('../../../common/errorMiddleware');
 
-router.get('/:userId', 
-    profileValidation.validateGetUser, 
-    handleValidationErrors, 
-    profileController.getProfile
-);
+router.route('/finish-profile')
+    .post(
+        profileValidation.validateUserProfile,
+        handleValidationErrors,
+        authorizeUpdateProfile,
+        profileController.finishProfile
+    )
+    .all(notAllowed);
 
-router.put('/', 
-    profileValidation.validateUserProfile, 
-    handleValidationErrors, 
-    authorizeUpdateProfile,
-    profileController.updateProfile
-);
+router.route('/')
+    .put(
+        profileValidation.validateUserProfile,
+        handleValidationErrors,
+        authorizeUpdateProfile,
+        profileController.updateProfile
+    )
+    .all(notAllowed);
+
+router.route('/:userId')
+    .get(
+        profileValidation.validateGetUser,
+        handleValidationErrors,
+        profileController.getProfile
+    )
+    .all(notAllowed);
 
 router.route('/:seekerId/image')
     .get(
-        profileValidation.validateGetUser, 
+        profileValidation.validateGetUser,
+        handleValidationErrors,
         profileController.getProfileImage
     )
     .post(
         profileValidation.validateGetUser,
+        validateFileNameHeader(),
+        handleValidationErrors,
         authorizeUpdateProfileImage,
         profileController.uploadProfileImage
-    ).all(notAllowed);
+    )
+    .all(notAllowed);
 
 module.exports = router;

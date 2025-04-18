@@ -11,8 +11,10 @@ const { seekerSkillAuthorization } = require('./skillsAuthorization')
 router.route('/')
     .get(controller.getSeekerSkillsById)
     .post(seekerSkillAuthorization, skillValidation.skills, handleValidationErrors, controller.addSeekerSkills)
-    .delete(seekerSkillAuthorization, skillValidation.skills, handleValidationErrors, controller.deleteSeekerSkillById)
     .all(notAllowed)
 
+router.route('/:id')
+    .delete(seekerSkillAuthorization, skillValidation.skillIdParamValidation(), handleValidationErrors, controller.deleteSeekerSkillById)
+    .all(notAllowed)
 
 module.exports = router

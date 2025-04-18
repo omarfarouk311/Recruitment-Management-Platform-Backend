@@ -245,9 +245,9 @@ class RecruiterModel {
             let query=
             `
             SELECT t1.name as recruiterName,Company.name as companyName,Company_Location.city as companyCity,
-            Company_Location.country as companyCountry,t1.department as recruiterDepartment,t1.has_image as has_image
+            Company_Location.country as companyCountry,t1.department as recruiterDepartment
             FROM(
-            SELECT id,company_id,name,department,has_image
+            SELECT id,company_id,name,department
             FROM Recruiter
             WHERE id=$1) as t1
             JOIN Company ON Company.id=t1.company_id

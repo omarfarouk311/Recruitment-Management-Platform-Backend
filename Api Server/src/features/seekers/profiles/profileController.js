@@ -20,6 +20,24 @@ exports.updateProfile = async (req, res, next) => {
     }
 }
 
+exports.finishProfile = async (req, res, next) => {
+    const data = {
+        name: req.body.name,
+        city: req.body.city,
+        country: req.body.country,
+        phoneNumber: req.body.phoneNumber,
+        dateOfBirth: req.body.dateOfBirth,
+        gender: req.body.gender
+    };
+
+    try {
+        await profileService.finishProfile(req.userId, data);
+        res.status(201).end();
+    } catch (error) {
+        next(error);
+    }
+}
+
 exports.getProfileImage = async (req, res, next) => {
     const { seekerId } = req.params;
     const imageData = {
@@ -45,7 +63,7 @@ exports.getProfileImage = async (req, res, next) => {
     }
     catch (err) {
         if (err.code === 'NotFound') {
-            err.msg = 'Company photo not found';
+            err.msg = 'Seeker photo not found';
             err.status = 404;
         }
         next(err);
@@ -60,11 +78,6 @@ exports.uploadProfileImage = async (req, res, next) => {
         fileSize: req.get('content-length'),
         mimeType: req.get('content-type'),
         dataStream: req
-    };
-
-    const retrievedImageData = {
-        objectName: `${role.jobSeeker}${req.userId}`,
-        bucketName: imagesBucketName
     };
 
     try {

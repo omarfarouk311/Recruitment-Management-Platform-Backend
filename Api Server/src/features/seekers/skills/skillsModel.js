@@ -64,17 +64,13 @@ class SkillModel {
     }
 
 
-    static deleteSeekerSkillById = async (client, seekerId, skills) => {
+    static deleteSeekerSkillById = async (client, seekerId, skillId) => {
         try {
             const query = `
                             DELETE FROM User_Skills
                             WHERE user_id = $1 AND skill_id = $2
                         `; 
-            const deletionPromise = skills.map(async (skillId) => {
-                skillId = skillId.skillId
-                await client.query(query, [seekerId, skillId]); 
-            })
-            await Promise.all(deletionPromise);
+            await client.query(query, [seekerId, skillId]);
 
             return 'Skills deleted successfully';
         } catch (err) {

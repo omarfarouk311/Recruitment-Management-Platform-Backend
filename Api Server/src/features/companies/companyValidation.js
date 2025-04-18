@@ -52,20 +52,17 @@ const validateSize = () => body('size', `size must be an integer between ${confi
     .custom(value => typeof value === 'number' && value >= config.minCompanySize && value <= config.maxCompanySize)
     .isInt();
 
-const validateIndustries = () => body('industries')
+const validateIndustriesIds = () => body('industriesIds')
     .isArray({ min: config.minIndustriesArrayLength, max: config.maxIndustriesArrayLength })
-    .withMessage(`industries must be an array with size between ${config.minIndustriesArrayLength} and ${config.maxIndustriesArrayLength}`);
+    .withMessage(`industriesIds must be an array with size between ${config.minIndustriesArrayLength} and ${config.maxIndustriesArrayLength}`);
 
 const validateLocations = () => body('locations')
     .isArray({ min: config.minLocationsArrayLength, max: config.maxLocationsArrayLength })
     .withMessage(`locations must be an array with size between ${config.minLocationsArrayLength} and ${config.maxLocationsArrayLength}`);
 
-const validateIndustriesArray = () => body('industries.*')
-    .isString()
-    .withMessage('industry must be a string')
-    .trim()
-    .isLength({ min: config.minIndustryLength, max: config.maxIndustryLength })
-    .withMessage(`industry length must be between ${config.minIndustryLength} and ${config.maxIndustryLength}`);
+const validateIndustriesIdsArray = () => body('industriesIds.*', 'Invalid industry id in industriesIds array')
+    .custom(value => typeof value === 'number')
+    .isInt();
 
 const validateLocationsArray = () => body('locations.*')
     .custom(({ country, city }) => {
@@ -114,9 +111,9 @@ exports.validateUpdateCompanyData = [
     validateType(),
     validateSize(),
     validateFoundedIn(),
-    validateIndustries(),
+    validateIndustriesIds(),
     validateLocations(),
-    validateIndustriesArray(),
+    validateIndustriesIdsArray(),
     validateLocationsArray()
 ];
 

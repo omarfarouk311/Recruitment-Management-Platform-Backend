@@ -18,18 +18,26 @@ const reportRoutes = require('./features/reports/reportRoutes');
 const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
 const cvRoutes = require('./features/cvs/cvRoutes');
+const authRoutes = require('./features/auth/authRoutes');
+const { authenticateUser } = require('./features/auth/authController');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const app = express();
 
 minioConnect();
 
-app.use(helmet());
+app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+    }),
+);
 
 /* To be removed after integration because api request and frontend files will be served from the
 same origin (the reverse proxy) */
 app.use(cors({ origin: '*' }));
 
+<<<<<<< HEAD
 // for testing
 app.use((req, res, next) => {
     // console.log('request reached')
@@ -37,8 +45,19 @@ app.use((req, res, next) => {
     req.userRole = role.recruiter;
     next();
 });
+=======
+app.use(cookieParser(process.env.COOKIE_SECRET));
+>>>>>>> 564cf241c471590ac9b62a0495df8bbaf8ad2a20
 
 app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+
+// parse the cv when the user uploads it, doesn't need to be authenticated
+app.use('/api/cvs', cvRoutes);
+
+// this middleware will authenticate the user for all the routes below it
+app.use(authenticateUser);
 
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/templates', templatesRoutes);
@@ -54,7 +73,6 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
-app.use('/api/cvs', cvRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);

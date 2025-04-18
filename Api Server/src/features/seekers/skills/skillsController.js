@@ -26,8 +26,8 @@ module.exports.addSeekerSkills = async (req, res, next) => {
 module.exports.deleteSeekerSkillById = async (req, res, next) => {
     try {
         const seekerId = req.userId;
-        const skills = req.body.skills;
-        const deleteMsg = await service.deleteSeekerSkillById(seekerId, skills);
+        const skillId = req.params.id;
+        const deleteMsg = await service.deleteSeekerSkillById(seekerId, skillId);
         res.status(200).json({ msg: deleteMsg });
     } catch (err) {
         

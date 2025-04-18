@@ -4,11 +4,11 @@ const { authorizeAccess } = require('../jobs_applied_for/jobsAppliedForAuthoriza
 const { checkLimit } = require('./cvAuthorization');
 const cvController = require('./cvController')
 const { cvIdValidation, jobIdValidation, seekerIdValidation } = require('./cvValidation');
-const { handleValidationErrors } = require('../../../common/util')
+const { handleValidationErrors, validateFileNameHeader } = require('../../../common/util')
 const router = Router();
 
 router.route('/')
-    .post(authorizeAccess, checkLimit, cvController.uploadCV)
+    .post(authorizeAccess, checkLimit, validateFileNameHeader(), handleValidationErrors, cvController.uploadCV)
     .get(jobIdValidation(), seekerIdValidation(), handleValidationErrors, cvController.getCvName)
     .all(notAllowed);
 
