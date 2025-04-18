@@ -37,7 +37,6 @@ app.use(
 same origin (the reverse proxy) */
 app.use(cors({ origin: '*' }));
 
-<<<<<<< HEAD
 // for testing
 app.use((req, res, next) => {
     // console.log('request reached')
@@ -45,9 +44,7 @@ app.use((req, res, next) => {
     req.userRole = role.recruiter;
     next();
 });
-=======
 app.use(cookieParser(process.env.COOKIE_SECRET));
->>>>>>> 564cf241c471590ac9b62a0495df8bbaf8ad2a20
 
 app.use(express.json());
 
