@@ -116,8 +116,10 @@ class Company {
         // only the company is allowed to see its closed jobs
         let query =
             `
-            select j.id, j.title, j.country, j.city, j.created_at as "createdAt"
+            select j.id, j.title, j.company_id as "companyId", c.name as "companyName", c.rating as "companyRating",
+            j.country, j.city, j.created_at as "createdAt"
             from job j
+            join company c on j.company_id = c.id
             where j.company_id = $${index++} ${userId !== companyId ? 'and j.closed = false' : ''} ${filters.remote ? 'and j.remote = true' : ''}
             `;
 
