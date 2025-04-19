@@ -5,11 +5,10 @@ module.exports.addEducationController=async(req,res,next)=>{
         let userId=req.userId;
         let{school_name,field,degree,grade,start_date,end_date}=req.body;
 
-        await educationService.addEducationService(userId,school_name,field,degree,grade,start_date,end_date);
+        let id = await educationService.addEducationService(userId,school_name,field,degree,grade,start_date,end_date);
         
         res.status(201).json({
-            success:"true",
-            message:"Education added successfully" 
+            id: id,
         })
     
     }catch(err){

@@ -43,8 +43,11 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
                 }, 'logs');
             throw error
         }
+        [].find
         delete result.client;
-        return { assignedCandidatesCnt: result.assigned_candidates_cnt };
+        return { 
+            assignedCandidatesCnt: result.assigned_candidates_cnt, 
+            invalidCandidates: seekerIds.filter((value) => result.updated_candidates.find((seeker) => seeker.seeker_id === value) === undefined) };
     } catch (error) {
         if (result.client) {
             await result.client.query('ROLLBACK;');

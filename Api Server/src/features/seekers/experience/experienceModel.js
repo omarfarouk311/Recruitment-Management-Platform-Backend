@@ -11,7 +11,9 @@ class Experience {
                 country, city
             FROM User_Experience
             WHERE user_id = $1
-            ORDER BY end_date DESC;
+            ORDER BY 
+            CASE WHEN end_date IS NULL THEN 1 ELSE 0 END, 
+            end_date DESC;
         `;
         const values = [userId];
         const { rows } = await pool.query(query, values);
