@@ -11,7 +11,6 @@ module.exports = {
     port: process.env.PORT || 3000,
     logs_topic: 'logs',
     cv_parsing_topic: 'cv_parsing',
-    job_parsing_topic: 'job_parsing',
     cv_embedding_topic: 'cv_embedding_generation',
     job_embedding_topic: 'job_embedding_generation',
     profile_embedding_topic: 'profile_embedding_generation',

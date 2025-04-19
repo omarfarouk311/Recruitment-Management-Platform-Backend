@@ -10,16 +10,15 @@ exports.uploadCV = async (req, res, next) => {
     };
 
     try {
-        let id = await cvService.uploadCV(cvData);
-        res.status(201).json({ id });
+        const response = await cvService.uploadCV(cvData);
+        res.status(201).json(response);
     }
     catch (err) {
         next(err);
     }
 };
 
-
-exports.getCvName = async (req, res, next) => { 
+exports.getCvName = async (req, res, next) => {
     const { jobId, seekerId } = req.query;
     const { userId, userRole } = req;
 
@@ -67,8 +66,6 @@ exports.deleteCV = async (req, res, next) => {
         next(err);
     }
 }
-
-
 
 exports.getCvsForJob = async (req, res, next) => {
     const { jobId } = req.params;

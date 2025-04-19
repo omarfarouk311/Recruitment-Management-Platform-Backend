@@ -27,19 +27,33 @@ class CV {
         return cnt;
     }
 
-    async create() {
-        const query =
-            `
-            insert into cv (id, user_id, name, created_at, deleted)
-            values ($1, $2, $3, $4, $5) RETURNING id;
-            `;
-        const values = [this.id, this.seekerId, this.name, this.createdAt, this.deleted];
+    async create(produce) {
+        const client = await CV.getMasterPool().connect();
 
-        let res = await CV.getMasterPool().query(query, values);
-        if(res.rowCount) {
-            return res.rows[0].id;
+        try {
+            await client.query('BEGIN');
+
+            const query = `
+                insert into cv (id, user_id, name, created_at, deleted)
+                values ($1, $2, $3, $4, $5)
+                RETURNING id
+            `;
+            const values = [this.id, this.seekerId, this.name, this.createdAt, this.deleted];
+            const { rows } = await client.query(query, values);
+
+            await produce(this.id);
+
+            await client.query('COMMIT');
+
+            return rows[0];
         }
-        return null;
+        catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        }
+        finally {
+            client.release();
+        }
     }
 
     static async getIdFromSequence() {
@@ -87,8 +101,8 @@ class CV {
                         from Recruiter
                         WHERE id = $1;
                     `, [query.rows[0].recruiter_id])
-                    
-                    if(query2.rows[0].company_id != userId) {
+
+                    if (query2.rows[0].company_id != userId) {
                         const error = new Error('You are not authorized to access this CV');
                         error.status = 403;
                         error.msg = 'Authorization Error';
@@ -106,7 +120,7 @@ class CV {
                         JOIN CV cv
                         ON cv.id = tmp.cv_id
                 `, [jobId, seekerId]);
-                }               
+                }
             }
             return query.rows;
         } catch (err) {
@@ -118,13 +132,13 @@ class CV {
         const client = getReadPool();
         try {
             let query;
-            if(userRole == role.jobSeeker) {
+            if (userRole == role.jobSeeker) {
                 query = await client.query(`
                     SELECT user_id
                     FROM CV
                     WHERE id = $1;
                 `, [cvId]);
-                if(query.rows[0].user_id != userId) {
+                if (query.rows[0].user_id != userId) {
                     const error = new Error('You are not authorized to access this CV');
                     error.status = 403;
                     error.msg = 'Authorization Error';
@@ -140,7 +154,7 @@ class CV {
                         AND recruiter_id = $3;
                     `, [seekerId, jobId, userId]);
 
-                    if(query.rows.length == 0) {
+                    if (query.rows.length == 0) {
                         const error = new Error('You are not authorized to access this CV');
                         error.status = 403;
                         error.msg = 'Authorization Error';
@@ -153,7 +167,7 @@ class CV {
                         WHERE seeker_id = $1
                         AND job_id = $2;
                     `, [seekerId, jobId]);
-                    if(query.rows.length == 0) {
+                    if (query.rows.length == 0) {
                         const error = new Error();
                         error.status = 403;
                         error.msg = 'seeker id and job id are incorrect';
@@ -164,11 +178,11 @@ class CV {
                         from Recruiter
                         WHERE id = $1;
                     `, [query.rows[0].recruiter_id])
-                    if(query2.rows[0].company_id!= userId) {
+                    if (query2.rows[0].company_id != userId) {
                         const error = new Error('You are not authorized to access this CV');
                         error.status = 403;
                         error.msg = 'Authorization Error';
-                        throw error; 
+                        throw error;
                     }
                 }
                 return;
@@ -178,10 +192,10 @@ class CV {
         }
     }
 
-    static async deleteCV (cvId, userId) {
+    static async deleteCV(cvId, userId) {
         const client = getWritePool();
         try {
-           await client.query(`
+            await client.query(`
                 UPDATE CV
                 SET deleted = $1
                 WHERE id = $2 and user_id = $3;
