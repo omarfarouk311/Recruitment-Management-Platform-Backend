@@ -16,9 +16,9 @@ exports.getTemplateDetails = async (req, res, next) => {
         const { id } = req.params;
         const template = await Templates.getTemplateById(id, req.query.simplified);
         if (!template) {
-            return res.sendStatus(404);
+            return res.status(404).json({ success: false, message: 'Template not found' });
         }
-        res.status(200).json(template);
+        res.status(200).json({ success: true, data: template });
     } catch (error) {
         next(error);
     }
@@ -30,7 +30,7 @@ exports.addTemplate = async (req, res) => {
         const createdTemplate = await Templates.createTemplate(newTemplate,req.userId);
         res.status(201).json({ success: true, data: createdTemplate });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error);
     }
 };
 
@@ -45,11 +45,11 @@ exports.editTemplate = async (req, res) => {
         }
         res.status(200).json({ success: true, data: updatedTemplate });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error);
     }
 };
 
-exports.deleteTemplate = async (req, res) => {
+exports.deleteTemplate = async (req, res,next) => {
     try {
         const { id } = req.params;
         const companyId = req.userId;
@@ -59,7 +59,7 @@ exports.deleteTemplate = async (req, res) => {
         }
         res.status(200).json({ success: true, message: 'Template deleted successfully' });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error);
     }
 };
 

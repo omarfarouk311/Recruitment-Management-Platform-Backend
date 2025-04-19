@@ -40,10 +40,11 @@ app.use(cors({ origin: '*' }));
 // app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use((req, res, next) => {
-  req.userId = 3;
-  req.userRole = role.jobSeeker;
-  next();
-})
+    // console.log('request reached')
+    req.userId = 3;
+    req.userRole = role.recruiter;
+    next();
+});
 
 app.use(express.json());
 

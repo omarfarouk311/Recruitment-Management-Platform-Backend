@@ -1,6 +1,6 @@
 const { getReadPool,getWritePool } = require('../../../config/db');
 const { produce} = require("../../common/kafka")
-const {getCompanyName} = require ('../candidates/candidateModel');
+const {CandidateModel} = require ('../candidates/candidateModel');
 const { v4: uuid } = require('uuid');
 const { action_types, logs_topic } = require("../../../config/config");
 
@@ -34,7 +34,7 @@ class Templates {
     static async getAllTemplates(companyId, sortBy = 1, offset, limit, simplified) {
         const pool = getReadPool();
         const order = sortBy === 1 ? 'ASC' : 'DESC';
-        const limitQuery = offset != undefined ? 'OFFSET $2 LIMIT $3' : '';
+        const limitQuery = offset ? 'OFFSET $2 LIMIT $3' : '';
         let params = offset ? [companyId, offset, limit] : [companyId];
         const columns = simplified ? 'id, name' : 'id, name, updated_at';
         
@@ -60,7 +60,7 @@ class Templates {
 
     static async createTemplate(templateData,companyId,placeholders) {
          const pool = await getWritePool().connect();
-         const companyName = await getCompanyName(companyId); 
+         const companyName = await CandidateModel.getCompanyName(companyId); 
         
         try{
             
@@ -81,7 +81,7 @@ class Templates {
                 },
                 action_type:action_types.create_template
               },logs_topic);
-
+            await pool.query("COMMIT");
             return result.rows[0];
         }
         catch(err){
@@ -97,8 +97,8 @@ class Templates {
 
     static async updateTemplate(id, updatedData,placeholders,companyId) {
 
-        const pool = await getWritePool();
-        const companyName = await getCompanyName(companyId); 
+        const pool = await getWritePool().connect();
+        const companyName = await CandidateModel.getCompanyName(companyId); 
 
         try{
             await pool.query('BEGIN');
@@ -118,7 +118,7 @@ class Templates {
                 },
                 action_type:action_types.update_template
               },logs_topic);
-
+              await pool.query("COMMIT");
             return result.rows[0];
         }
         catch(err){
@@ -132,17 +132,18 @@ class Templates {
 
     static async deleteTemplate(id,companyId) {
 
-        const pool = await getWritePool();
-        const companyName = await getCompanyName(companyId);
+        const pool = await getWritePool().connect();
+        const companyName = await CandidateModel.getCompanyName(companyId);
 
         try{
             await pool.query('BEGIN');
             const result = await pool.query('DELETE FROM job_offer_template WHERE id = $1 RETURNING name' , [id] );
 
-            if(result.length === 0) {
+            if(result.rows.length === 0) {
                 return false;
             }
-            const templateDelete = result[0].name;
+            
+            const templateDelete = result.rows[0].name;
 
             const logData = {
                 performed_by: companyName,
@@ -151,7 +152,7 @@ class Templates {
                 extra_data: { deletedTemplate: templateDelete },
                 action_type: action_types.remove_template,
               };
-            
+            await pool.query("COMMIT");
             await produce(logData, logs_topic);
             return result;
               
@@ -172,8 +173,7 @@ class Templates {
             SELECT 
                 c.placeholders_params AS placeholders_params, 
                 j.name AS template_name,
-                j.description AS template_description,
-                j.id AS template_id
+                j.description AS template_description
             FROM candidates c
             JOIN job_offer_template j ON c.template_id = j.id
             WHERE c.job_id = $1 AND c.seeker_id = $2
