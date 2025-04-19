@@ -16,16 +16,20 @@ class interview {
                         SELECT job_seeker.name as "userName",
                         job.title as "jobTitle",
                         candidates.phase_deadline as "date",
-                        job.country as "location",
+                        job.country as "jobCountry",
+                        job.city as "jobCity",
                         job.remote as "isRemote",
-                        job_seeker.country as "candidateLocation",
+                        job_seeker.country as "candidateCountry",
+                        job_seeker.city as "candidateCity",
                         job_seeker.id as "userId",
-                        job.id as "jobId"
+                        job.id as "jobId",
+                        candidates.interview_link as "meetingLink"
                         FROM (
                                 SELECT seeker_id,
                                 phase, job_id,
                                 phase_deadline,
-                                recruitment_process_id
+                                recruitment_process_id,
+                                interview_link
                                 FROM Candidates
                                 WHERE recruiter_id = $${index++}
                             ) as candidates
@@ -91,13 +95,15 @@ class interview {
                         job.title as job_title,job.city as job_city,
                         job.id as job_id,comp.id as company_id,
                         candidates.phase_deadline as deadline,
+                        candidates.interview_link as "meetingLink",
                         job.country as location,
                         comp.name as companyName
                         FROM (
                                 SELECT recruiter_id,
                                 phase, job_id,
                                 phase_deadline,
-                                recruitment_process_id
+                                recruitment_process_id,
+                                interview_link
                                 FROM Candidates
                                 WHERE seeker_id = $${index++}
                             ) as candidates
@@ -157,14 +163,15 @@ class interview {
         }
     }
 
-    static async modifyInterviewDate(jobId, seekedId, timestamp, client) {
+    static async modifyInterviewDate(jobId, seekedId, timestamp, interviewLink, client) {
         try {
             const query = `
                 UPDATE candidates
-                SET phase_deadline = $1, last_status_update = $2
-                WHERE job_id = $3 AND seeker_id = $4;
+                SET phase_deadline = $1, last_status_update = $2,
+                interview_link = $3
+                WHERE job_id = $4 AND seeker_id = $5;
             `;
-            await client.query(query, [timestamp, new Date(), jobId, seekedId]);
+            await client.query(query, [timestamp, new Date(), interviewLink, jobId, seekedId]);
 
             return;
         } catch (err) {
