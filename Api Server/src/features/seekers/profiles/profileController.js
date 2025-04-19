@@ -4,7 +4,7 @@ const { imagesBucketName, role } = require('../../../../config/config');
 
 exports.getProfile = async (req, res, next) => {
     try {
-        const profile = await profileService.getProfile(req.params.userId);
+        const profile = await profileService.getProfile(req.params.seekerId)
         res.status(200).json(profile);
     } catch (error) {
         next(error);

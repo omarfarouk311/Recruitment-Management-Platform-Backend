@@ -37,14 +37,13 @@ app.use(
 same origin (the reverse proxy) */
 app.use(cors({ origin: '*' }));
 
-// for testing
+// app.use(cookieParser(process.env.COOKIE_SECRET));
+
 app.use((req, res, next) => {
-    // console.log('request reached')
-    req.userId = 2;
-    req.userRole = role.recruiter;
-    next();
-});
-app.use(cookieParser(process.env.COOKIE_SECRET));
+  req.userId = 3;
+  req.userRole = role.jobSeeker;
+  next();
+})
 
 app.use(express.json());
 
@@ -54,7 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cvs', cvRoutes);
 
 // this middleware will authenticate the user for all the routes below it
-app.use(authenticateUser);
+// app.use(authenticateUser);
 
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/templates', templatesRoutes);

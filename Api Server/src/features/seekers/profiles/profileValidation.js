@@ -1,7 +1,7 @@
 const { param, body } = require("express-validator");
 
 const validateUserId = () =>
-  param("userId")
+  param("seekerId")
     .isInt({ min: 1, max: 100000000 })
     .toInt()
     .withMessage("Invalid user id");

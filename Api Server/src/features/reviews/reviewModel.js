@@ -125,11 +125,11 @@ class Review {
     static async updateCompanyAvgRating(companyId, client) {
         const updateRating = `
             UPDATE company
-            SET rating = (
+            SET rating = coalesce((
                 SELECT AVG(rating)
                 FROM reviews
                 WHERE company_id = $1
-            )
+            ), 0)
             WHERE id = $1
         `;
         await client.query(updateRating, [companyId]);

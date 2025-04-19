@@ -24,7 +24,7 @@ router.route('/')
     )
     .all(notAllowed);
 
-router.route('/:userId')
+router.route('/:seekerId')
     .get(
         profileValidation.validateGetUser,
         handleValidationErrors,
