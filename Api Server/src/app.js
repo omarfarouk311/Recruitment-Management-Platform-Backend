@@ -37,7 +37,8 @@ app.use(
 same origin (the reverse proxy) */
 app.use(cors({ origin: '*' }));
 
-// for testing
+// app.use(cookieParser(process.env.COOKIE_SECRET));
+
 app.use((req, res, next) => {
     console.log('request reached')
     req.userId = 1;
