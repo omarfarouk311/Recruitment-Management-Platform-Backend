@@ -39,22 +39,22 @@ app.use(cors({ origin: '*' }));
 
 // for testing
 app.use((req, res, next) => {
-    // console.log('request reached')
-    req.userId = 2;
-    req.userRole = role.recruiter;
+    console.log('request reached')
+    req.userId = 1;
+    req.userRole = role.company;
     next();
 });
-app.use(cookieParser(process.env.COOKIE_SECRET));
+// app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
+// app.use('/api/auth', authRoutes);
 
 // parse the cv when the user uploads it, doesn't need to be authenticated
 app.use('/api/cvs', cvRoutes);
 
 // this middleware will authenticate the user for all the routes below it
-app.use(authenticateUser);
+// app.use(authenticateUser);
 
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/templates', templatesRoutes);

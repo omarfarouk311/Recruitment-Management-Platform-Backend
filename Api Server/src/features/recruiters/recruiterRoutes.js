@@ -37,7 +37,7 @@ router.route('/assigned-Candidate-JobTitles')  // get list of the jobs the recru
              recruiterController.getJobTitleList)
 
 router.route('/profile-data')
-        .get(authorizeRecruiter,
+        .get(authorizeCompany,
              recruiterController.getRecruiterDataController)
 
 router.route('/profile-pic')

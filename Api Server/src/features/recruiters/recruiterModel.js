@@ -156,7 +156,7 @@ class RecruiterModel {
         try{
 
             let query=
-            `SELECT DISTINCT department as departments
+            `SELECT DISTINCT department 
             FROM Recruiter
             WHERE company_id=$1`
 

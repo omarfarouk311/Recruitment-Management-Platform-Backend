@@ -8,10 +8,10 @@ module.exports.getRecruitersContoller = async (req, res, next) => {
 
    try{
      let companyId=req.userId
-     let {recruiter,department,sorted,page}=req.query
+     let {name,department,sorted,page}=req.query
      let limit=config.pagination_limit
 
-     let result=await recruiterService.getRecruitersService(companyId,recruiter,department,sorted,page,limit)
+     let result=await recruiterService.getRecruitersService(companyId,name,department,sorted,page,limit)
      res.status(200).json({
         success: true,
         recruiters:result
@@ -47,8 +47,7 @@ module.exports.getUniquetDepartmentsController=async(req,res,next)=>{
     try{
         let result=await recruiterService.getUniquetDepartmentsService(req.userId)
         res.status(200).json({
-            success:true,
-            departments:result
+            result
         })
 
     }catch(err){
