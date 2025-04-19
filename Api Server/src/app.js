@@ -34,7 +34,7 @@ app.use(cors({ origin: '*' }));
 app.use((req, res, next) => {
     // console.log('request reached')
     req.userId = 3;
-    req.userRole = role.jobSeeker;
+    req.userRole = role.recruiter;
     next();
 });
 

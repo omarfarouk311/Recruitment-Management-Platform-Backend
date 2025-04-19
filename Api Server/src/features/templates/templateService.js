@@ -21,7 +21,7 @@ function extractPlaceholders (value) {
 
 exports.getAllTemplates = async (userId, sortBy, page, userRole, simplified) => {
   const limit = constants.pagination_limit
-  const offset = page? (page - 1) * limit: undefined;
+  const offset = (page - 1) * limit;
   
   let companyId = userRole === role.recruiter? (await HelperQuerySet.getCompanyIdByRecruiter(userId)): userId;
   return await Templates.getAllTemplates(companyId, sortBy, offset, limit, simplified); 
