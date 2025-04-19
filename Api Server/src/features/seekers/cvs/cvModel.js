@@ -20,7 +20,7 @@ class CV {
             `
             select count(id)::int as "cnt"
             from cv
-            where user_id = $1
+            where user_id = $1 AND deleted = False
             `;
 
         const { rows: [{ cnt }] } = await CV.getMasterPool().query(query, [seekerId]);
@@ -31,11 +31,15 @@ class CV {
         const query =
             `
             insert into cv (id, user_id, name, created_at, deleted)
-            values ($1, $2, $3, $4, $5)
+            values ($1, $2, $3, $4, $5) RETURNING id;
             `;
         const values = [this.id, this.seekerId, this.name, this.createdAt, this.deleted];
 
-        await CV.getMasterPool().query(query, values);
+        let res = await CV.getMasterPool().query(query, values);
+        if(res.rowCount) {
+            return res.rows[0].id;
+        }
+        return null;
     }
 
     static async getIdFromSequence() {

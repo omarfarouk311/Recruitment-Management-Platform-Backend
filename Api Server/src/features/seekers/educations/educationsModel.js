@@ -36,11 +36,13 @@ class educationModel {
                 placeHolder.push(`$${cnt++}`)
                 values.push(end_date);
             }
-            query+=`) VALUES(${placeHolder.join(', ')})`
+            query+=`) VALUES(${placeHolder.join(', ')}) RETURNING id`
 
-            await primary_DB.query(query,values)
-
-            return true
+            const res = await primary_DB.query(query,values);
+            if (res.rowCount) {
+                return res.rows[0].id;
+            }
+            throw new Error('Failed to add education');
 
         }catch(err){
             console.log("err in addEducation model",err.message);

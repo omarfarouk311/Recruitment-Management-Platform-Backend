@@ -60,7 +60,7 @@ exports.uploadCV = async ({ seekerId, mimeType, fileName, fileSize, dataStream }
     // insert the CV data in the DB, and try to delete it from the object store if insertion failed
     try {
         const cv = new CV(id, fileName, seekerId, new Date());
-        await cv.create();
+        return await cv.create();
     }
     catch (err) {
         await client.removeObject(cvsBucketName, id, { forceDelete: true });
