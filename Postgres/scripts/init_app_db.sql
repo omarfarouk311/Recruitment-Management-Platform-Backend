@@ -92,6 +92,7 @@ CREATE TABLE Candidates (
   similarity_score float NOT NULL,
   cv_id int NOT NULL,
   phase_deadline TIMESTAMP,
+  interview_link TEXT,
   template_id INTEGER,
   placeholders_params JSON,
   recruitment_process_id int NOT NULL,

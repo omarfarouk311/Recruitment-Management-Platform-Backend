@@ -14,9 +14,9 @@ module.exports.getRecruiterInterviewsData = async (req, res, next) => {
 
 module.exports.modifyInterviewDate = async (req, res, next) => {
     const { jobId, seekerId } = req.params
-    const { timestamp } = req.body;
+    const { timestamp, interviewLink } = req.body;
     try {
-        const response = await interviewService.modifyInterviewDate(req.userId, jobId, seekerId, timestamp);
+        const response = await interviewService.modifyInterviewDate(req.userId, jobId, seekerId, timestamp, interviewLink);
         res.status(200).json(response);
     } catch (err) {
         next(err);

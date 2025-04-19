@@ -83,45 +83,51 @@ class jobModel {
         let client = Pool.getReadPool();
         try {
             const jobDetailsQuery = `
-                        SELECT j.description as job_description,
+
+                        SELECT j.title as title,
+                        j.description as job_description,
+                        j.created_at as created_at,
+                        j.country as country,
+                        j.city as city,
                         j.remote as remote,
                         j.applied_cnt as applied_cnt,
                         j.closed as closed,
 
+                        c.id as company_id,
                         c.name as company_name,
                         c.founded_in as founded_in,
                         c.overview as overview,
                         c.size as company_size,
-                        c.type as type ,
+                        c.type as type,
+                        c.rating as company_rating,
 
-                        r.title as review_title,
-                        r.description as review_description,
-                        r.rating as review_rating,
-                        r.created_at as review_created_at
+                        count(ci.industry_id) as industry_count
 
-                        FROM (SELECT title, description, created_at, company_id, industry_id, country, city, remote,
+                        FROM (SELECT title, description, created_at, company_id, country, city, remote,
                                 applied_cnt, closed
                                 FROM job WHERE id = $1
                                 AND closed = $2
                             ) as j
                         JOIN company c
                         ON j.company_id = c.id
-                        LEFT JOIN reviews r
-                        ON c.id = r.company_id
-                        JOIN industry i
-                        ON i.id = j.industry_id;
-                `;      
+                        LEFT JOIN company_industry ci
+                        ON ci.company_id = c.id
+                        GROUP BY
+                            j.title, j.description, j.created_at, j.country, j.city,
+                            j.remote, j.applied_cnt, j.closed,
+                            c.id, c.name, c.founded_in, c.overview,
+                            c.size, c.type, c.rating
+                        `;
 
             const jobValues = [jobId, false];
             const jobRes = await client.query(jobDetailsQuery, jobValues);
-
+       
             if (jobRes.rows.length === 0) {
                 const err = new Error('Job id is not in database');
                 err.msg = 'Job not found';
                 err.status = 404;
                 throw err;
             }
-
             let hasReported = false, hasApplied = false, skillMaches = 0;
 
             if (userRole === role.jobSeeker) {
@@ -143,9 +149,20 @@ class jobModel {
                 skillMaches = await this.getSkillMatches(jobId, userId);
             }
 
+            const companyId = jobRes.rows[0].company_id;
+            const reviews = await client.query(`
+                                                SELECT title as review_title,
+                                                created_at as review_created_at,
+                                                description as review_description,
+                                                rating as review_rating
+
+                                                FROM reviews 
+                                                WHERE company_id = $1
+                                                LIMIT 2;
+                                            `, [companyId])
             return userRole === role.jobSeeker
-                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied, skillMaches }
-                : { jobDetails: jobRes.rows[0] };
+                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied, skillMaches, reviews: reviews.rows } 
+                : { jobDetails: jobRes.rows[0], reviews: reviews.rows } ;
 
         } catch (err) {
             console.log('Error in getJobById');
@@ -346,7 +363,7 @@ class jobModel {
             const values = [jobId];
             const { rows } = await client.query(query, values);
             return rows;
-            
+
         } catch (err) {
             throw err;
         }

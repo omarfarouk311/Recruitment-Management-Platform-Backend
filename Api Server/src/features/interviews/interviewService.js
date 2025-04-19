@@ -18,13 +18,13 @@ module.exports.getSeekerInterviewsData = async (id, filters) => {
     return interviews;
 }
 
-module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timestamp) => {
+module.exports.modifyInterviewDate = async (recruiterId, jobId, seekerId, timestamp, interviewLink) => {
 
     // start the transaction here, as we will add the email functionality and will wait until we get ack from kafka
     const client = await Pool.getWritePool().connect() 
     try {
         await client.query('BEGIN');
-        await interviewModel.modifyInterviewDate(jobId, seekerId, timestamp, client);
+        await interviewModel.modifyInterviewDate(jobId, seekerId, timestamp, interviewLink, client);
         const { name: recruiterName, company_id: companyId } = await interviewModel.getRecruiterNameAndCompanyId(recruiterId)
         const id = uuid();
         const logs =  Kafka.produce({
