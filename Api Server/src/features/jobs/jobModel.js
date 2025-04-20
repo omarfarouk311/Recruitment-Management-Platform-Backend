@@ -108,7 +108,7 @@ class jobModel {
                     COALESCE(
                         (SELECT json_agg(
                             json_build_object(
-                                'company_id', r.company_id,
+                                'id', r.id,
                                 'title', r.title,
                                 'role', r.role,
                                 'description', r.description,
@@ -117,7 +117,7 @@ class jobModel {
                             )
                         )
                         FROM (
-                            SELECT company_id, title, role, description, rating, created_at
+                            SELECT id, title, role, description, rating, created_at
                             FROM reviews
                             WHERE company_id = c.id
                             LIMIT 2
@@ -330,30 +330,22 @@ class jobModel {
         let client = Pool.getReadPool();
         try {
             const query = `
-                            SELECT c.name as companyName,
-                            c.rating as companyRating,
-                            j.id as jobId,
-                            j.title as jobTitle,
-                            j.country as country,
-                            j.city as city,
-                            CURRENT_DATE - j.created_at as days_ago
-
-
-                            FROM  ( 
-                                    SELECT embedding, job_id
-                                    FROM job_embedding
-                                    WHERE job_id = $1
-                                ) as t1
-                            JOIN job_embedding t2
-                            ON t1.job_id != t2.job_id
-                            JOIN job j
-                            ON t2.job_id = j.id
-                            JOIN company c
-                            ON j.company_id  = c.id
-                            ORDER BY t1.embedding <=> t2.embedding
-                            LIMIT 3;
-
-                        `
+                SELECT j.id, j.title, j.company_id as "companyId", c.name as "companyName",
+                c.rating as "companyRating", j.country, j.city, j.created_at as "createdAt"
+                FROM ( 
+                    SELECT embedding, job_id
+                    FROM job_embedding
+                    WHERE job_id = $1
+                ) as t1
+                JOIN job_embedding t2
+                ON t1.job_id != t2.job_id
+                JOIN job j
+                ON t2.job_id = j.id
+                JOIN company c
+                ON j.company_id  = c.id
+                ORDER BY t1.embedding <=> t2.embedding
+                LIMIT 3
+            `;
             const values = [jobId];
             const { rows } = await client.query(query, values);
             return rows;

@@ -75,7 +75,7 @@ module.exports.getSimilarJobs = async (req, res, next) => {
     const jobId = req.params.id;
     try {
         const jobs = await jobService.getSimilarJobs(jobId);
-        res.status(200).json({ jobs });
+        res.status(200).json(jobs);
     } catch (err) {
         next(err);
     }
