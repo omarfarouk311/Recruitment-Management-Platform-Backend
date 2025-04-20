@@ -89,6 +89,7 @@ class jobModel {
                         'description', j.description,
                         'country', j.country,
                         'city', j.city,
+                        'created_at', j.created_at,
                         'remote', j.remote,
                         'applied_cnt', j.applied_cnt,
                         'closed', j.closed,
