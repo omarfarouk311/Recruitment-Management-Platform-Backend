@@ -2,10 +2,9 @@ const { query } = require('express-validator');
 const { validatePage} = require('../../../common/util')
 
 const CompanyName = () =>
-  query('companyName')
+  query('companyName', "Invalid company name")
     .optional()
-    .isAlpha()
-    .withMessage('Company name must be alphabetic ');
+    .isString()
 
 const CompanyType = () =>
   query('companyType')

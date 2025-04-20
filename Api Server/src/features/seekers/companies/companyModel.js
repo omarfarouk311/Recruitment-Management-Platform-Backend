@@ -83,6 +83,7 @@ class CompanyModel {
             query += ` AND rating >= $${params.length + 1} `;
             params.push(rating); 
         }
+        query += ` GROUP BY company.id `;
         if (name) {
            query += `ORDER BY similarity DESC`; 
         }
