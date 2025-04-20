@@ -83,37 +83,54 @@ class jobModel {
         let client = Pool.getReadPool();
         try {
             const jobDetailsQuery = `
-                        SELECT j.description as job_description,
-                        j.remote as remote,
-                        j.applied_cnt as applied_cnt,
-                        j.closed as closed,
+                SELECT 
+                    json_build_object(
+                        'title', j.title,
+                        'description', j.description,
+                        'country', j.country,
+                        'city', j.city,
+                        'remote', j.remote,
+                        'applied_cnt', j.applied_cnt,
+                        'closed', j.closed,
+                        'skills_cnt', (SELECT COUNT(*) FROM Job_Skill s WHERE s.job_id = j.id)
+                    ) AS job,
+                     
+                    json_build_object(
+                        'id', c.id,
+                        'name', c.name,
+                        'size', c.size,
+                        'founded_in', c.founded_in,
+                        'type', c.type,
+                        'rating', c.rating,
+                        'industriesCount', (SELECT COUNT(*) FROM company_industry WHERE company_id = c.id)
+                    ) AS company,
 
-                        c.name as company_name,
-                        c.founded_in as founded_in,
-                        c.overview as overview,
-                        c.size as company_size,
-                        c.type as type ,
+                    COALESCE(
+                        (SELECT json_agg(
+                            json_build_object(
+                                'company_id', r.company_id,
+                                'title', r.title,
+                                'role', r.role,
+                                'description', r.description,
+                                'rating', r.rating,
+                                'created_at', r.created_at
+                            )
+                        )
+                        FROM (
+                            SELECT company_id, title, role, description, rating, created_at
+                            FROM reviews
+                            WHERE company_id = c.id
+                            LIMIT 2
+                        ) r),
+                        '[]'::json
+                    ) AS reviews
+                FROM job j
+                JOIN company c ON j.company_id = c.id
+                WHERE j.id = $1 AND j.closed = false
+                GROUP BY j.id, c.id;
+            `;
 
-                        r.title as review_title,
-                        r.description as review_description,
-                        r.rating as review_rating,
-                        r.created_at as review_created_at
-
-                        FROM (SELECT title, description, created_at, company_id, industry_id, country, city, remote,
-                                applied_cnt, closed
-                                FROM job WHERE id = $1
-                                AND closed = $2
-                            ) as j
-                        JOIN company c
-                        ON j.company_id = c.id
-                        LEFT JOIN reviews r
-                        ON c.id = r.company_id
-                        JOIN industry i
-                        ON i.id = j.industry_id;
-                `;      
-
-            const jobValues = [jobId, false];
-            const jobRes = await client.query(jobDetailsQuery, jobValues);
+            const jobRes = await client.query(jobDetailsQuery, [jobId]);
 
             if (jobRes.rows.length === 0) {
                 const err = new Error('Job id is not in database');
@@ -122,36 +139,30 @@ class jobModel {
                 throw err;
             }
 
-            let hasReported = false, hasApplied = false, skillMaches = 0;
+            const { job: jobData, company: companyData, reviews } = jobRes.rows[0];
+            let result = { jobData, companyData, reviews };
 
             if (userRole === role.jobSeeker) {
                 const statusQuery = `
-            SELECT 
-                EXISTS(SELECT 1 FROM report WHERE job_id = $1 AND creator_id = $2 limit 1) AS has_reported,
-                EXISTS(SELECT 1 FROM candidates WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied,
-                EXISTS(SELECT 1 FROM candidate_history WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied_history;
-        `;
+                SELECT 
+                EXISTS(SELECT 1 FROM report WHERE job_id = $1 AND creator_id = $2 LIMIT 1) AS has_reported,
+                EXISTS(SELECT 1 FROM candidates WHERE seeker_id = $2 AND job_id = $1 LIMIT 1) AS has_applied,
+                EXISTS(SELECT 1 FROM candidate_history WHERE seeker_id = $2 AND job_id = $1 LIMIT 1) AS has_applied_history;
+            `;
 
-                // Run in parallel using Promise.all
-                const [statusRes] = await Promise.all([
-                    client.query(statusQuery, [jobId, userId])
-                ]);
-
+                const statusRes = await client.query(statusQuery, [jobId, userId]);
                 const status = statusRes.rows[0];
-                hasReported = status.has_reported;
-                hasApplied = status.has_applied || status.has_applied_history;
-                skillMaches = await this.getSkillMatches(jobId, userId);
+
+                result.hasReported = status.has_reported;
+                result.hasApplied = status.has_applied || status.has_applied_history;
+                result.skillMatches = await this.getSkillMatches(jobId, userId);
             }
 
-            return userRole === role.jobSeeker
-                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied, skillMaches }
-                : { jobDetails: jobRes.rows[0] };
+            return result;
 
         } catch (err) {
-            console.log('Error in getJobById');
             throw err;
         }
-
     }
 
     static async closeJobById(client, companyId, jobId) {
@@ -346,7 +357,7 @@ class jobModel {
             const values = [jobId];
             const { rows } = await client.query(query, values);
             return rows;
-            
+
         } catch (err) {
             throw err;
         }
@@ -375,7 +386,6 @@ class jobModel {
             const { rowCount } = await client.query(query, values);
             return rowCount;
         } catch (err) {
-            console.error('Error in getSkillMatches:', err);
             throw err;
         }
     }
