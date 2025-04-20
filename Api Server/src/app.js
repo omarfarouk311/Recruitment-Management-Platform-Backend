@@ -19,6 +19,7 @@ const seekerRoutes = require('./features/seekers/seekerRoutes');
 const industryRoutes = require('./features/industries/industryRoutes');
 const cvRoutes = require('./features/cvs/cvRoutes');
 const authRoutes = require('./features/auth/authRoutes');
+const skillsRoutes = require('./features/skills/skillsRoutes');
 const { authenticateUser } = require('./features/auth/authController');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -41,8 +42,8 @@ app.use(cors({ origin: '*' }));
 
 app.use((req, res, next) => {
     // console.log('request reached')
-    req.userId = 3;
-    req.userRole = role.recruiter;
+    req.userId = 7;
+    req.userRole = role.jobSeeker;
     next();
 });
 
@@ -70,6 +71,7 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
+app.use('/api/skills', skillsRoutes);
 
 app.use(notFound);
 app.use(errorHandlingMiddleware);
