@@ -341,7 +341,7 @@ class jobModel {
                 JOIN job_embedding t2
                 ON t1.job_id != t2.job_id
                 JOIN job j
-                ON t2.job_id = j.id
+                ON t2.job_id = j.id and j.closed = false
                 JOIN company c
                 ON j.company_id  = c.id
                 ORDER BY t1.embedding <=> t2.embedding
