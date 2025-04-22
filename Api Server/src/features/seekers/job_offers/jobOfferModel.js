@@ -15,7 +15,9 @@ class JobOfferModel {
                     FROM candidates c
                     JOIN job j ON c.job_id = j.id
                     JOIN company comp ON j.company_id = comp.id
-                    WHERE c.seeker_id = $${index++} AND c.template_id IS NOT NULL 
+                    JOIN Recruitment_Phase r on c.recruitment_process_id = r.recruitment_process_id and c.phase = r.phase_num
+                    JOIN Phase_Type p on r.type = p.id AND p.name = '${constants.phase_types.job_offer}'
+                    WHERE c.seeker_id = $${index++} AND c.template_id IS NOT NULL
                 `
         }
         else if (status == constants.candidate_status_rejected || status == constants.candidate_status_accepted) {
