@@ -159,29 +159,6 @@ exports.multipartParser = () => {
                         return handleError(req, next, err);
                     }
                 }
-                else if (mimeType === 'application/json' && name === 'data') {
-                    let dataBuffer = Buffer.from('');
-                    
-                    // Collect data chunks
-                    file.on('data', (chunk) => {
-                        dataBuffer = Buffer.concat([dataBuffer, chunk]);
-                    });
-                    
-                    // Parse JSON when the stream ends
-                    file.on('end', () => {
-                        try {
-                            req.body = JSON.parse(dataBuffer.toString());
-                        } catch (err) {
-                            res.status(400).json({ error: 'Invalid JSON in data field' });
-                        }
-                    });
-                    if (file.truncated || cancel) {
-                        const err = new Error(`json file size has exceeded the limit of ${fileSizeLimit / 1048576}`);
-                        err.msg = err.message;
-                        err.status = 400;
-                        return handleError(req, next, err);
-                    }
-                }
                 else {
                     const err = new Error('Invalid mime type for the expected image file,it must be png or jpeg or jpg');
                     err.msg = err.message;
@@ -193,15 +170,25 @@ exports.multipartParser = () => {
             // parse expected json field
             bb.on('field', (name, field, info) => {
                 const { mimeType, valueTruncated } = info;
-
-                if (mimeType !== 'application/json') {
+                
+                try {
+                    req.body = JSON.parse(field);
+                    console.log(req.body);
+                } catch (err) {
                     cancel = true;
-                    const err = new Error(`Invalid mime type for ${name} field, it must be json`);
+                    const parseError = new Error(`Invalid JSON in ${name} field`);
+                    parseError.msg = parseError.message;
+                    parseError.status = 400;
+                    return handleError(req, next, parseError);
+                }
+                if (mimeType !== 'application/json' && mimeType !== 'text/plain') {
+                    cancel = true;
+                    const err = new Error(`Invalid mime type for ${name} field, it must be json or plain text`);
                     err.msg = err.message;
                     err.status = 400;
                     return handleError(req, next, err);
                 }
-
+                
                 if (valueTruncated) {
                     cancel = true
                     const err = new Error(`${name} field size exceeded the limit of ${fieldSizeLimit / 1024}kb`);
@@ -210,7 +197,6 @@ exports.multipartParser = () => {
                     return handleError(req, next, err);
                 }
 
-                req.body = JSON.parse(field);
             });
 
             bb.on('filesLimit', () => {

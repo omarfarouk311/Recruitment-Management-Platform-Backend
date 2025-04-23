@@ -137,7 +137,7 @@ class assessmentsModel{
               FROM Assessment 
               WHERE id=$1 
             )
-            SELECT assessment_data.name,assessment_data.assessment_time,assessment_data.job_title,assessment_data.num_of_questions,Questions.question,Questions.answers,Questions.correct_answers
+            SELECT assessment_data.name,assessment_data.assessment_time,assessment_data.job_title,assessment_data.num_of_questions,Questions.question,Questions.answers,Questions.correct_answers,Questions.id as question_id
             FROM assessment_data JOIN Questions ON assessment_data.id=Questions.assessment_id`;
 
             const value=[assessmentId]
@@ -154,6 +154,7 @@ class assessmentsModel{
                     numberOfQuestions:result.rows[0].num_of_questions
                 },
                 questions:result.rows.map(row=>({
+                    id:row.question_id,
                     question:row.question,
                     answers:row.answers,
                     correctAnswers:row.correct_answers,
@@ -517,9 +518,13 @@ class assessmentsModel{
             await client.query("BEGIN")
             let cnt=1,cnt2=1;;
             let query1=
-            `SELECT id,question_num,question,answers
+            `SELECT
+                assessment.name,assessment.assessment_time,assessment.num_of_questions, 
+                json_agg(json_build_object('id', Questions.id, 'question',question,'answers',answers)) as questions
             FROM Questions 
+            JOIN assessment on assessment.id=Questions.assessment_id
             WHERE assessment_id=$${cnt++}
+            GROUP BY assessment.id
             `
             let values1=[assessmentId];
 
@@ -539,8 +544,14 @@ class assessmentsModel{
             let result1=await client.query(query1,values1);
             await client.query(query2,values2);
 
+            if(result1.rowCount==0){
+                let err=new Error()
+                err.status=404;
+                err.msg="Assessment not found!"
+                throw err;
+            }
             await client.query("COMMIT")
-            return result1.rows;
+            return result1.rows[0];
 
         }catch(err){
             await client.query("ROLLBACK")
@@ -562,7 +573,7 @@ class assessmentsModel{
             WHERE seeker_id=$${cnt++} AND job_id=$${cnt++}
             `
             let time=await replica_DB.query(query,values);
-            if(time.rows[0]!=null){
+            if(time.rows[0].assessment_deadline!=null){
                 return false;
             }
             return time.rows[0];

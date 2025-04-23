@@ -42,7 +42,7 @@ app.use(cors({ origin: '*' }));
 
 app.use((req, res, next) => {
     // console.log('request reached')
-    req.userId = 7;
+    req.userId = 3;
     req.userRole = role.jobSeeker;
     next();
 });

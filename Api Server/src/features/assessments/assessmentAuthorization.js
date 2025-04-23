@@ -8,7 +8,7 @@ module.exports.authorizeCompanyAssessment=async(req,res,next)=>{
         let assessmentId=parseInt(req.params.id);
 
     
-        if(req.role!=role.company){
+        if(req.userRole!=role.company){
             let err=new Error();
             err.msg="You are not authorized to access this assessment only company can"
             err.status=404;

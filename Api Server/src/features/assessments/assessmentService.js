@@ -187,7 +187,7 @@ module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,cit
 module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,jobId)=>{
 
     let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
-    console.log(checkTimme)
+    
     if(!checkTimme){
         return false;
     }

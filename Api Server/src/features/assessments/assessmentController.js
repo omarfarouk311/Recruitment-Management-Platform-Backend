@@ -166,7 +166,7 @@ module.exports.get_Seeker_Assessment_Details=async(req,res,next)=>{
     try{
 
         let assesmentId=req.params.assessmentId;
-        let seekerId=req.params.seekerId;
+        let seekerId=req.userId;
         let jobId=req.params.jobId;
 
         let assessmentDetails=await assessmentService.get_Seeker_Assessment_DetailsService(assesmentId,seekerId,jobId);
