@@ -27,9 +27,14 @@ exports.finishProfile = async (req, res, next) => {
         country: req.body.country,
         phoneNumber: req.body.phoneNumber,
         dateOfBirth: req.body.dateOfBirth,
-        gender: req.body.gender
+        gender: req.body.gender,
+        experiences: req.body.experiences,
+        educations: req.body.educations,
+        skills: req.body.skills,
+        cvId: req.cvId,
+        cvName: req.cvName,
     };
-
+    console.log('finishProfile', data);
     try {
         await profileService.finishProfile(req.userId, data);
         res.status(201).end();

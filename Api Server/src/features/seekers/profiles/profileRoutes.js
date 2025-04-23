@@ -5,12 +5,14 @@ const profileValidation = require('./profileValidation');
 const { handleValidationErrors, validateFileNameHeader } = require('../../../common/util');
 const { authorizeUpdateProfile, authorizeUpdateProfileImage } = require('./profileAuthorization');
 const { notAllowed } = require('../../../common/errorMiddleware');
+const { multipartParser } = require('../../../common/util');
 
 router.route('/finish-profile')
     .post(
+        authorizeUpdateProfile,
+        multipartParser(),
         profileValidation.validateUserProfile,
         handleValidationErrors,
-        authorizeUpdateProfile,
         profileController.finishProfile
     )
     .all(notAllowed);

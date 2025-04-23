@@ -94,7 +94,7 @@ exports.multipartParser = () => {
                     fieldSize: fieldSizeLimit,
                     fields: 1,
                     fileSize: fileSizeLimit,
-                    files: 2
+                    files: 3
                 }
             });
 
@@ -106,9 +106,8 @@ exports.multipartParser = () => {
                     'content-type': mimeType,
                     filename
                 };
-
                 // image
-                if (mimeType === 'image/png' && mimeType === 'image/jpeg' && mimeType === 'image/jpg') {
+                if (mimeType === 'image/png' || mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
                     const objectName = `${req.userRole}${req.userId}`;
 
                     file.on('limit', () => bb.removeAllListeners('finish'));
@@ -138,6 +137,9 @@ exports.multipartParser = () => {
 
                     try {
                         const cvId = await CV.getIdFromSequence();
+                        
+                        req.cvId = cvId;
+                        req.cvName = filename;
                         const objectName = cvId.toString();
 
                         await client.putObject(cvsBucketName, objectName, file, metadata);
@@ -150,12 +152,33 @@ exports.multipartParser = () => {
                             err.status = 400;
                             return handleError(req, next, err);
                         }
-
-                        req.cvId = cvId;
                     }
                     catch (err) {
                         err.msg = `Error while uploading the CV`;
                         err.status = 500;
+                        return handleError(req, next, err);
+                    }
+                }
+                else if (mimeType === 'application/json' && name === 'data') {
+                    let dataBuffer = Buffer.from('');
+                    
+                    // Collect data chunks
+                    file.on('data', (chunk) => {
+                        dataBuffer = Buffer.concat([dataBuffer, chunk]);
+                    });
+                    
+                    // Parse JSON when the stream ends
+                    file.on('end', () => {
+                        try {
+                            req.body = JSON.parse(dataBuffer.toString());
+                        } catch (err) {
+                            res.status(400).json({ error: 'Invalid JSON in data field' });
+                        }
+                    });
+                    if (file.truncated || cancel) {
+                        const err = new Error(`json file size has exceeded the limit of ${fileSizeLimit / 1048576}`);
+                        err.msg = err.message;
+                        err.status = 400;
                         return handleError(req, next, err);
                     }
                 }
@@ -192,7 +215,7 @@ exports.multipartParser = () => {
 
             bb.on('filesLimit', () => {
                 cancel = true;
-                const err = new Error('only one file is allowed to be uploaded');
+                const err = new Error('only 2 file is allowed to be uploaded');
                 err.msg = err.message;
                 err.status = 400;
                 handleError(req, next, err);
