@@ -139,20 +139,20 @@ module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerI
     let assessmentData=await assessmentsModel.getAssessmentById(assessmentId);
     let num_of_questions=assessmentData.assessmentInfo.numberOfQuestions
     let score=0;
-  
     assessmentData.questions.forEach((Obj)=>{    
-        const question=Obj.question;  
+        const questionId=Obj.id;  
         const correctAnswer=Obj.correctAnswers; 
 
         let jobSeekerObj=metaData.find((jobSeekerMetaData)=>{ 
             
-            return jobSeekerMetaData.question==question
+            return jobSeekerMetaData.questionId==questionId
         })
         
         const jobSeekerAnswer = jobSeekerObj ? jobSeekerObj.answers : [];
        
         correctAnswer.sort();
         jobSeekerAnswer.sort();
+        console.log(correctAnswer, jobSeekerAnswer);
         if(jobSeekerAnswer.length==correctAnswer.length&& correctAnswer.every((value, index) => value === jobSeekerAnswer[index])){
             score++;
         }

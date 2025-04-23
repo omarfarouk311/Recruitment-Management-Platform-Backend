@@ -520,7 +520,7 @@ class assessmentsModel{
             let query1=
             `SELECT
                 assessment.name,assessment.assessment_time,assessment.num_of_questions, 
-                json_agg(json_build_object('id', Questions.id, 'question',question,'answers',answers)) as questions
+                json_agg(json_build_object('id', Questions.id, 'question',question,'answers',answers, 'questionNum', question_num)) as questions
             FROM Questions 
             JOIN assessment on assessment.id=Questions.assessment_id
             WHERE assessment_id=$${cnt++}
