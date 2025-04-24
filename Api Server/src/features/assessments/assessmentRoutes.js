@@ -15,7 +15,7 @@ router.route('/')
 router.route('/seeker-assessment-dashboard')
         .get(authorizeSeeker,assessmentController.get_Seeker_Assessment_Dashboard) 
 
-router.route('/seeker-assessment-details/:assessmentId/:jobId/:seekerId')
+router.route('/:assessmentId/job/:jobId')
         .get(authorizeSeeker,assessmentController.get_Seeker_Assessment_Details)
 
 

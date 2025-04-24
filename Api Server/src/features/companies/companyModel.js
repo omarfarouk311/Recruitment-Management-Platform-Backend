@@ -278,40 +278,42 @@ class Company {
         // base query
         let query =
             `
-            select id, company_id as "companyId", title, description, rating, role, created_at as "createdAt"
-            from reviews
-            where company_id = $${index++}
-`;
+            select r.id, r.company_id as "companyId", c.name as "companyName", r.title, r.description, r.rating, r.role,
+            r.created_at as "createdAt"
+            from reviews r
+            join company c on r.company_id = c.id
+            where r.company_id = $${index++}
+        `;
 
         //specific rating
         if (filters.rating) {
-            query += ` and rating = $${index++} `;
+            query += ` and r.rating = $${index++} `;
             values.push(filters.rating);
         }
 
         // ensure that rows maintain the same order if no sorting filter is applied, because postgres doesn't guarantee it
         if (!Object.keys(filters).some(value => value === 'sortByDate' || value === 'sortByRating')) {
-            query += ' order by id desc';
+            query += ' order by r.id desc';
         }
 
         //rating asc
         else if (filters.sortByRating === 1) {
-            query += ` order by rating`;
+            query += ` order by r.rating`;
         }
 
         //rating desc
         else if (filters.sortByRating === -1) {
-            query += ` order by rating desc`;
+            query += ` order by r.rating desc`;
         }
 
         // oldest
         else if (filters.sortByDate === 1) {
-            query += ` order by created_at`;
+            query += ` order by r.created_at`;
         }
 
         // newest
         else if (filters.sortByDate === -1) {
-            query += ` order by created_at desc`;
+            query += ` order by r.created_at desc`;
         }
 
         // pagination

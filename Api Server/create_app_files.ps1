@@ -12,7 +12,7 @@ if (-not $appName -or -not $path) {
 # Create the specified files
 New-Item -Path "$path\$appName`Authorization.js" -ItemType File
 New-Item -Path "$path\$appName`Validation.js" -ItemType File
-New-Item -Path "$path\$appName`Router.js" -ItemType File
+New-Item -Path "$path\$appName`Routes.js" -ItemType File
 New-Item -Path "$path\$appName`Controller.js" -ItemType File
 New-Item -Path "$path\$appName`Service.js" -ItemType File
 New-Item -Path "$path\$appName`Model.js" -ItemType File

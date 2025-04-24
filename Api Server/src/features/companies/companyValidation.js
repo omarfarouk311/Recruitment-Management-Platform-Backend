@@ -24,7 +24,8 @@ const validateSortByDate = () => query('sortByDate')
     .withMessage('sortByDate parameter must be a string')
     .trim()
     .custom(value => value === '1' || value === '-1')
-    .withMessage('sortByDate parameter value must be 1 or -1');
+    .withMessage('sortByDate parameter value must be 1 or -1')
+    .toInt();
 
 const validateOverview = () => body('overview')
     .isString()

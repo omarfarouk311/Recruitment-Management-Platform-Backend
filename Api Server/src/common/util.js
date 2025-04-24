@@ -2,7 +2,8 @@ const { validationResult, query, header } = require('express-validator');
 const busboy = require('busboy');
 const { client } = require('../../config/MinIO');
 const { imagesBucketName, minLocationLength, maxLocationLength, fileSizeLimit, minNameLength,
-    maxNameLength } = require('../../config/config');
+    maxNameLength, cvsBucketName } = require('../../config/config');
+const CV = require('../features/seekers/cvs/cvModel');
 
 exports.validatePage = () => query('page')
     .isString()
@@ -73,7 +74,7 @@ exports.handleValidationErrors = (req, res, next) => {
     next();
 };
 
-exports.multipartParser = (mediaType) => {
+exports.multipartParser = () => {
     const fieldSizeLimit = 1024 * 50 /*50KB*/;
 
     // function that detaches streams, discards the rest of incoming request data, and forwards the error
@@ -85,14 +86,6 @@ exports.multipartParser = (mediaType) => {
 
     // parsing middleware
     return (req, res, next) => {
-        // validate passed mediaType parameter
-        if (mediaType !== 'image') {
-            const err = new Error('Invalid media type parameter passed to the parser function, it must be image');
-            err.msg = 'Internal server error'
-            err.status = 500;
-            return handleError(req, next, err);
-        }
-
         try {
             const bb = busboy({
                 headers: req.headers,
@@ -101,30 +94,21 @@ exports.multipartParser = (mediaType) => {
                     fieldSize: fieldSizeLimit,
                     fields: 1,
                     fileSize: fileSizeLimit,
-                    files: 1
+                    files: 3
                 }
             });
 
-            // parse expected file and upload it to the object store
-            let cancel = false, image = false;
+            // parse expected files and upload it to the object store
+            let cancel = false;
             bb.on('file', async (name, file, info) => {
                 const { mimeType, filename } = info;
                 const metadata = {
                     'content-type': mimeType,
                     filename
                 };
-
                 // image
-                if (mediaType === 'image') {
-                    image = true;
+                if (mimeType === 'image/png' || mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
                     const objectName = `${req.userRole}${req.userId}`;
-
-                    if (mimeType !== 'image/png' && mimeType !== 'image/jpeg' && mimeType !== 'image/jpg') {
-                        const err = new Error('Invalid mime type for the expected image file,it must be png or jpeg or jpg');
-                        err.msg = err.message;
-                        err.status = 400;
-                        return handleError(req, next, err);
-                    }
 
                     file.on('limit', () => bb.removeAllListeners('finish'));
 
@@ -146,20 +130,65 @@ exports.multipartParser = (mediaType) => {
                         return handleError(req, next, err);
                     }
                 }
+
+                // CV
+                else if (mimeType === 'application/pdf') {
+                    file.on('limit', () => bb.removeAllListeners('finish'));
+
+                    try {
+                        const cvId = await CV.getIdFromSequence();
+                        
+                        req.cvId = cvId;
+                        req.cvName = filename;
+                        const objectName = cvId.toString();
+
+                        await client.putObject(cvsBucketName, objectName, file, metadata);
+                        if (file.truncated || cancel) {
+                            await client.removeObject(cvsBucketName, objectName);
+                        }
+                        if (file.truncated && !cancel) {
+                            const err = new Error(`CV size has exceeded the limit of ${fileSizeLimit / 1048576}`);
+                            err.msg = err.message;
+                            err.status = 400;
+                            return handleError(req, next, err);
+                        }
+                    }
+                    catch (err) {
+                        err.msg = `Error while uploading the CV`;
+                        err.status = 500;
+                        return handleError(req, next, err);
+                    }
+                }
+                else {
+                    const err = new Error('Invalid mime type for the expected image file,it must be png or jpeg or jpg');
+                    err.msg = err.message;
+                    err.status = 400;
+                    return handleError(req, next, err);
+                }
             });
 
             // parse expected json field
             bb.on('field', (name, field, info) => {
                 const { mimeType, valueTruncated } = info;
-
-                if (mimeType !== 'application/json') {
+                
+                try {
+                    req.body = JSON.parse(field);
+                    console.log(req.body);
+                } catch (err) {
                     cancel = true;
-                    const err = new Error(`Invalid mime type for ${name} field, it must be json`);
+                    const parseError = new Error(`Invalid JSON in ${name} field`);
+                    parseError.msg = parseError.message;
+                    parseError.status = 400;
+                    return handleError(req, next, parseError);
+                }
+                if (mimeType !== 'application/json' && mimeType !== 'text/plain') {
+                    cancel = true;
+                    const err = new Error(`Invalid mime type for ${name} field, it must be json or plain text`);
                     err.msg = err.message;
                     err.status = 400;
                     return handleError(req, next, err);
                 }
-
+                
                 if (valueTruncated) {
                     cancel = true
                     const err = new Error(`${name} field size exceeded the limit of ${fieldSizeLimit / 1024}kb`);
@@ -168,12 +197,11 @@ exports.multipartParser = (mediaType) => {
                     return handleError(req, next, err);
                 }
 
-                req.body = JSON.parse(field);
             });
 
             bb.on('filesLimit', () => {
                 cancel = true;
-                const err = new Error('only one file is allowed to be uploaded');
+                const err = new Error('only 2 file is allowed to be uploaded');
                 err.msg = err.message;
                 err.status = 400;
                 handleError(req, next, err);
@@ -192,15 +220,6 @@ exports.multipartParser = (mediaType) => {
             });
 
             bb.on('finish', async () => {
-                try {
-                    if (!image) {
-                        await client.removeObject(imagesBucketName, `${req.userRole}${req.userId}`);
-                    }
-                }
-                catch (err) {
-                    return next(err);
-                }
-
                 next();
             });
 

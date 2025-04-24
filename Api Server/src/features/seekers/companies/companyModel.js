@@ -7,7 +7,7 @@ class CompanyModel {
         const readPool = getReadPool();
         let query = `
             WITH companies as MATERIALIZED (
-                SELECT id, name, type, size, rating ${name? ', similarity(company.name, $1) AS similarity' : ''}
+                SELECT id, name, type, overview,size, rating ${name? ', similarity(company.name, $1) AS similarity' : ''}
                 FROM company
                 LEFT JOIN company_industry ci ON ci.company_id = company.id
                 LEFT JOIN company_location cl ON cl.company_id = company.id
@@ -39,7 +39,7 @@ class CompanyModel {
                 group by company_id
             )
             SELECT 
-                companies.name, companies.type, companies.size, 
+                companies.name, companies.type, companies.size,companies.id as id,companies.overview,
                 coalesce(j.job_count, 0) as "jobsCount",
                 coalesce(r.review_count, 0) as "reviewsCount",
                 coalesce(i.industry_count, 0) as "industriesCount",
@@ -83,6 +83,7 @@ class CompanyModel {
             query += ` AND rating >= $${params.length + 1} `;
             params.push(rating); 
         }
+        query += ` GROUP BY company.id `;
         if (name) {
            query += `ORDER BY similarity DESC`; 
         }

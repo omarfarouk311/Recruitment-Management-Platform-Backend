@@ -83,92 +83,87 @@ class jobModel {
         let client = Pool.getReadPool();
         try {
             const jobDetailsQuery = `
+                SELECT 
+                    json_build_object(
+                        'title', j.title,
+                        'description', j.description,
+                        'country', j.country,
+                        'city', j.city,
+                        'created_at', j.created_at,
+                        'remote', j.remote,
+                        'applied_cnt', j.applied_cnt,
+                        'closed', j.closed,
+                        'skills_cnt', (SELECT COUNT(*) FROM Job_Skill s WHERE s.job_id = j.id)
+                    ) AS job,
+                     
+                    json_build_object(
+                        'id', c.id,
+                        'name', c.name,
+                        'size', c.size,
+                        'founded_in', c.founded_in,
+                        'type', c.type,
+                        'rating', c.rating,
+                        'industriesCount', (SELECT COUNT(*) FROM company_industry WHERE company_id = c.id)
+                    ) AS company,
 
-                        SELECT j.title as title,
-                        j.description as job_description,
-                        j.created_at as created_at,
-                        j.country as country,
-                        j.city as city,
-                        j.remote as remote,
-                        j.applied_cnt as applied_cnt,
-                        j.closed as closed,
+                    COALESCE(
+                        (SELECT json_agg(
+                            json_build_object(
+                                'id', r.id,
+                                'title', r.title,
+                                'role', r.role,
+                                'description', r.description,
+                                'rating', r.rating,
+                                'created_at', r.created_at
+                            )
+                        )
+                        FROM (
+                            SELECT id, title, role, description, rating, created_at
+                            FROM reviews
+                            WHERE company_id = c.id
+                            LIMIT 2
+                        ) r),
+                        '[]'::json
+                    ) AS reviews
+                FROM job j
+                JOIN company c ON j.company_id = c.id
+                WHERE j.id = $1 AND j.closed = false
+                GROUP BY j.id, c.id;
+            `;
 
-                        c.id as company_id,
-                        c.name as company_name,
-                        c.founded_in as founded_in,
-                        c.overview as overview,
-                        c.size as company_size,
-                        c.type as type,
-                        c.rating as company_rating,
+            const jobRes = await client.query(jobDetailsQuery, [jobId]);
 
-                        count(ci.industry_id) as industry_count
-
-                        FROM (SELECT title, description, created_at, company_id, country, city, remote,
-                                applied_cnt, closed
-                                FROM job WHERE id = $1
-                                AND closed = $2
-                            ) as j
-                        JOIN company c
-                        ON j.company_id = c.id
-                        LEFT JOIN company_industry ci
-                        ON ci.company_id = c.id
-                        GROUP BY
-                            j.title, j.description, j.created_at, j.country, j.city,
-                            j.remote, j.applied_cnt, j.closed,
-                            c.id, c.name, c.founded_in, c.overview,
-                            c.size, c.type, c.rating
-                        `;
-
-            const jobValues = [jobId, false];
-            const jobRes = await client.query(jobDetailsQuery, jobValues);
-       
             if (jobRes.rows.length === 0) {
                 const err = new Error('Job id is not in database');
                 err.msg = 'Job not found';
                 err.status = 404;
                 throw err;
             }
-            let hasReported = false, hasApplied = false, skillMaches = 0;
+
+            const { job: jobData, company: companyData, reviews } = jobRes.rows[0];
+            let result = { jobData, companyData, reviews };
 
             if (userRole === role.jobSeeker) {
                 const statusQuery = `
-            SELECT 
-                EXISTS(SELECT 1 FROM report WHERE job_id = $1 AND creator_id = $2 limit 1) AS has_reported,
-                EXISTS(SELECT 1 FROM candidates WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied,
-                EXISTS(SELECT 1 FROM candidate_history WHERE seeker_id = $2 AND job_id = $1 limit 1) AS has_applied_history;
-        `;
+                SELECT 
+                EXISTS(SELECT 1 FROM report WHERE job_id = $1 AND creator_id = $2 LIMIT 1) AS has_reported,
+                EXISTS(SELECT 1 FROM candidates WHERE seeker_id = $2 AND job_id = $1 LIMIT 1) AS has_applied,
+                EXISTS(SELECT 1 FROM candidate_history WHERE seeker_id = $2 AND job_id = $1 LIMIT 1) AS has_applied_history;
+            `;
 
-                // Run in parallel using Promise.all
-                const [statusRes] = await Promise.all([
-                    client.query(statusQuery, [jobId, userId])
-                ]);
-
+                const statusRes = await client.query(statusQuery, [jobId, userId]);
                 const status = statusRes.rows[0];
-                hasReported = status.has_reported;
-                hasApplied = status.has_applied || status.has_applied_history;
-                skillMaches = await this.getSkillMatches(jobId, userId);
+
+                result.hasReported = status.has_reported;
+                result.hasApplied = status.has_applied || status.has_applied_history;
+                result.skillMatches = await this.getSkillMatches(jobId, userId);
             }
 
-            const companyId = jobRes.rows[0].company_id;
-            const reviews = await client.query(`
-                                                SELECT title as review_title,
-                                                created_at as review_created_at,
-                                                description as review_description,
-                                                rating as review_rating
-
-                                                FROM reviews 
-                                                WHERE company_id = $1
-                                                LIMIT 2;
-                                            `, [companyId])
-            return userRole === role.jobSeeker
-                ? { jobDetails: jobRes.rows[0], hasReported, hasApplied, skillMaches, reviews: reviews.rows } 
-                : { jobDetails: jobRes.rows[0], reviews: reviews.rows } ;
+            return result;
 
         } catch (err) {
-            console.log('Error in getJobById');
             throw err;
         }
-
     }
 
     static async closeJobById(client, companyId, jobId) {
@@ -336,30 +331,22 @@ class jobModel {
         let client = Pool.getReadPool();
         try {
             const query = `
-                            SELECT c.name as companyName,
-                            c.rating as companyRating,
-                            j.id as jobId,
-                            j.title as jobTitle,
-                            j.country as country,
-                            j.city as city,
-                            CURRENT_DATE - j.created_at as days_ago
-
-
-                            FROM  ( 
-                                    SELECT embedding, job_id
-                                    FROM job_embedding
-                                    WHERE job_id = $1
-                                ) as t1
-                            JOIN job_embedding t2
-                            ON t1.job_id != t2.job_id
-                            JOIN job j
-                            ON t2.job_id = j.id
-                            JOIN company c
-                            ON j.company_id  = c.id
-                            ORDER BY t1.embedding <=> t2.embedding
-                            LIMIT 3;
-
-                        `
+                SELECT j.id, j.title, j.company_id as "companyId", c.name as "companyName",
+                c.rating as "companyRating", j.country, j.city, j.created_at as "createdAt"
+                FROM ( 
+                    SELECT embedding, job_id
+                    FROM job_embedding
+                    WHERE job_id = $1
+                ) as t1
+                JOIN job_embedding t2
+                ON t1.job_id != t2.job_id
+                JOIN job j
+                ON t2.job_id = j.id and j.closed = false
+                JOIN company c
+                ON j.company_id  = c.id
+                ORDER BY t1.embedding <=> t2.embedding
+                LIMIT 3
+            `;
             const values = [jobId];
             const { rows } = await client.query(query, values);
             return rows;
@@ -392,7 +379,6 @@ class jobModel {
             const { rowCount } = await client.query(query, values);
             return rowCount;
         } catch (err) {
-            console.error('Error in getSkillMatches:', err);
             throw err;
         }
     }

@@ -13,7 +13,7 @@ PATH=$2
 # Create the specified files
 touch "$PATH/${APP_NAME}Authorization.js"
 touch "$PATH/${APP_NAME}Validation.js"
-touch "$PATH/${APP_NAME}Router.js"
+touch "$PATH/${APP_NAME}Routes.js"
 touch "$PATH/${APP_NAME}Controller.js"
 touch "$PATH/${APP_NAME}Service.js"
 touch "$PATH/${APP_NAME}Model.js"
