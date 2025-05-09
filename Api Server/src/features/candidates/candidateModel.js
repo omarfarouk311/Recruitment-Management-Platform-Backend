@@ -556,7 +556,7 @@ class CandidateAPIAuthorization {
             SELECT 1
             FROM recruiter
             WHERE id = $1 AND company_id = $2;
-        `, [recruiterId, companyId])).rows.length > 0;
+        `, [recruiterId, companyId])).rowCount > 0;
     }
 
     static async candidatesBelongsToRecruiterOrCompany (jobId, seekerIds, userId) {

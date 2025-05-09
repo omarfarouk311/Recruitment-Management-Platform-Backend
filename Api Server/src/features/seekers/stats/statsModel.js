@@ -17,7 +17,7 @@ class Stats {
             from Candidates c
             join Recruitment_Phase r on c.recruitment_process_id = r.recruitment_process_id and c.phase = r.phase_num
             join Phase_Type p on r.type = p.id
-            where c.seeker_id = $1 and p.name != '${phase_types.cv_screening}'
+            where c.seeker_id = $1
             `;
 
         const { rows } = await Stats.getReplicaPool().query(query, values);

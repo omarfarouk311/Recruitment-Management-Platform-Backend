@@ -2,7 +2,7 @@ const experienceService = require('./experienceService');
 
 exports.getAllExperiences = async (req, res, next) => {
     try {
-        const userId = req.userId;
+        const userId = req.params.userId || req.userId;
         const experiences = await experienceService.getAllExperiences(userId);
         res.status(200).json(experiences);
     } catch (error) {
