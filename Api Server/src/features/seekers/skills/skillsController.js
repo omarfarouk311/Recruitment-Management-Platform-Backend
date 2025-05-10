@@ -2,7 +2,7 @@ const service = require('./skillsService')
 
 module.exports.getSeekerSkillsById = async (req, res, next) => {
     try {
-        const seekerId = req.userId;
+        const seekerId = req.query.seekerId || req.userId;
         const skills = await service.getSeekerSkillsById(seekerId);
         res.status(200).json(skills);
     } catch (err) {

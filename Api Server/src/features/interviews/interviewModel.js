@@ -114,7 +114,7 @@ class interview {
                                 FROM Recruitment_Phase r
                                 JOIN Phase_Type p
                                 ON type = id
-                                WHERE r.name = $${index++}
+                                WHERE p.name = $${index++}
                             ) as phases
                         
                         ON phases.recruitment_process_id = candidates.recruitment_process_id
