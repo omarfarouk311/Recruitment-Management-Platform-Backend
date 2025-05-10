@@ -127,7 +127,7 @@ class jobModel {
                     ) AS reviews
                 FROM job j
                 JOIN company c ON j.company_id = c.id
-                WHERE j.id = $1 AND j.closed = false
+                WHERE j.id = $1
                 GROUP BY j.id, c.id;
             `;
 
