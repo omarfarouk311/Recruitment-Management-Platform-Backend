@@ -58,9 +58,11 @@ exports.validateCompanyName = () => query('companyName')
     .isLength({ min: minNameLength, max: maxNameLength })
     .withMessage(`company parameter length must be between ${minNameLength} and ${maxNameLength}`);
 
-exports.validateFileNameHeader = () => header('File-Name', 'Invalid file name header')
+exports.validateFileNameHeader = () => header('File-Name')
     .isString()
-    .isLength({ min: 1, max: 50 });
+    .withMessage('file name must be a string')
+    .isLength({ min: 1, max: 100 })
+    .withMessage('file name length must be between 1 and 100 characters');
 
 exports.handleValidationErrors = (req, res, next) => {
     const err = validationResult(req);
@@ -137,7 +139,7 @@ exports.multipartParser = () => {
 
                     try {
                         const cvId = await CV.getIdFromSequence();
-                        
+
                         req.cvId = cvId;
                         req.cvName = filename;
                         const objectName = cvId.toString();
@@ -170,7 +172,7 @@ exports.multipartParser = () => {
             // parse expected json field
             bb.on('field', (name, field, info) => {
                 const { mimeType, valueTruncated } = info;
-                
+
                 try {
                     req.body = JSON.parse(field);
                     console.log(req.body);
@@ -188,7 +190,7 @@ exports.multipartParser = () => {
                     err.status = 400;
                     return handleError(req, next, err);
                 }
-                
+
                 if (valueTruncated) {
                     cancel = true
                     const err = new Error(`${name} field size exceeded the limit of ${fieldSizeLimit / 1024}kb`);
