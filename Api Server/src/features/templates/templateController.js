@@ -2,8 +2,7 @@ const Templates  = require('./templateService');
 
 exports.getAllTemplates = async (req, res, next) => {
     try {
-        const { sortBy = 1, page, simplified } = req.query;
-        (simplified)
+        const { sortBy , page, simplified } = req.query;
         const templates = await Templates.getAllTemplates(req.userId, sortBy, page, req.userRole, simplified);
         return res.status(200).json(templates);
     } catch (error) {
@@ -18,7 +17,7 @@ exports.getTemplateDetails = async (req, res, next) => {
         if (!template) {
             return res.status(404).json({ success: false, message: 'Template not found' });
         }
-        res.status(200).json({ success: true, data: template });
+        res.status(200).json(template);
     } catch (error) {
         next(error);
     }

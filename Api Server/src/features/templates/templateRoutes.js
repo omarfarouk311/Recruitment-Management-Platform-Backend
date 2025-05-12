@@ -14,7 +14,7 @@ router.get('',
 
 
 router.get('/template-details/:id', 
-    templateValidation.validateGetAllTemplate,
+    templateValidation.validateGetTemplate,
     handleValidationErrors,
     templateAuth.authGetTemplate, 
     templatesController.getTemplateDetails
