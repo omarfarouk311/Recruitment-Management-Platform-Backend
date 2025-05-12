@@ -137,7 +137,13 @@ class assessmentsModel{
               FROM Assessment 
               WHERE id=$1 
             )
-            SELECT assessment_data.name,assessment_data.assessment_time,assessment_data.job_title,assessment_data.num_of_questions,Questions.question,Questions.answers,Questions.correct_answers,Questions.id as question_id
+            SELECT 
+                assessment_data.name,
+                assessment_data.assessment_time,
+                assessment_data.job_title,
+                assessment_data.num_of_questions,
+                Questions.question,Questions.answers,Questions.correct_answers,
+                Questions.id as question_id, Questions.question_num as "questionNum"
             FROM assessment_data JOIN Questions ON assessment_data.id=Questions.assessment_id`;
 
             const value=[assessmentId]
@@ -158,6 +164,7 @@ class assessmentsModel{
                     question:row.question,
                     answers:row.answers,
                     correctAnswers:row.correct_answers,
+                    questionNum: row.questionNum
                 }))
             }
 
