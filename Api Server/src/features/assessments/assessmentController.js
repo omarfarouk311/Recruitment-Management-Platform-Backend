@@ -107,9 +107,20 @@ module.exports.compute_JobSeekerScore=async(req,res,next)=>{
         // console.log(jobSeekerId)
         // console.log(jobId)
 
-        await assessmentService.compute_JobSeekerScoreService(assessmentId,jobId,jobSeekerId,metaData);
+        let result=await assessmentService.compute_JobSeekerScoreService(assessmentId,jobId,jobSeekerId,metaData);
 
-
+        if(result==-2){  // for more than one submission
+            return res.status(409).json({
+                success: false,
+                message: "You have already submitted the assessment"
+            })
+        }
+        else if(result==-1){ // for time exceeds
+            return res.status(404).json({
+                success: false,
+                message: "you have exceed the time of the assessment,submition failed"
+            })
+        }
         return res.status(200).json({
             success: true,
             message: "submitted successfully"

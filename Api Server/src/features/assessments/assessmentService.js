@@ -135,7 +135,21 @@ module.exports.delete_AssessmentByIdService=async(assessmentId,companyId)=>{
 
 
 module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerId,metaData)=>{
+
+    let checkSubmitted=await assessmentsModel.checkSubmitted(jobSeekerId,jobId);
+   
+    if(checkSubmitted){
+        return -2;
+    }
+    
+    let assessmentDeadline=await assessmentsModel.checkStartTime_assessmet(jobSeekerId,jobId);
+    let currentTime = new Date();
+    const timestamp = currentTime.toISOString().slice(0, 19).replace('T', ' ');    
+    if(assessmentDeadline<timestamp){
+        return -1;
+    }
   
+    await assessmentsModel.updateAssessmentSubmitted(jobSeekerId,jobId,true); // update the status of the assessment to be submitted
     let assessmentData=await assessmentsModel.getAssessmentById(assessmentId);
     let num_of_questions=assessmentData.assessmentInfo.numberOfQuestions
     let score=0;
@@ -188,7 +202,7 @@ module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,
 
     let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
     
-    if(!checkTimme){
+    if(checkTimme!=null){
         return false;
     }
     let result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId);

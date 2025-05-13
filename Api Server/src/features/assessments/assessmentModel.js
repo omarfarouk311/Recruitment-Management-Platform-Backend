@@ -528,20 +528,25 @@ class assessmentsModel{
             `
             let values1=[assessmentId];
 
-
-            let currentTime= new Date();
-            const timestamp = currentTime.toISOString().slice(0, 19).replace('T', ' ');
-            
-           
-            let query2 = `
-            UPDATE candidates
-            SET assessment_deadline = $${cnt2++}
-            WHERE seeker_id = $${cnt2++} AND job_id = $${cnt2++};
-            `;
-
-            let values2 = [timestamp, seekerId, jobId]; 
-
             let result1=await client.query(query1,values1);
+
+            let currentTime = new Date();
+
+            // Get assessment time in milliseconds from db
+            let assessmentTime = result1.rows[0].assessment_time * 60 * 1000;
+            
+            let deadline = new Date(currentTime.getTime() + assessmentTime);
+
+            let formattedDeadline = deadline.toISOString().slice(0, 19).replace('T', ' ');
+            
+            let query2 = `
+                UPDATE candidates
+                SET assessment_deadline = $${cnt2++}
+                WHERE seeker_id = $${cnt2++} AND job_id = $${cnt2++};
+            `;
+            
+            let values2 = [formattedDeadline, seekerId, jobId];
+
             await client.query(query2,values2);
 
             if(result1.rowCount==0){
@@ -573,10 +578,8 @@ class assessmentsModel{
             WHERE seeker_id=$${cnt++} AND job_id=$${cnt++}
             `
             let time=await replica_DB.query(query,values);
-            if(time.rows[0].assessment_deadline!=null){
-                return false;
-            }
-            return time.rows[0];
+           
+            return time.rows[0].assessment_deadline;
 
         }catch(err){
             console.log("Err in checkStartTime_assessmet",err.message)
@@ -584,5 +587,41 @@ class assessmentsModel{
         }
 
     }
+    static async checkSubmitted(jobSeekerId,jobId){
+        let replica_DB=replicaPool.getReadPool();
+        try{
+
+            let query=
+            `SELECT submited
+            FROM Candidates
+            WHERE seeker_id=$1 AND job_id=$2
+            `
+            let values=[jobSeekerId,jobId]
+            let result=await replica_DB.query(query,values);
+            return result.rows[0].submited;
+        }
+        catch(err){
+            console.log("Error in checkSubmittedModel",err.message)
+            throw err
+        }
+    }
+    static async updateAssessmentSubmitted(jobSeekerId,jobId,submited){
+        let primary_DB=primaryPool.getWritePool();
+        try{
+
+            let query=
+            `UPDATE Candidates
+            SET submited=$1
+            WHERE seeker_id=$2 AND job_id=$3
+            `
+            let values=[submited,jobSeekerId,jobId]
+            await primary_DB.query(query,values);
+            
+        }catch(err){
+            console.log("Error in updateAssessmentSubmittedModel",err.message)
+            throw err
+        }
+    }
+
 }
 module.exports = assessmentsModel;
