@@ -15,6 +15,7 @@ router.get(
 
 router.get(
     '/recruiter/', 
+    candidateAuth.authGetCandidatesForRecruiter,
     candidateValidation.getCandidatesForRecruiterValidator, 
     handleValidationErrors,
     candidateController.getCandidatesForRecruiter

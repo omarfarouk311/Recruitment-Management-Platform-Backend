@@ -2,10 +2,10 @@ const jobModel = require('./jobModel')
 const { role } = require('../../../config/config')
 
 
-module.exports.jobOfCompanyAuthorization = async (req, res, next) => {
+module.exports.createJobAuthorization = async (req, res, next) => {
     try {
-        if(req.userRole == role.jobSeeker || req.userRole == role.recruiter) {
-            const error = new Error('You are not authorized to access this job');
+        if (req.userRole !== role.company) {
+            const error = new Error('You are not authorized to create a new job');
             error.status = 403;
             error.msg = 'Authorization Error';
             throw error;
@@ -35,20 +35,6 @@ module.exports.deleteUpdateJobAuthorization = async (req, res, next) => {
             throw error;
         }
         next();
-    } catch (err) {
-        next(err);
-    }
-}
-
-module.exports.similarJobs = async (req, res, next) => {
-    try {
-       if(req.userRole == role.jobSeeker) {
-           return next();
-        } 
-        const error = new Error('You are not authorized to access this job');
-        error.status = 403;
-        error.msg = 'Authorization Error';
-        throw error;
     } catch (err) {
         next(err);
     }

@@ -46,6 +46,7 @@ const id = param('id')
 const sortBy = query('sortBy')
     .optional()
     .isInt()
+    .toInt()
     .isIn([1, -1]).withMessage('SortBy must be 1 or -1');
 
 const simplified = query('simplified')
@@ -116,7 +117,7 @@ exports.validateGetAllTemplates = [
     simplified
 ];
 
-exports.validateGetAllTemplate = [
+exports.validateGetTemplate = [
     id,
     simplified
 ];

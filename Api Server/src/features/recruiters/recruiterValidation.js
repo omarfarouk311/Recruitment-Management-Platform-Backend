@@ -5,7 +5,7 @@ const {body,query,param}=require('express-validator')
 
 
 const validateName=()=>{
-    return query('name').optional().isAlphanumeric().withMessage('Name query parameter should be between [a-z]/[A-Z]/[0-9]')
+    return query('name').optional().isString().withMessage('Name query parameter should be between [a-z]/[A-Z]/[0-9]')
 }
 
 const validateSorted=()=>{

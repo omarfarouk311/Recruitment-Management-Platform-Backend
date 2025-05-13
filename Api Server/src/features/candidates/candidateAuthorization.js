@@ -96,3 +96,21 @@ exports.authGetCandidateLocations = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.authGetCandidatesForRecruiter = async (req, res, next) => {
+    try {
+        if (req.userRole === role.company) {
+            const found = await authQuerySets.recruiterBelongsToCompany(req.query.recruiterId, req.userId);
+            if (!found) {
+                let error = new Error('Unauthorized Access!');
+                error.status = 403;
+                error.msg = 'Unauthorized Access!';
+                throw error;
+            }
+        }
+        next();
+    } catch (error) {
+        console.error("Error in authGetCandidatesForRecruiter controller", error);
+        next(error);
+    }
+}

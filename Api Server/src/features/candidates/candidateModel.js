@@ -19,6 +19,7 @@ class CandidateModel {
                     job_seeker.country as "candidateCountry",
                     job_seeker.city as "candidateCity",
                     recruiter.name as "recruiterName",
+                    candidates.recruiter_id as "recruiterId",
                     CASE 
                         WHEN 
                             rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
@@ -555,7 +556,7 @@ class CandidateAPIAuthorization {
             SELECT 1
             FROM recruiter
             WHERE id = $1 AND company_id = $2;
-        `, [recruiterId, companyId])).rows.length > 0;
+        `, [recruiterId, companyId])).rowCount > 0;
     }
 
     static async candidatesBelongsToRecruiterOrCompany (jobId, seekerIds, userId) {

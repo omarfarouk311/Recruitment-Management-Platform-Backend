@@ -52,8 +52,8 @@ class Company {
             
             select id, c.overview,
             case 
-                when c.type = true then 'public'
-                else 'private'
+                when c.type = true then 'Public'
+                else 'Private'
             end as type,
             c.founded_in as "foundedIn", c.size, c.rating, c.name,
             coalesce(j.job_count, 0) as "jobsCount",

@@ -23,8 +23,10 @@ exports.getCandidatesForJob = async (req, res, next) => {
 
 exports.getCandidatesForRecruiter = async (req, res, next) => {
     try {
+        const recruiterId = req.query.recruiterId || req.userId;
+        
         const candidates = await candidateService.getCandidatesForRecruiter(
-            req.userId, 
+            recruiterId, 
             req.query.simplified || false,
             {
                 phaseType: req.query.phaseType, 

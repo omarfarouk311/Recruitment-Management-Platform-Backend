@@ -1,9 +1,5 @@
 const Pool = require('../../../config/db')
-const Kafka = require('../../common/kafka')
-const { asc_order, desc_order, role } = require('../../../config/config')
-const { v6: uuid } = require('uuid');
-
-
+const { role } = require('../../../config/config')
 
 class jobModel {
 
@@ -46,35 +42,6 @@ class jobModel {
             return { message: 'Job added successfully', jobId };
         } catch (err) {
             console.error('Error in createJob:', err);
-            throw err;
-        }
-    }
-
-    static async getAllCompanyJobs(companyId, filters) {
-        let client = Pool.getReadPool();
-        try {
-            let index = 1;
-            let query = `SELECT id, title, country, city, CURRENT_DATE - created_at as days_ago
-                        FROM job
-                        WHERE company_id = $${index++}`;
-
-            const { title, sort } = filters;
-            const values = [companyId];
-            if (title) {
-                query += ` AND title = $${index++}`;
-                values.push(title);
-            }
-            if (sort == asc_order) {
-                query += ` ORDER BY created_at;`;
-            } else if (sort == desc_order) {
-                query += ` ORDER BY created_at DESC;`;
-            } else {
-                query += ` ORDER BY id;`
-            }
-            const { rows } = await client.query(query, values);
-            return rows;
-        } catch (err) {
-            console.log('Error in getAll Jobs')
             throw err;
         }
     }
@@ -127,7 +94,7 @@ class jobModel {
                     ) AS reviews
                 FROM job j
                 JOIN company c ON j.company_id = c.id
-                WHERE j.id = $1 AND j.closed = false
+                WHERE j.id = $1
                 GROUP BY j.id, c.id;
             `;
 

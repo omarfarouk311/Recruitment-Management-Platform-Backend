@@ -45,13 +45,21 @@ const city = query("City", "invalid City query parameter")
     .isAlpha()
     .withMessage("City must be alphabetic");
 
+const recruiterIdForCompany = query("recruiterId", "Invalid recruiterId").optional().isInt({ min: 1 }).toInt().custom((value, {req}) => {
+    if (req.userRole === constants.role.company && !value) {
+        throw new Error("recruiterId is required");
+    }
+    return true;
+});
+
 exports.getCandidatesForRecruiterValidator = [
     sortBy,
     simplified,
     jobTitle,
     phaseType,
     country,
-    validatePage()
+    validatePage(),
+    recruiterIdForCompany
 ];
 
 const status = query("status", "Invalid status query parameter")

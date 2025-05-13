@@ -34,8 +34,8 @@ class Templates {
     static async getAllTemplates(companyId, sortBy = 1, offset, limit, simplified) {
         const pool = getReadPool();
         const order = sortBy === 1 ? 'ASC' : 'DESC';
-        const limitQuery = offset ? 'OFFSET $2 LIMIT $3' : '';
-        let params = offset ? [companyId, offset, limit] : [companyId];
+        const limitQuery = offset != undefined ? 'OFFSET $2 LIMIT $3' : '';
+        let params = offset != undefined ? [companyId, offset, limit] : [companyId];
         const columns = simplified ? 'id, name' : 'id, name, updated_at';
         
         let query = `

@@ -49,13 +49,6 @@ module.exports.createJob = async (companyId, jobData) => {
     }
 };
 
-
-
-module.exports.getAllCompanyJobs = async (companyId, filters) => {
-    const jobs = await jobModel.getAllCompanyJobs(companyId, filters)
-    return jobs
-}
-
 module.exports.getJobDetailsById = async (jobId, userId, userRole) => {
     const job = await jobModel.getJobDetailsById(jobId, userId, userRole)
     return job
