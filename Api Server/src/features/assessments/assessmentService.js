@@ -23,7 +23,7 @@ module.exports.add_AssessmentService=async (assessmentData) => {
         const assessment=await assessmentsModel.save(assessmentData,client);
 
 
-        Kafka.produce({
+        await Kafka.produce({
             id: uuid(),
             performed_by: companyName,
             company_id: assessmentData.companyId,
@@ -31,7 +31,9 @@ module.exports.add_AssessmentService=async (assessmentData) => {
             action_type: action_types.create_assessment,
             created_at: new Date(),
         }, logs_topic)
+        
 
+        console.log("here")
         client.query('COMMIT')
         return assessment;
 

@@ -200,8 +200,8 @@ class assessmentsModel{
             const deleteQuestionsValues = [assessmentId];
 
             const insertQuestionsQuery=
-            `INSERT INTO Questions (assessment_id,question,answers,correct_answers)
-             VALUES($1,$2,$3,$4) RETURNING *`
+            `INSERT INTO Questions (assessment_id,question_num,question,answers,correct_answers)
+             VALUES($1,$2,$3,$4,$5) RETURNING *`
 
             
         
@@ -218,11 +218,12 @@ class assessmentsModel{
             }
 
             assessmentData.metaData.forEach(async(Obj) => {
+                let questionNum=Obj.questionNum;
                 let question=Obj.questions;
                 let answers=Obj.answers;
                 let correctAnswers=Obj.correctAnswers;
 
-                const Questionvalues=[assessmentId,question,answers,correctAnswers]
+                const Questionvalues=[assessmentId,questionNum,question,answers,correctAnswers]
                 const questionResult=await client.query(insertQuestionsQuery,Questionvalues)
 
                 const questionId = questionResult.rows[0].id;
