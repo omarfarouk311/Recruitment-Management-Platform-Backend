@@ -122,7 +122,7 @@ const validateSkills = () =>
        .isArray()
        .withMessage("Skills must be an array")
 
-exports.validateUserProfile = [
+exports.validateCreateUserProfile = [
     validateName(),
     validateCity(),
     validateCountry(),
@@ -133,5 +133,14 @@ exports.validateUserProfile = [
     validateEducations(),
     validateSkills(),
 ];
+
+exports.validateUpdateUserProfile = [
+    validateName(),
+    validateCity(),
+    validateCountry(),
+    validatePhoneNumber(),
+    validateBirthDate(),
+    validateGender(),
+]
 
 exports.validateGetUser = [validateUserId()];

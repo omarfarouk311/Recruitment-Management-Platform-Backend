@@ -11,7 +11,7 @@ router.route('/finish-profile')
     .post(
         authorizeUpdateProfile,
         multipartParser(),
-        profileValidation.validateUserProfile,
+        profileValidation.validateCreateUserProfile,
         handleValidationErrors,
         profileController.finishProfile
     )
@@ -19,7 +19,7 @@ router.route('/finish-profile')
 
 router.route('/')
     .put(
-        profileValidation.validateUserProfile,
+        profileValidation.validateUpdateUserProfile,
         handleValidationErrors,
         authorizeUpdateProfile,
         profileController.updateProfile
