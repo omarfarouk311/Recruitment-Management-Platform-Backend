@@ -126,7 +126,7 @@ class interview {
                         JOIN Company comp
                         ON comp.id = job.company_id
 
-                        JOIN Recruiter rec
+                        LEFT JOIN Recruiter rec
                         ON rec.id = candidates.recruiter_id
                       `
 
