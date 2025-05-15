@@ -8,7 +8,7 @@ class JobOfferModel {
         if(status == constants.candidate_status_pending || !status) {
             var query = `
                     SELECT 
-                        j.title AS "jobTitle", comp.name AS "companyName", comp.id AS companyId, 
+                        j.title AS "jobTitle", comp.name AS "companyName", comp.id AS "companyId", 
                         j.id AS "jobId", j.country AS country, j.city AS city, 
                         c.last_status_update AS "dateRecieved", 
                         ${constants.candidate_status_pending} AS "status"
@@ -23,8 +23,9 @@ class JobOfferModel {
         else if (status == constants.candidate_status_rejected || status == constants.candidate_status_accepted) {
             var query = `
                 SELECT
-                    j.title AS "jobTitle", comp.name AS "companyName", j.id AS "jobId",
-                    j.country AS country, j.city AS city, c.last_status_update AS "dateRecieved",
+                    j.title AS "jobTitle", comp.name AS "companyName", comp.id AS "companyId",
+                    j.id AS "jobId", j.country AS country, j.city AS city, 
+                    c.last_status_update AS "dateRecieved",
                     ${status} AS "status"
                 FROM candidate_history c
                 JOIN job j ON c.job_id = j.id
