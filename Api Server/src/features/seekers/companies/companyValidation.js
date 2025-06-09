@@ -1,5 +1,5 @@
 const { query } = require('express-validator');
-const { validatePage} = require('../../../common/util')
+const { validatePage } = require('../../../common/util')
 
 const CompanyName = () =>
   query('companyName', "Invalid company name")
@@ -9,54 +9,55 @@ const CompanyName = () =>
 const CompanyType = () =>
   query('companyType')
     .optional()
-    .isIn([true, false])
-    .isBoolean()
-    .withMessage('Company type is required');
+    .isIn(['true', 'false'])
+    .withMessage('Invalid company type, must be a boolean')
+    .toBoolean();
 
 const CompanyMinSize = () =>
   query('companyMinSize')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('Company minimum size must be a positive integer');
+    .withMessage('Company minimum size must be a positive integer')
+    .toInt();
 
 const CompanyMaxSize = () =>
-    query('companyMaxSize')
-      .optional()
-      .isInt({ min: 1 })
-      .withMessage('Company maximum size must be a positive integer')
-      .custom((value, req) => {
-          if (value < req.query.companyMinSize) {
-              throw new Error('Company maximum size must be greater than minimum size');
-          }
-          return true;
-      });
+  query('companyMaxSize')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Company maximum size must be a positive integer')
+    .toInt()
+    .custom((value, { req: { query } }) => {
+      if (value < query.companyMinSize) {
+        throw new Error('Company maximum size must be greater than minimum size');
+      }
+      return true;
+    });
 
 const CompanyIndustry = () =>
   query('companyIndustry')
     .optional()
     .isInt({ min: 1 })
-    .toInt()
-    .withMessage('Company industry must be positive integer');
+    .withMessage('Company industry must be positive integer')
+    .toInt();
 
 const CompanyCity = () =>
   query('companyCity')
     .optional()
     .isString()
-    .isAlpha()
     .withMessage('Company city must be an string');
 
 const CompanyCountry = () =>
   query('companyCountry')
     .optional()
     .isString()
-    .isAlpha()
     .withMessage('Company country must be an string');
 
 const CompanyRating = () =>
   query('companyRating')
     .optional()
-    .isFloat({ min: 0, max: 5 })
-    .withMessage('Company rating must be a number between 0 and 5');
+    .isInt({ min: 0, max: 5 })
+    .withMessage('Company rating must be a number between 0 and 5')
+    .toInt();
 
 const CompanyQuery = [
   CompanyName(),

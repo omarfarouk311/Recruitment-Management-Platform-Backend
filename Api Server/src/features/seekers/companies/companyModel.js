@@ -39,7 +39,7 @@ class CompanyModel {
                 group by company_id
             )
             SELECT 
-                companies.name, companies.type, companies.size,companies.id as id,companies.overview,
+                companies.name, companies.size,companies.id as id,companies.overview,
                 coalesce(j.job_count, 0) as "jobsCount",
                 coalesce(r.review_count, 0) as "reviewsCount",
                 coalesce(i.industry_count, 0) as "industriesCount",
@@ -57,7 +57,7 @@ class CompanyModel {
             query += ` AND similarity(company.name, $${params.length + 1}) > 0.2 `;
             params.push(name);
         }
-        if (type) {
+        if (type !== undefined) {
             query += ` AND type = $${params.length + 1} `;
             params.push(type);
         }
@@ -73,7 +73,6 @@ class CompanyModel {
         if (country) {
             query += ` AND cl.country = $${params.length + 1} `;
             params.push(country); 
-            
         }
         if (city) {
             query += ` AND cl.city = $${params.length + 1} `;
