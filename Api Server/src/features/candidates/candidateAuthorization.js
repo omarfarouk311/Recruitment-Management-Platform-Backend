@@ -17,20 +17,11 @@ exports.authGetCandidatesForJob = async (req, res, next) => {
 
 exports.authAssignCandidatesToRecruiter = async (req, res, next) => {
     try {
-        const candidateFound = await authQuerySets.candidatesBelongsToCompany(
-            req.body.jobId, 
-            req.body.candidates, 
-            req.userId
-        );
         const recruiterFound = await authQuerySets.recruiterBelongsToCompany(
             req.body.recruiterId, 
             req.userId
         );
-
-        if(!candidateFound) {
-            res.status(404).json({ message: 'Candidate not found!' });
-            return;
-        }
+        
         if (!recruiterFound) {
             res.status(404).json({ message: 'Recruiter not found!' });
             return;

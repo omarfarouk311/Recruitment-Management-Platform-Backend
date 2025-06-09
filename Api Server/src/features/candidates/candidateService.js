@@ -182,7 +182,7 @@ exports.getCandidateLocationsForRecruiter = async (recruiterId) => {
 };
 
 exports.getCandidateLocationsForJob = async (jobId) => {
-    return await CandidateQueryset.getCandidateLocationsForJob(jobId);
+    return await CandidateQueryset.getCandidatesForJob(jobId);
 };
 
 exports.getPhaseTypes = async () => {
