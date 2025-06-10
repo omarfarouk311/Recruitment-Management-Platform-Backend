@@ -38,14 +38,14 @@ exports.login = async (req, res, next) => {
                 httpOnly: true,
                 sameSite: 'None',
                 signed: true,
-                secure: false,
+                secure: true,
                 expires: new Date(Date.now() + 604800 * 1000)
             })
             .cookie('JWT', token, {
                 httpOnly: true,
                 sameSite: 'None',
                 signed: true,
-                secure: false,
+                secure: true,
                 expires: new Date(Date.now() + 900 * 1000)
             })
             .json({
@@ -77,14 +77,14 @@ exports.refreshToken = async (req, res, next) => {
                 httpOnly: true,
                 sameSite: 'None',
                 signed: true,
-                secure: false,
+                secure: true,
                 expires: new Date(Date.now() + 604800 * 1000)
             })
             .cookie('JWT', token, {
                 httpOnly: true,
                 sameSite: 'None',
                 signed: true,
-                secure: false,
+                secure: true,
                 expires: new Date(Date.now() + 900 * 1000)
             })
             .end();
