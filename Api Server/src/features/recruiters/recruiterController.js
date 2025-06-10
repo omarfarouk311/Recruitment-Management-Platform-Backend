@@ -112,7 +112,7 @@ module.exports.getRecruiterDataController=async(req,res,next)=>{
 module.exports.getProfilePicController=async(req,res,next)=>{
 
     try {
-        let recruiterId=req.userId
+        let recruiterId=req.params.userId
 
         const {
             metaData,
@@ -155,7 +155,8 @@ module.exports.getAllRecruitersController=async(req,res,next)=>{
 }
 
 module.exports.updateProfilePicController=async(req,res,next)=>{
-  
+    
+    
         const uploadedImageData = {
             objectName: `${role.recruiter}${req.userId}`,
             bucketName: imagesBucketName,
@@ -173,4 +174,45 @@ module.exports.updateProfilePicController=async(req,res,next)=>{
             catch (err) {
                 next(err);
             }
+}
+
+
+module.exports.updateRecruiterController=async(req,res,next)=>{
+
+
+    try{
+
+        let recruiterId=req.userId;
+        let {recruiterName}=req.body
+
+        await recruiterService.updateRecruiterService(recruiterId,recruiterName) 
+        res.status(200).json({
+            success:true,
+            message:"Recruiter updated successfully"
+        })
+
+    }catch(err){
+        console.log("err in updateRecruiterController")
+        next(err)
+    }
+
+}
+
+module.exports.finishProfileController=async(req,res,next)=>{
+      try{
+
+        let recruiterId=req.userId;
+        let {recruiterName}=req.body
+
+        await recruiterService.createRecruiterService(recruiterId,recruiterName)
+        res.status(200).json({
+            success:true,
+            message:"Recruiter created successfully"
+        })
+
+    }catch(err){
+        console.log("err in updateRecruiterController")
+        next(err)
+    }
+
 }

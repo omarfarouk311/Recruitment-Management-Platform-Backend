@@ -282,6 +282,42 @@ class RecruiterModel {
             throw err;
         }
     }
+
+    static async updateRecruiter(recruiterId,name){
+        let primary_DB=primaryPool.getWritePool()
+        try{
+                let query=
+                `UPDATE Recruiter
+                SET name=$1
+                WHERE id=$2`
+
+                let value=[name,recruiterId]
+                await primary_DB.query(query,value)
+                return true;
+        }catch(err){
+                console.log('err in updateRecruiter model',err.message)
+                throw err;
+            }
+    }
+
+    static async createRecruiter(recruiterId,name){
+       try{
+        console.log('recruiterId',recruiterId)
+            let primary_DB=primaryPool.getWritePool()
+            let query=
+            `INSERT INTO Recruiter(id,company_id,name,assigned_candidates_cnt,has_image,department)
+            VALUES($1,NULL,$2,0,false,NULL)
+            RETURNING id`
+
+            let value=[recruiterId,name]
+            let queryResult=await primary_DB.query(query,value)
+            return queryResult.rows[0].id;
+       }
+       catch(err){
+            console.log('err in createRecruiter model',err.message)
+            throw err;
+        }
+    }
 }
 
    

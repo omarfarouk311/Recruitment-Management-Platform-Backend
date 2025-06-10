@@ -5,7 +5,7 @@ const {handleValidationErrors}=require('../../common/util')
 
 const recruiterController=require('./recruiterController');
 const {authorizeCompanyRecruiter,authorizeRecruiter,authorizeCompany}=require('./recruiterAuthorization')
-const {validateParams,validateRecruiterId,validateInvitationData,validateJobOffer}=require('./recruiterValidation')
+const {validateParams,validateRecruiterId,validateInvitationData,validateJobOffer,validateRecruiterName}=require('./recruiterValidation')
 
 
 router.route('/')   //localhost:3000/recruiters/?recruiter="" & department="" & sorted=""&page=""
@@ -40,9 +40,11 @@ router.route('/profile-data')
         .get(authorizeRecruiter,
              recruiterController.getRecruiterDataController)
 
-router.route('/profile-pic')
+router.route('/:userId/profile-pic')
         .get(authorizeRecruiter
             ,recruiterController.getProfilePicController)
+
+router.route('/profile-pic')
         .put(authorizeRecruiter,
                 recruiterController.updateProfilePicController)
 
@@ -52,4 +54,15 @@ router.route('/allRecruiters')
         .get(authorizeCompany,
             recruiterController.getAllRecruitersController)
 
+
+router.route('/recruiter')
+        .put(authorizeRecruiter,
+             validateRecruiterName,
+             handleValidationErrors,
+            recruiterController.updateRecruiterController)
+
+
+router.route('/finish-profile')
+        .post(validateRecruiterName,
+            recruiterController.finishProfileController)
 module.exports=router
