@@ -3,7 +3,9 @@ const {validatePage}=require('../../common/util')
 const {body,query,param}=require('express-validator')
 
 
-
+const validateBodyName=()=>{
+    return body('recruiterName').isString().withMessage('Name should be a string').isLength({min:3,max:50}).withMessage('Name should be between 3 and 50 characters')
+}
 const validateName=()=>{
     return query('name').optional().isString().withMessage('Name query parameter should be between [a-z]/[A-Z]/[0-9]')
 }
@@ -44,6 +46,10 @@ module.exports.validateParams=[
     validateSorted(),
     validateDepartment(),
     validatePage(),
+]
+
+module.exports.validateRecruiterName= [
+    validateBodyName(),
 ]
 
 
