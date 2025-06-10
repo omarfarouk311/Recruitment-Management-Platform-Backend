@@ -39,7 +39,7 @@ class jobModel {
                 await client.query(query2, values2);
             }
 
-            return { message: 'Job added successfully', jobId };
+            return jobId;
         } catch (err) {
             console.error('Error in createJob:', err);
             throw err;
@@ -133,21 +133,17 @@ class jobModel {
         }
     }
 
-    static async closeJobById(client, companyId, jobId) {
-        try {
-            const query = `UPDATE job SET closed = true WHERE id = $1;`
-            await client.query(query, [jobId]);
-            return;
-        } catch (err) {
-            console.error('Error in deleteJobById:', err);
-            throw err;
-        }
+    static async closeJobById(client, jobId) {
+        const closeJob = `UPDATE job SET closed = true WHERE id = $1;`
+        await client.query(closeJob, [jobId]);
+
+        const removeFromRecommendations = `delete from Recommendations where job_id = $1`;
+        await client.query(removeFromRecommendations, [jobId]);
     }
 
 
     static async updateJobById(client, companyId, jobId, jobData) {
         try {
-            const date = new Date();
             let index = 1;
 
             // Check if recruitment process exists
@@ -162,14 +158,14 @@ class jobModel {
 
             // Update job details
             const query = `
-                        UPDATE job SET title = $${index++}, description = $${index++}, created_at = $${index++}, 
+                        UPDATE job SET title = $${index++}, description = $${index++}, 
                           recruitment_process_id = $${index++}, company_id = $${index++}, industry_id = $${index++}, 
                           country = $${index++}, city = $${index++}, remote = $${index++}, applied_cnt = $${index++}, 
                           closed = $${index++}, applied_cnt_limit = $${index++}
                         WHERE id = $${index++};
         `;
             const values = [
-                jobData.jobTitle, jobData.jobDescription, date, jobData.processId, companyId, jobData.industryId,
+                jobData.jobTitle, jobData.jobDescription, jobData.processId, companyId, jobData.industryId,
                 jobData.country, jobData.city, Boolean(jobData.remote), 0, Boolean(0), jobData.appliedCntLimit, jobId
             ];
             await client.query(query, values);
@@ -215,8 +211,10 @@ class jobModel {
                         j.city as city,
                         j.remote as remote,
 
+                        i.id as industry_id,
                         i.name as industry_name,
 
+                        j.recruitment_process_id as recruitment_process_id,
                         rp.name as recruitment_process_name
                         FROM (
                                 SELECT id, title, description, recruitment_process_id, industry_id, country, city, remote, applied_cnt_limit, closed
