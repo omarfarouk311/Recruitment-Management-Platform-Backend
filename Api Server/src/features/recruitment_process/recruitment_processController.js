@@ -6,9 +6,9 @@ module.exports.getRecruitmentProcess = async (req, res, next) => {
         let companyId = req.userId;
         const query = req.query;
         const recruitment_process = await recruitment_processService.getRecruitmentProcess(companyId, query);
-        if (!recruitment_process || recruitment_process.length === 0) {
-            return res.status(200).json({ message: 'No recruitment process in the current page' });
-        }
+        // if (!recruitment_process || recruitment_process.length === 0) {
+        //     return res.status(200).json({ message: 'No recruitment process in the current page' });
+        // }
         res.status(200).json({ recruitment_process });
     } catch (error) {
         next(error);

@@ -41,9 +41,9 @@ app.use(cors({ origin: '*' }));
 // app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use((req, res, next) => {
-    // console.log('request reached')
-    req.userId = 1;
-    req.userRole = role.company;
+    console.log('request reached')
+    req.userId = 22;
+    req.userRole = role.jobSeeker;
     next();
 });
 

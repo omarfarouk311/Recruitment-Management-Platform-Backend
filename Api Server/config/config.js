@@ -63,6 +63,12 @@ module.exports = {
         interview: 'interview',
         job_offer: 'job offer'
     },
+    phase_types_numbers: {
+        cv_screening: 3,
+        assessment: 1,
+        interview: 2,
+        job_offer: 4
+    },
     maxNameLength: 30,
     minNameLength: 1,
     maxOverviewLength: 400,

@@ -1,5 +1,5 @@
 const Pool = require('../../../config/db')
-const { pagination_limit, asc_order, desc_order } = require('../../../config/config')
+const { pagination_limit, asc_order, desc_order, phase_types_numbers } = require('../../../config/config')
 
 
 
@@ -9,6 +9,7 @@ class interview {
 
     static async getRecruiterInterviewsData(id, page, title, sort, city, country) {
         const client = Pool.getReadPool();
+        // console.log('id', id, 'page', page, 'title', title, 'sort', sort, 'city', city, 'country', country);
         try {
             let index = 1;
             let query = `
@@ -38,9 +39,7 @@ class interview {
                                 SELECT Phase_num, 
                                 recruitment_process_id
                                 FROM Recruitment_Phase r
-                                JOIN Phase_Type p
-                                ON type = id
-                                WHERE r.name = $${index++}
+                                WHERE type = $${index++}
                             ) as phases
                         
                         ON phases.recruitment_process_id = candidates.recruitment_process_id
@@ -52,18 +51,19 @@ class interview {
                         JOIN Job_Seeker job_seeker
                         ON job_seeker.id = candidates.seeker_id
                       `
-            
-            const values = [id, "interview"];
+
+            const values = [id, phase_types_numbers.interview];
+            query += ` WHERE 1 = 1`;
             if (title) {
-                query += ` WHERE job.title = $${index++}`;
+                query += ` AND job.title = $${index++}`;
                 values.push(title);
             }
             if(city) {
-                query += ` WHERE job.city = $${index++}`;
+                query += ` AND job.city = $${index++}`;
                 values.push(city);
             }
             if (country) {
-                query += ` WHERE job.country = $${index++}`;
+                query += ` AND job.country = $${index++}`;
                 values.push(country);
             }
             if (sort == asc_order || !sort) {
@@ -112,9 +112,7 @@ class interview {
                                 SELECT Phase_num, 
                                 recruitment_process_id
                                 FROM Recruitment_Phase r
-                                JOIN Phase_Type p
-                                ON type = id
-                                WHERE p.name = $${index++}
+                                WHERE type = $${index++}
                             ) as phases
                         
                         ON phases.recruitment_process_id = candidates.recruitment_process_id
@@ -130,17 +128,18 @@ class interview {
                         ON rec.id = candidates.recruiter_id
                       `
 
-            const values = [id, "interview"];
+            const values = [id, phase_types_numbers.interview];
+            query += ` WHERE 1 = 1`;
             if (companyName) {
-                query += ` WHERE comp.name = $${index++}`;
+                query += ` AND comp.name = $${index++}`;
                 values.push(companyName);
             }
             if (city) {
-                query += ` WHERE job.city = $${index++}`;
+                query += ` AND job.city = $${index++}`;
                 values.push(city);
             }
             if (country) {
-                query += ` WHERE job.country = $${index++}`;
+                query += ` AND job.country = $${index++}`;
                 values.push(country);
             }
             if (sort == asc_order || !sort) {
