@@ -35,6 +35,12 @@ router.route('/profile-data')
         authorizeCompany,
         recruiterController.getRecruiterDataController
     )
+    .put(
+        authorizeRecruiter,
+        validateRecruiterName,
+        handleValidationErrors,
+        recruiterController.updateRecruiterController
+    )
     .all(notAllowed);
 
 router.route('/profile-pic')
@@ -53,14 +59,8 @@ router.route('/allRecruiters')
     )
     .all(notAllowed);
 
-router.route('/recruiter')
-    .put(
-        authorizeRecruiter,
-        validateRecruiterName,
-        handleValidationErrors,
-        recruiterController.updateRecruiterController
-    )
-    .all(notAllowed);
+
+    
 
 router.route('/finish-profile')
     .post(
