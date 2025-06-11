@@ -97,7 +97,8 @@ class interview {
                         candidates.phase_deadline as deadline,
                         candidates.interview_link as "meetingLink",
                         job.country as location,
-                        comp.name as companyName
+                        comp.name as companyName,
+                        rec.id as recruiterId
                         FROM (
                                 SELECT recruiter_id,
                                 phase, job_id,
