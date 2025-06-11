@@ -204,9 +204,9 @@ module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,
 
     let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
     
-    if(checkTimme!=null){
-        return false;
-    }
+    // if(checkTimme!=null){
+    //     return false;
+    // }
     let result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId);
     return result
 }

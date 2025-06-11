@@ -5,8 +5,8 @@ module.exports.createJob = async (req, res, next) => {
     const jobData = req.body;
     const companyId = req.userId
     try {
-        const msg = await jobService.createJob(companyId, jobData);
-        res.status(201).json(msg);
+        const jobId = await jobService.createJob(companyId, jobData);
+        res.status(201).json({id: jobId});
     } catch (err) {
         next(err);
     }
@@ -40,7 +40,7 @@ module.exports.updateJobById = async (req, res, next) => {
     const jobId = req.params.id;
     const jobData = req.body;
     try {
-        const msg = await jobService.updateJobById(req.userId || 1, jobId, jobData);
+        const msg = await jobService.updateJobById(req.userId, jobId, jobData);
         res.status(200).json(msg);
     } catch (err) {
         next(err);

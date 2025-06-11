@@ -75,3 +75,12 @@ module.exports.getAllRecruitersService=async(companyId)=>{
     return await recruiterModel.getAllRecruiters(companyId)
 
 }
+
+
+module.exports.updateRecruiterService=async(recruiterId,name)=>{
+    return await recruiterModel.updateRecruiter(recruiterId,name)
+}
+
+module.exports.createRecruiterService=async(recruiterId,name)=>{
+    return await recruiterModel.createRecruiter(recruiterId,name)
+}

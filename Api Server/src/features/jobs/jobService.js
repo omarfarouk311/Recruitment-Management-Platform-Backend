@@ -1,6 +1,6 @@
 const jobModel = require('./jobModel')
 const Kafka = require('../../common/kafka')
-const {  job_embedding_topic, logs_topic, action_types } = require('../../../config/config')
+const { job_embedding_topic, logs_topic, action_types } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
 const Pool = require('../../../config/db')
 
@@ -14,9 +14,8 @@ module.exports.createJob = async (companyId, jobData) => {
     try {
         await client.query('BEGIN');
 
-        const response = await jobModel.createJob(client, companyId, jobData);
+        const jobId = await jobModel.createJob(client, companyId, jobData);
         const companyName = await jobModel.getCompanyName(companyId);
-        const { message, jobId } = response;
         const id = uuid();
         const processObject = {
             id,
@@ -29,20 +28,16 @@ module.exports.createJob = async (companyId, jobData) => {
 
         await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
-        console.log('Ack from Kafka');
         try {
             await client.query('COMMIT');
         } catch (err) {
             await produceToKafka({ id, type: 0 }, logs_topic);
-            console.log('Error in committing transaction:', err);
             throw err;
         }
-      
-        return message;
 
+        return jobId;
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error in createJob:', error);
         throw error;
     } finally {
         client.release();
@@ -59,7 +54,7 @@ module.exports.closeJobById = async (companyId, jobId) => {
     try {
         await client.query('BEGIN');
 
-        await jobModel.closeJobById(client, companyId, jobId);
+        await jobModel.closeJobById(client, jobId);
         const companyName = await jobModel.getCompanyName(companyId);
         const id = uuid();
         const processObject = {
@@ -72,7 +67,6 @@ module.exports.closeJobById = async (companyId, jobId) => {
         };
 
         await produceToKafka(processObject, logs_topic);
-        console.log('Ack from Kafka');
 
         try {
             await client.query('COMMIT');
@@ -80,11 +74,9 @@ module.exports.closeJobById = async (companyId, jobId) => {
             await produceToKafka({ id, type: 0 }, logs_topic);
             throw err;
         }
-
         return { message: 'Job closed successfully' };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error in deleteJobById:', error);
         throw error;
     } finally {
         client.release();
@@ -111,7 +103,6 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
 
         await produceToKafka({ jobId }, job_embedding_topic);
         await produceToKafka(processObject, logs_topic);
-        console.log('Ack from Kafka');
 
         try {
             await client.query('COMMIT');
@@ -119,12 +110,10 @@ module.exports.updateJobById = async (companyId, jobId, jobData) => {
             await produceToKafka({ id, type: 0 }, logs_topic);
             throw err;
         }
-   
 
         return { message: 'Job updated successfully' };
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error in updateJobById:', error);
         throw error;
     } finally {
         client.release();
@@ -136,7 +125,6 @@ module.exports.getJobDataForEditing = async (jobId) => {
     const job = await jobModel.getJobDataForEditing(jobId)
     return job
 }
-
 
 
 module.exports.getSimilarJobs = async (jobId) => {

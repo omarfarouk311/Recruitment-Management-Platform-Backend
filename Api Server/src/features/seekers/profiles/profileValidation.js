@@ -33,7 +33,7 @@ const validatePhoneNumber = () =>
         .withMessage("Phone number must be a string")
         .isMobilePhone()
         .withMessage(
-            'Phone number must start with a "+" followed by 1 to 14 digits'
+            'Phone number must between 6 and 14 digits'
         );
 
 const validateBirthDate = () =>

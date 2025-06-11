@@ -16,6 +16,7 @@ const validateStartDate = ()=>
     body('start_date', 'Start date is required')
     .notEmpty()
     .isISO8601()
+    .withMessage('End date must be ISO string')
     .toDate();
 
 

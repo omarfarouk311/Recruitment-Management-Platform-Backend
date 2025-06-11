@@ -244,14 +244,12 @@ class RecruiterModel {
         try{
             let query=
             `
-            SELECT t1.name as recruiterName,Company.name as companyName,Company_Location.city as companyCity,
-            Company_Location.country as companyCountry,t1.department as recruiterDepartment
+            SELECT t1.name as recruiterName,Company.name as companyName,t1.assigned_candidates_cnt as assignedCandidatesCnt
             FROM(
-            SELECT id,company_id,name,department
+            SELECT id,company_id,name,assigned_candidates_cnt
             FROM Recruiter
             WHERE id=$1) as t1
-            JOIN Company ON Company.id=t1.company_id
-            JOIN Company_Location ON Company.id=Company_Location.company_id
+            LEFT JOIN Company ON Company.id=t1.company_id
             `
 
             let value=[recruiteId]
@@ -279,6 +277,42 @@ class RecruiterModel {
 
         }catch(err){
             console.log('err in getAllRecruiters model',err.message)
+            throw err;
+        }
+    }
+
+    static async updateRecruiter(recruiterId,name){
+        let primary_DB=primaryPool.getWritePool()
+        try{
+                let query=
+                `UPDATE Recruiter
+                SET name=$1
+                WHERE id=$2`
+
+                let value=[name,recruiterId]
+                await primary_DB.query(query,value)
+                return true;
+        }catch(err){
+                console.log('err in updateRecruiter model',err.message)
+                throw err;
+            }
+    }
+
+    static async createRecruiter(recruiterId,name){
+       try{
+        console.log('recruiterId',recruiterId)
+            let primary_DB=primaryPool.getWritePool()
+            let query=
+            `INSERT INTO Recruiter(id,company_id,name,assigned_candidates_cnt,has_image,department)
+            VALUES($1,NULL,$2,0,false,NULL)
+            RETURNING id`
+
+            let value=[recruiterId,name]
+            let queryResult=await primary_DB.query(query,value)
+            return queryResult.rows[0].id;
+       }
+       catch(err){
+            console.log('err in createRecruiter model',err.message)
             throw err;
         }
     }
