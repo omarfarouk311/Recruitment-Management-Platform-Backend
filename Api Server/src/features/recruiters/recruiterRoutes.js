@@ -32,7 +32,7 @@ router.route('/assigned-Candidate-JobTitles')  // get list of the jobs the recru
 
 router.route('/profile-data')
     .get(
-        authorizeCompany,
+        authorizeRecruiter,
         recruiterController.getRecruiterDataController
     )
     .put(
@@ -72,7 +72,6 @@ router.route('/finish-profile')
 
 router.route('/:userId/profile-pic')
     .get(
-        authorizeRecruiter,
         recruiterController.getProfilePicController
     )
     .all(notAllowed);

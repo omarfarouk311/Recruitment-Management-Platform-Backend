@@ -130,7 +130,7 @@ module.exports.getProfilePicController=async(req,res,next)=>{
     }
     catch (err) {
         if (err.code === 'NotFound') {
-            err.msg = 'Company photo not found';
+            err.msg = 'recruiter photo not found';
             err.status = 404;
             return next(err);
         }
