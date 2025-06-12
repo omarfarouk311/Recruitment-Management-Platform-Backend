@@ -1,4 +1,5 @@
 const authService = require('./authService');
+const User = require('./userModel');
 
 exports.signUp = async (req, res, next) => {
     const data = {
@@ -113,3 +114,21 @@ exports.authenticateUser = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.checkAuth = async (req, res, next) => {
+    const data = {
+        token: req.signedCookies.JWT
+    };
+
+    try {
+        const {
+            userId,
+            userRole
+        } = authService.authenticateUser(data);
+        const name = await User.getUserName(userId, userRole);
+        res.status(200).json({ isProfileFinished: Boolean(name) });
+    }
+    catch (err) {
+        next(err);
+    }
+}

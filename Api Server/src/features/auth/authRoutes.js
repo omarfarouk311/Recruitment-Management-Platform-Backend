@@ -25,4 +25,8 @@ router.route('/refresh-token')
     .post(authController.refreshToken)
     .all(notAllowed);
 
+router.route('/check-auth')
+    .get(authController.checkAuth)
+    .all(notAllowed);
+
 module.exports = router;

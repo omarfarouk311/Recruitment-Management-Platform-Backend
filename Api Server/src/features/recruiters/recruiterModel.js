@@ -304,8 +304,8 @@ class RecruiterModel {
         console.log('recruiterId',recruiterId)
             let primary_DB=primaryPool.getWritePool()
             let query=
-            `INSERT INTO Recruiter(id,company_id,name,assigned_candidates_cnt,has_image,department)
-            VALUES($1,NULL,$2,0,false,NULL)
+            `INSERT INTO Recruiter(id,company_id,name,assigned_candidates_cnt,department)
+            VALUES($1,NULL,$2,0,NULL)
             RETURNING id`
 
             let value=[recruiterId,name]
