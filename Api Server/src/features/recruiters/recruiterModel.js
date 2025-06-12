@@ -244,9 +244,10 @@ class RecruiterModel {
         try{
             let query=
             `
-            SELECT t1.name as recruiterName,Company.name as companyName,t1.assigned_candidates_cnt as assignedCandidatesCnt
+            SELECT t1.name as "recruiterName", t1.company_id as "companyId", Company.name as "companyName",
+            t1.department, t1.assigned_candidates_cnt as "assignedCandidatesCnt"
             FROM(
-            SELECT id,company_id,name,assigned_candidates_cnt
+            SELECT id,company_id,name,assigned_candidates_cnt,department
             FROM Recruiter
             WHERE id=$1) as t1
             LEFT JOIN Company ON Company.id=t1.company_id
