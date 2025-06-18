@@ -32,19 +32,18 @@ exports.login = async (req, res, next) => {
             name
         } = await authService.login(data);
 
-        // change samesite to 'Lax' after completing development
         res
             .status(200)
             .cookie('refreshToken', refreshToken, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 604800 * 1000)
             })
             .cookie('JWT', token, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 900 * 1000)
@@ -71,19 +70,18 @@ exports.refreshToken = async (req, res, next) => {
             refreshToken
         } = authService.refreshToken(data);
 
-        // change samesite to 'Lax' after completing development
         res
             .status(204)
             .cookie('refreshToken', refreshToken, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 604800 * 1000)
             })
             .cookie('JWT', token, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 900 * 1000)
