@@ -1,3 +1,4 @@
+console.log = () => { };
 process.env.TZ = 'UTC';
 const express = require('express');
 const { port } = require('../config/config');
