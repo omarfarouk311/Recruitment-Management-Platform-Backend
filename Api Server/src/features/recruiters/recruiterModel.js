@@ -184,7 +184,7 @@ class RecruiterModel {
             FROM Candidates
             WHERE recruiter_id=$${cnt++} AND template_id IS NOT NULL)
 
-            SELECT Job_Seeker.name as candidateName,Job_Seeker.id,Job.title as jobTitle,candidatesIdsJobIds.date_applied as dateSent
+            SELECT job.id as "jobId", Job_Seeker.name as candidateName,Job_Seeker.id,Job.title as jobTitle,candidatesIdsJobIds.date_applied as dateSent
             FROM candidatesIdsJobIds
             JOIN Job on candidatesIdsJobIds.job_id=Job.id
             JOIN Job_Seeker on candidatesIdsJobIds.seeker_id=Job_Seeker.id`

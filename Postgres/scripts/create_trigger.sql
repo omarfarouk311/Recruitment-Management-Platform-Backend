@@ -1,7 +1,10 @@
 -- Trigger for automating partition creation
 
 CREATE OR REPLACE FUNCTION create_partition()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
     partition_start INTEGER;
     partition_end INTEGER;
@@ -9,8 +12,8 @@ DECLARE
     partition_exists BOOLEAN;
 BEGIN
     -- Calculate the partition range based on the user_id
-    partition_start := (NEW.id / 10000 + 1) * 10000 + 1;
-    partition_end := partition_start + 9999;
+    partition_start := (NEW.id / 15000 + 1) * 15000 + 1;
+    partition_end := partition_start + 14999;
     partition_name := 'recommendations_' || partition_start || '_' || partition_end;
 
     -- Acquire a transaction-level advisory lock to prevent race conditions
@@ -43,9 +46,9 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ ;
 
 CREATE TRIGGER create_partition_trigger
 AFTER INSERT ON Job_Seeker
-FOR EACH ROW WHEN (NEW.id % 10000 > 9500)
+FOR EACH ROW WHEN (NEW.id % 15000 > 14500)
 EXECUTE FUNCTION create_partition();

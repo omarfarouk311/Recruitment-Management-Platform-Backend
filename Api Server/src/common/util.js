@@ -244,7 +244,7 @@ exports.getImageService = async ({ bucketName, objectName }) => {
 exports.uploadImageService = async ({ bucketName, objectName, mimeType, fileName, fileSize, dataStream }) => {
     if (mimeType !== 'image/png' && mimeType !== 'image/jpeg' && mimeType !== 'image/jpg') {
         dataStream.resume();
-        const err = new Error('Invalide file type while uploading the CV');
+        const err = new Error('Invalide file type while uploading the image');
         err.msg = 'Image type must be png, jpeg, or jpg';
         err.status = 400;
         throw err;

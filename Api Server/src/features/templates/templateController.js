@@ -68,7 +68,7 @@ exports.getOfferDetails = async (req, res, next) => {
         const { jobId, seekerId } = req.params;
         const offerDetails = await Templates.getOfferDetails(jobId, seekerId);
         if (!offerDetails) {
-            return res.status(404).json({message: 'Offer not found' });
+            return res.sendStatus(404);
         }
         res.status(200).json(offerDetails);
     } catch (error) {
@@ -83,7 +83,7 @@ exports.sendOfferDetails = async (req, res, next) => {
         const { placeholders, templateId } = req.body;
         const updatedOfferDetails = await Templates.sendOfferDetails(jobId, seekerId, placeholders, templateId);
         if (!updatedOfferDetails) {
-            return res.status(404).json({ message: 'Offer not found' });
+            return res.sendStatus(404);
         }
         res.sendStatus(201);
     } catch (error) {
