@@ -92,7 +92,7 @@ class educationModel {
     }
 
     static async editEducation(seekerId,educationId,school_name,field,degree,grade,start_date,end_date){
-        let primary_DB=primaryPool.getWritePool();
+      
         try{
 
             let values=[];
@@ -118,7 +118,7 @@ class educationModel {
             query+=` WHERE id=$${cnt++} AND user_id=$${cnt++}`
             values.push(educationId,seekerId)
 
-            await primary_DB.query(query,values)
+            await client.query(query,values)
             return true;
 
         }catch(err){
