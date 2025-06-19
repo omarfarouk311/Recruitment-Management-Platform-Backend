@@ -23,7 +23,7 @@ exports.getTemplateDetails = async (req, res, next) => {
     }
 };
 
-exports.addTemplate = async (req, res) => {
+exports.addTemplate = async (req, res, next) => {
     try {
         const newTemplate = req.body;
         const createdTemplate = await Templates.createTemplate(newTemplate,req.userId);
@@ -33,7 +33,7 @@ exports.addTemplate = async (req, res) => {
     }
 };
 
-exports.editTemplate = async (req, res) => {
+exports.editTemplate = async (req, res, next) => {
     try {
         const { id } = req.params;
         const companyId = req.userId;
