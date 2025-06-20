@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # 1. Start Docker Compose in detached mode
-docker compose up -d
+docker compose up -d --build
 echo "🚀 Containers started in detached mode."
 
 # 2. Wait for 120 seconds

@@ -36,7 +36,7 @@ log "✅ Kafka is up."
 log "🚀" "Starting Email Server..."
 ( 
   cd "./Email Server" \
-    && docker compose up -d \
+    && docker compose up -d --build \
     && log "✅ Email Server is up."
 ) || { log "❌ Email Server failed."; exit 1; }
 
@@ -44,7 +44,7 @@ log "🚀" "Starting Email Server..."
 log "🚀" "Starting Logs Writing Server..."
 ( 
   cd "./Logs Writing Server" \
-    && docker compose up -d \
+    && docker compose up -d --build \
     && log "✅ Logs Writing Server is up."
 ) || { log "❌ Logs Writing Server failed."; exit 1; }
 
@@ -52,7 +52,7 @@ log "🚀" "Starting Logs Writing Server..."
 log "🚀" "Starting API Servers..."
 (
   cd "./Api Server" \
-    && docker compose up -d \
+    && docker compose up -d --build \
     && log "✅ API Servers are up."
 ) || { log "❌ API Servers failed."; exit 1; }
 
@@ -60,7 +60,7 @@ log "🚀" "Starting API Servers..."
 log "🚀" "Starting Nginx..."
 (
   cd "./Nginx" \
-    && docker compose up -d \
+    && docker compose up -d --build \
     && log "✅ Nginx is up."
 ) || { log "❌ Nginx failed."; exit 1; }
 
