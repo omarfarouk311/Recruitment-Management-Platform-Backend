@@ -33,6 +33,7 @@ exports.updateExperience = async (req, res, next) => {
     try {
         const experienceId = req.params.experienceId;
         const experienceData = {
+            userId: req.userId,
             companyName: req.body.companyName,
             startDate: req.body.startDate,
             endDate: req.body.endDate,
@@ -41,8 +42,8 @@ exports.updateExperience = async (req, res, next) => {
             country: req.body.country,
             city: req.body.city
         };
-        const experience = await experienceService.updateExperience(experienceId, experienceData);
-        res.status(200).json(experience);
+        await experienceService.updateExperience(experienceId, experienceData);
+        res.status(200).end();
     } catch (error) {
         next(error);
     }

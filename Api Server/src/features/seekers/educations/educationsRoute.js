@@ -1,41 +1,37 @@
-
 const express = require('express');
-const router=express();
-
-const educationController=require('./educationsController')
-const {validateEducation,validatSeekerId,validateEducationId}=require('./educationsValidation')
-const {handleValidationErrors}=require('../../../common/util')
-const {authorizeSeeker}=require('./educationsAuthorization')
-
-
-
-
+const router = express();
+const educationController = require('./educationsController')
+const { validateEducation, validateSeekerId, validateEducationId } = require('./educationsValidation')
+const { handleValidationErrors } = require('../../../common/util')
+const { authUpdateEducation, authDeleteEducation } = require('./educationsAuthorization')
+const { authorizeAccess } = require('../jobs_applied_for/jobsAppliedForAuthorization');
 
 router.post('/add',
     validateEducation,
     handleValidationErrors,
-    authorizeSeeker,
-    educationController.addEducationController)
+    authorizeAccess,
+    educationController.addEducationController
+)
 
 router.get('/:seekerId',
-    validatSeekerId,
+    validateSeekerId,
     handleValidationErrors,
-    educationController.getEducationController)
+    educationController.getEducationController
+)
 
 router.delete('/:educationId',
     validateEducationId,
     handleValidationErrors,
-    authorizeSeeker,
+    authDeleteEducation,
     educationController.deleteEducationController
 )
 
 router.patch('/:educationId',
-        validateEducation,
-        handleValidationErrors,
-        authorizeSeeker,
-        educationController.editEducationController)
+    validateEducationId,
+    validateEducation,
+    handleValidationErrors,
+    authUpdateEducation,
+    educationController.editEducationController
+)
 
-
-
-
-module.exports=router
+module.exports = router;

@@ -9,7 +9,6 @@ module.exports.getSeekerSkillsById = async (seekerId) => {
     return skills
 }
 
-
 module.exports.addSeekerSkills = async (seekerId, skills) => {
     let client = await Pool.getWritePool().connect();
     try {
@@ -19,8 +18,7 @@ module.exports.addSeekerSkills = async (seekerId, skills) => {
         const promise = Kafka.produce(
             {
                 id: null,
-                userId: seekerId,
-                type: 'profile'
+                userId: seekerId
             },
             profile_embedding_topic
         )
