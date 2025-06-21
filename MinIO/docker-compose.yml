@@ -9,8 +9,6 @@ services:
       - minio-store:/data
     networks:
       - internal-net
-    ports:
-      - 9001:9001
 
 volumes:
   minio-store:
