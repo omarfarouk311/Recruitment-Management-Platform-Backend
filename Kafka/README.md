@@ -81,6 +81,8 @@ The following Kafka topics are created and managed by this setup (see [`init.sh`
 ### Prerequisites
 
 - `internal-net` Docker network created (see below)
+- check that the [`init.sh`](/Kafka/init.sh) script end of sequence type is LF not CRLF
+
 
 ### Steps
 
