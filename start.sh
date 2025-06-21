@@ -7,7 +7,7 @@ log() {
 }
 
 # 1. Postgres
-log "🍀" "Starting Postgres containers (detached)..."
+log "🍀" "Starting Postgres containers..."
 (
   cd "./Postgres" \
     && docker compose start \
@@ -23,7 +23,7 @@ log "🚀" "Starting MinIO containers..."
 ) || { log "❌ Failed to start MinIO"; exit 1; }
 
 # 3. Kafka
-log "🚀" "Starting Kafka containers (detached)..."
+log "🚀" "Starting Kafka containers..."
 (
   cd "./Kafka" \
     && docker compose start \

@@ -28,38 +28,48 @@ log "💾" "Removing MinIO..."
   cd "./MinIO" \
     && docker compose down -v \
     && log "✅ MinIO containers & volumes removed."
-) || log "❌ Failed to tear down MinIO"
+) || log "❌ Failed to remove MinIO"
 
 # 4. Email Server
 log "📧" "Removing Email Server..."
 (
   cd "./Email Server" \
-    && docker compose down -v \
-    && log "✅ Email Server containers & volumes removed."
-) || log "❌ Failed to tear down Email Server"
+    && docker compose down \
+    && log "✅ Email Server containers removed."
+) || log "❌ Failed to remove Email Server"
 
 # 5. Logs Writing Server
 log "📝" "Removing Logs Writing Server..."
 (
   cd "./Logs Writing Server" \
-    && docker compose down -v \
-    && log "✅ Logs Writing Server containers & volumes removed."
-) || log "❌ Failed to tear down Logs Writing Server"
+    && docker compose down \
+    && log "✅ Logs Writing Server containers removed."
+) || log "❌ Failed to remove Logs Writing Server"
 
 # 6. API Server
 log "🔌" "Removing API Server..."
 (
   cd "./Api Server" \
-    && docker compose down -v \
-    && log "✅ API Server containers & volumes removed."
-) || log "❌ Failed to tear down API Server"
+    && docker compose down \
+    && log "✅ API Server containers removed."
+) || log "❌ Failed to remove API Server"
 
 # 7. Nginx
 log "🌐" "Removing Nginx..."
 (
   cd "./Nginx" \
-    && docker compose down -v \
-    && log "✅ Nginx containers & volumes removed."
-) || log "❌ Failed to tear down Nginx"
+    && docker compose down \
+    && log "✅ Nginx containers removed."
+) || log "❌ Failed to remove Nginx"
 
-log "🎉" "All services have been fully removed with their volumes!"
+# 8. Remove internal Docker network if it exists
+NETWORK="internal-net"
+log "🌐" "Checking for Docker network '$NETWORK'..."
+if docker network inspect "$NETWORK" >/dev/null 2>&1; then
+  docker network rm "$NETWORK" \
+    && log "✅ Network '$NETWORK' removed."
+else
+  log "ℹ️" "Network '$NETWORK' does not exist; skipping removal."
+fi
+
+log "🎉" "All networks and services have been fully removed with their volumes!"

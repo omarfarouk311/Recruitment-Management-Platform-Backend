@@ -6,6 +6,14 @@ log() {
   echo -e "${emoji} $*"
 }
 
+# 🌐 0. Create internal Docker network
+NETWORK_NAME="internal-net"
+log "🌐" "Creating Docker network '${NETWORK_NAME}'"
+docker network ls --format "{{.Name}}" | grep -qw "${NETWORK_NAME}" || {
+  docker network create --driver bridge --subnet 10.0.0.0/24 "${NETWORK_NAME}"
+  log "✅ Network '${NETWORK_NAME}' created."
+} || { log "❌ Failed to create Docker network '${NETWORK_NAME}'"; exit 1;}
+
 # 1. Postgres
 log "🍀" "Starting Postgres..."
 (
