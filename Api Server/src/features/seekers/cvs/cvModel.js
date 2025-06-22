@@ -212,19 +212,14 @@ class CV {
         try {
             const query = `
                 SELECT c.id, c.name
-                FROM (
-                    SELECT id, name
-                    FROM cv
-                    WHERE user_id = $1 and deleted = $2
-                ) as c
-                JOIN cv_embedding ce
-                ON ce.cv_id = c.id
-                CROSS JOIN (
+                FROM cv c
+                LEFT JOIN cv_embedding ce ON ce.cv_id = c.id
+                WHERE c.user_id = $1 and c.deleted = $2
+                ORDER BY ce.vector <=> (
                     SELECT embedding
-                    FROM job_embedding 
+                    FROM job_embedding
                     WHERE job_id = $3
-                ) as j
-                ORDER BY ce.vector <=> j.embedding
+                )
             `;
             const values = [seekerId, false, jobId];
             const { rows } = await client.query(query, values);
