@@ -18,7 +18,12 @@ function validatePlaceholders(value) {
     return true;
 }
 
-
+const pageAndSimplified = query('page').custom((value, { req }) => {
+    if (!value && !req.query.simplified) {
+        throw new Error('Page query parameter is required when simplified is not provided');
+    }
+    return true;
+});
 
 const name = body('name')
     .exists({ checkFalsy: true })
@@ -114,6 +119,7 @@ const templateId = body('templateId')
 exports.validateGetAllTemplates = [
     sortBy,
     page,
+    pageAndSimplified,
     simplified
 ];
 
