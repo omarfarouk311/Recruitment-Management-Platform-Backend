@@ -47,7 +47,19 @@ class ProfileModel {
         const writePool = await getWritePool().connect();
         try {
             writePool.query('BEGIN');
-            const { name, city, country, phoneNumber, dateOfBirth, gender, experiences, educations, skills, cvId, cvName} = profileData;
+            const { 
+                name, 
+                city, 
+                country, 
+                phoneNumber, 
+                dateOfBirth, 
+                gender, 
+                experiences = [], 
+                educations = [], 
+                skills = [], 
+                cvId, 
+                cvName 
+            } = profileData;
             // insert the profile data into the job_seeker table
             let query = `
                 INSERT INTO Job_Seeker (id, name, city, country, phone_number, date_of_birth, gender)
@@ -64,7 +76,7 @@ class ProfileModel {
             const cvValues = [cvId, cvName, userId];
             await writePool.query(query, cvValues);
             // Produce cv id to kafka for parsing
-            const kafkaPromise = produce(cvId, constants.cv_parsing_topic)
+            const kafkaPromise = produce({id: cvId}, constants.cv_parsing_topic)
 
             // insert the experience data into the user_experience table
             let placeholders = experiences
