@@ -308,6 +308,8 @@ CREATE INDEX ON Recruiter (company_id);
 
 CREATE INDEX ON Recruiter (department);
 
+CREATE INDEX ON CV (user_id);
+
 CREATE INDEX ON Company (size);
 
 CREATE INDEX ON Company (rating);

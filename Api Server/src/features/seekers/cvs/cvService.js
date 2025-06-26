@@ -89,8 +89,7 @@ exports.downloadCV = async (cvId, userId, userRole, seekerId, jobId) => {
 
 exports.deleteCV = async (cvId, userId) => {
     try {
-        const msg = await CV.deleteCV(cvId, userId);
-        return msg;
+        await CV.deleteCV(cvId, userId);
     } catch (err) {
         throw err;
     }
