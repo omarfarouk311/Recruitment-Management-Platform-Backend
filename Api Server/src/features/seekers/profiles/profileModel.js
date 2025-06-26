@@ -75,54 +75,61 @@ class ProfileModel {
             `;
             const cvValues = [cvId, cvName, userId];
             await writePool.query(query, cvValues);
-            // Produce cv id to kafka for parsing
-            const kafkaPromise = produce({id: cvId}, constants.cv_parsing_topic)
-
+            
+            let placeholders;
             // insert the experience data into the user_experience table
-            let placeholders = experiences
-                .map((_, index) => `($1, $${index * 7 + 2}, $${index * 7 + 3}, $${index * 7 + 4}, $${index * 7 + 5}, $${index * 7 + 6}, $${index * 7 + 7}, $${index * 7 + 8})`)
-                .join(", ");
-            const bulkQuery = `
-                INSERT INTO user_experience (user_id, company_name, start_date, end_date, job_title, description, country, city)
-                VALUES ${placeholders}
-            `;
-            const bulkValues = experiences.flatMap(experience => [
-                experience.companyName,
-                experience.startDate,
-                experience.endDate,
-                experience.jobTitle,
-                experience.description,
-                experience.country,
-                experience.city,
-            ]);
-            await writePool.query(bulkQuery, [userId, ...bulkValues]);
-            // insert the education data into the user_education table
-            placeholders = educations
-                .map((_, index) => `($1, $${index * 6 + 2}, $${index * 6 + 3}, $${index * 6 + 4}, $${index * 6 + 5}, $${index * 6 + 6}, $${index * 6 + 7})`)
-                .join(", ");
-            query = `
-                INSERT INTO education (user_id, school_name, start_date, end_date, degree, field, grade)
-                VALUES ${placeholders}
-            `
-            const educationValues = educations.flatMap(education => [
-                education.schoolName, 
-                education.startDate, 
-                education.endDate, 
-                education.degree, 
-                education.field, 
-                education.grade
-            ]);
-            await writePool.query(query, [userId, ...educationValues]);
-            // insert the skills data into the user_skills table
-            query = `
-                INSERT INTO user_skills (user_id, skill_id)
-                SELECT $1 as user_id, id
-                FROM skills
-                WHERE id = ANY($2)
-            `;
-            const skillsValues = [userId, skills];
-            await writePool.query(query, skillsValues);
-            await kafkaPromise;
+            if (experiences.length !== 0) {
+                placeholders = experiences
+                    .map((_, index) => `($1, $${index * 7 + 2}, $${index * 7 + 3}, $${index * 7 + 4}, $${index * 7 + 5}, $${index * 7 + 6}, $${index * 7 + 7}, $${index * 7 + 8})`)
+                    .join(", ");
+                const bulkQuery = `
+                    INSERT INTO user_experience (user_id, company_name, start_date, end_date, job_title, description, country, city)
+                    VALUES ${placeholders}
+                `;
+                const bulkValues = experiences.flatMap(experience => [
+                    experience.companyName,
+                    experience.startDate,
+                    experience.endDate,
+                    experience.jobTitle,
+                    experience.description,
+                    experience.country,
+                    experience.city,
+                ]);
+                await writePool.query(bulkQuery, [userId, ...bulkValues]);
+            }
+
+            if(educations.length !== 0) {
+                // insert the education data into the user_education table
+                placeholders = educations
+                    .map((_, index) => `($1, $${index * 6 + 2}, $${index * 6 + 3}, $${index * 6 + 4}, $${index * 6 + 5}, $${index * 6 + 6}, $${index * 6 + 7})`)
+                    .join(", ");
+                query = `
+                    INSERT INTO education (user_id, school_name, start_date, end_date, degree, field, grade)
+                    VALUES ${placeholders}
+                `
+                const educationValues = educations.flatMap(education => [
+                    education.schoolName, 
+                    education.startDate, 
+                    education.endDate, 
+                    education.degree, 
+                    education.field, 
+                    education.grade
+                ]);
+                await writePool.query(query, [userId, ...educationValues]);
+            }
+            
+            if (skills.length !== 0) {
+                // insert the skills data into the user_skills table
+                query = `
+                    INSERT INTO user_skills (user_id, skill_id)
+                    SELECT $1 as user_id, id
+                    FROM skills
+                    WHERE id = ANY($2)
+                `;
+                const skillsValues = [userId, skills];
+                await writePool.query(query, skillsValues);
+            }
+            await produce({id: cvId}, constants.cv_parsing_topic);
             // commit the transaction
             await writePool.query('COMMIT');
             return;
