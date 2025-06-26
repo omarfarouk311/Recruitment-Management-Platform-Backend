@@ -59,9 +59,8 @@ exports.deleteCV = async (req, res, next) => {
     const { userId } = req;
 
     try {
-        const msg = await cvService.deleteCV(cvId, userId);
-        console.log('CV deleted successfully');
-        res.status(200).json({ msg });
+        await cvService.deleteCV(cvId, userId);
+        res.sendStatus(200);
     } catch (err) {
         next(err);
     }
