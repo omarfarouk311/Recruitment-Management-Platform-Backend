@@ -5,7 +5,8 @@ CREATE TABLE Users (
   id serial PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  role smallint NOT NULL
+  role smallint NOT NULL,
+  token_version int NOT NULL
 );
 
 CREATE TABLE Job_Seeker (

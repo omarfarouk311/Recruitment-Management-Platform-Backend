@@ -15,8 +15,8 @@ class User {
     async create() {
         const query =
             `
-            INSERT INTO Users (email, password, role)
-            VALUES ($1, $2, $3)
+            INSERT INTO Users (email, password, role, token_version)
+            VALUES ($1, $2, $3, 0)
             RETURNING id
             `;
         const { rows } = await User.getMasterPool().query(query, [this.email, this.password, this.role]);
@@ -26,7 +26,7 @@ class User {
     static async getUserData(email) {
         const query =
             `
-            SELECT id as "userId", password as "hashedPassword", role as "userRole"
+            SELECT id as "userId", password as "hashedPassword", role as "userRole", token_version as "tokenVersion"
             FROM Users
             WHERE email = $1
             `;
@@ -48,6 +48,17 @@ class User {
 
         const { rows } = await User.getMasterPool().query(query, [id]);
         return rows.length > 0 ? rows[0].name : null;
+    }
+
+    static async getTokenVersion(id) {
+        const query = 'SELECT token_version as "tokenVersion" FROM Users WHERE id = $1';
+        const { rows } = await User.getMasterPool().query(query, [id]);
+        return rows[0].tokenVersion;
+    }
+
+    static async updateTokenVersion(id) {
+        const query = 'UPDATE Users SET token_version = token_version + 1 WHERE id = $1';
+        await User.getMasterPool().query(query, [id]);
     }
 }
 
