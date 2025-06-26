@@ -36,7 +36,7 @@ exports.login = async (data) => {
         throw err;
     }
 
-    const { userId, hashedPassword, userRole } = userData;
+    const { userId, hashedPassword, userRole, tokenVersion } = userData;
     const isMatch = await bcrypt.compare(password, hashedPassword);
     // password not valid
     if (!isMatch) {
@@ -47,8 +47,8 @@ exports.login = async (data) => {
     }
 
     // Generate JWT tokens and retrieve the name
-    const token = jwt.sign({ userId, userRole }, process.env.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ userId, userRole }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId, userRole, tokenVersion }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ userId, userRole, tokenVersion }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
     const name = await User.getUserName(userId, userRole);
 
     return {
@@ -73,9 +73,9 @@ exports.refreshToken = (data) => {
 
     try {
         const decodedToken = jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-        const { userId, userRole } = decodedToken;
-        const token = jwt.sign({ userId, userRole }, process.env.JWT_SECRET, { expiresIn: '15m' });
-        const refreshToken = jwt.sign({ userId, userRole }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+        const { userId, userRole, tokenVersion } = decodedToken;
+        const token = jwt.sign({ userId, userRole, tokenVersion }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        const refreshToken = jwt.sign({ userId, userRole, tokenVersion }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 
         return {
             token,
@@ -91,7 +91,7 @@ exports.refreshToken = (data) => {
     }
 };
 
-exports.authenticateUser = (data) => {
+exports.authenticateUser = async (data) => {
     const { token } = data;
 
     // Check if the token is provided
@@ -104,7 +104,17 @@ exports.authenticateUser = (data) => {
 
     try {
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const { userId, userRole } = decodedToken;
+        const { userId, userRole, tokenVersion } = decodedToken;
+
+        // check on the token version
+        const dbTokenVersion = await User.getTokenVersion(userId);
+        if (tokenVersion !== dbTokenVersion) {
+            const err = new Error('Invalid token version');
+            err.msg = 'Invalid token';
+            err.status = 401;
+            throw err;
+        }
+
         return { userId, userRole };
     }
     catch (err) {
@@ -114,4 +124,9 @@ exports.authenticateUser = (data) => {
         }
         throw err;
     }
+};
+
+exports.logout = async (data) => {
+    const { userId } = data;
+    await User.updateTokenVersion(userId);
 };

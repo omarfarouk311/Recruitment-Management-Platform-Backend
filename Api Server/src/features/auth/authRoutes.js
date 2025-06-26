@@ -29,4 +29,8 @@ router.route('/check-auth')
     .get(authController.checkAuth)
     .all(notAllowed);
 
+router.route('/logout')
+    .post(authController.logout)
+    .all(notAllowed);
+
 module.exports = router;
