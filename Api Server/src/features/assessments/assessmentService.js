@@ -2,7 +2,8 @@ const assessmentsModel = require('./assessmentModel');
 const Kafka = require('../../common/kafka')
 const { action_types, logs_topic,candidate_status_pending,candidate_status_accepted,candidate_status_rejected,phase_types } = require('../../../config/config')
 const { v6: uuid } = require('uuid');
-const primaryPool=require('../../../config/db')
+const primaryPool=require('../../../config/db');
+const { toString } = require('express-validator/lib/utils');
 
 
 
@@ -144,11 +145,12 @@ module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerI
         return -2;
     }
     
-    let assessmentDeadline=await assessmentsModel.checkStartTime_assessmet(jobSeekerId,jobId);
-    assessmentDeadline=assessmentDeadline; 
-    let currentTime = new Date();
-    const timestamp = currentTime.toISOString();    
-    if(assessmentDeadline<timestamp){
+     let assessmentDeadline=await assessmentsModel.checkStartTime_assessmet(jobSeekerId,jobId);
+     assessmentDeadline = new Date(assessmentDeadline);
+
+    const timestamp = new Date(); // current time
+
+    if (assessmentDeadline < timestamp) {
         return -1;
     }
   
