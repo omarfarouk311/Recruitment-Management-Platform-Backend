@@ -93,9 +93,9 @@ class Invitation {
                 `
                 select 1
                 from Company_Invitations
-                where recruiter_id = (select id from users where email = $1) and company_id = $2 and status = 2
+                where recruiter_id = (select id from users where email = $1) and company_id = $2 and status = 2 and deadline >= $3
                 `;
-            values = [this.recruiterEmail, this.companyId];
+            values = [this.recruiterEmail, this.companyId, new Date()];
             const { rows: existingInvitations } = await client.query(checkInvitation, values);
 
             if (existingInvitations.length) {
