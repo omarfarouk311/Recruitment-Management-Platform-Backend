@@ -424,24 +424,29 @@ class assessmentsModel{
     static async get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page=1){
         let replica_DB=replicaPool.getReadPool();
         try{
+            console.log("her")
             let cnt=1;
             let values=[];
+            let currentTime = new Date();
+            const timestamp = currentTime.toISOString();;  
             let query=
             `WITH getSeekerData as(
-            SELECT job_id,date_applied,phase_deadline,recruitment_process_id,phase
+            SELECT job_id,date_applied,phase_deadline,recruitment_process_id,phase,assessment_deadline
             FROM Candidates
             WHERE seeker_id=$${cnt++}
             )
-            SELECT Job.title,Company.name,Job.country,Job.city,
+            SELECT Job.title,Company.name,Job.country,Job.city,getSeekerData.assessment_deadline,
             getSeekerData.date_applied,getSeekerData.phase_deadline,t1.assessment_id,Job.id as jobId,Company.id as companyId,a.assessment_time,'Pending' as status
             FROM getSeekerData 
             JOIN (SELECT recruitment_process_id,assessment_id,phase_num FROM Recruitment_Phase WHERE assessment_id is not null) as t1 ON getSeekerData.recruitment_process_id=t1.recruitment_process_id AND getSeekerData.phase=t1.phase_num
             JOIN Job ON getSeekerData.job_id=Job.id
             JOIN Company ON Job.company_id=Company.id
             JOIN Assessment a on a.id=t1.assessment_id
-            WHERE 1=1
+            WHERE getSeekerData.assessment_deadline is null AND getSeekerData.phase_deadline>= $${cnt++} 
+
             `
-            values.push(seekerId);
+            console.log("sss",timestamp)
+            values.push(seekerId,timestamp);
             if(country){
                 query+=` AND Job.country=$${cnt++}`
                 values.push(country)
@@ -483,7 +488,9 @@ class assessmentsModel{
             let values=[];
             let query=
             `SELECT job_title,company_name,country,city,date_applied,job_id,'Completed' as status 
-            FROM Candidate_History 
+            FROM job 
+            JOIN assessment_score ON job.id=assessment_score.job_id
+            JOIN company ON job.company_id=company.id
             WHERE seeker_id=$${cnt++} AND phase_type=$${cnt++}
             `
             values.push(seekerId,status,phase_types);

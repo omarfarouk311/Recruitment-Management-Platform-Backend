@@ -145,9 +145,9 @@ module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerI
     }
     
     let assessmentDeadline=await assessmentsModel.checkStartTime_assessmet(jobSeekerId,jobId);
-    assessmentDeadline=assessmentDeadline.toISOString().slice(0, 19).replace('T', ' '); 
+    assessmentDeadline=assessmentDeadline; 
     let currentTime = new Date();
-    const timestamp = currentTime.toISOString().slice(0, 19).replace('T', ' ');    
+    const timestamp = currentTime.toISOString();    
     if(assessmentDeadline<timestamp){
         return -1;
     }
@@ -188,15 +188,7 @@ module.exports.get_JobSeekerScoreService=async(jobId,jobSeekerId)=>{
 
 module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,city,status,companyName,sorted,page)=>{
     let result
-    
-    if(status==null|| status==candidate_status_pending){
-        result=assessmentsModel.get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page);
-    }
-    else{
-        if(status==2)status=1;
-        else status=0;
-        result=assessmentsModel.get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page,phase_types.assessment);
-    }
+    result=assessmentsModel.get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page);
     return result
     
 }
