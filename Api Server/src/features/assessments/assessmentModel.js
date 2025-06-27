@@ -311,7 +311,7 @@ class assessmentsModel{
             const returnedPhase=await primary_DB.query(query,queryValue)
 
             if(returnedPhase.rowCount==0){
-                throw new Error("submition failedd,please try again")
+                throw new Error("submition failedd,please try again later")
             }
 
             const insertValues=[jobId,jobSeekerId,returnedPhase.rows[0].phase_num,returnedPhase.rows[0].phase_name,score,num_of_questions]
@@ -518,53 +518,93 @@ class assessmentsModel{
         }
 
     }
-    static async get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId){
+    static async get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId,state){
         const primary_DB=primaryPool.getWritePool();
         const client=await primary_DB.connect();  
         try{
 
             await client.query("BEGIN")
-            let cnt=1,cnt2=1;;
-            let query1=
-            `SELECT
-                assessment.name,assessment.assessment_time,assessment.num_of_questions, 
-                json_agg(json_build_object('id', Questions.id, 'question',question,'answers',answers, 'questionNum', question_num)) as questions
+            if(state==0){
+                let cnt=1,cnt2=1;;
+
+                let query1=
+                `SELECT
+                    assessment.name,assessment.assessment_time,assessment.num_of_questions, 
+                    json_agg(json_build_object('id', Questions.id, 'question',question,'answers',answers, 'questionNum', question_num)) as questions
+                FROM Questions 
+                JOIN assessment on assessment.id=Questions.assessment_id
+                WHERE assessment_id=$${cnt++}
+                GROUP BY assessment.id
+                `
+                let values1=[assessmentId];
+
+                let result1=await client.query(query1,values1);
+
+                let currentTime = new Date();
+
+                // Get assessment time in milliseconds from db
+                let assessmentTime = result1.rows[0].assessment_time * 60 * 1000;
+                
+                let deadline = new Date(currentTime.getTime() + assessmentTime);
+
+                let formattedDeadline = deadline.toISOString().slice(0, 19).replace('T', ' ');
+                
+                let query2 = `
+                    UPDATE candidates
+                    SET assessment_deadline = $${cnt2++}
+                    WHERE seeker_id = $${cnt2++} AND job_id = $${cnt2++};
+                `;
+                
+                let values2 = [formattedDeadline, seekerId, jobId];
+
+                await client.query(query2,values2);
+
+                if(result1.rowCount==0){
+                    let err=new Error()
+                    err.status=404;
+                    err.msg="Assessment not found!"
+                    throw err;
+                }
+                await client.query("COMMIT")
+                return result1.rows[0];
+        }
+        else{
+
+             let cnt=1;
+
+                let query1=
+                ` SELECT
+                assessment.name,
+                ROUND(EXTRACT(EPOCH FROM (candidates.assessment_deadline - NOW())) / 60)::INT AS assessment_time,
+                assessment.num_of_questions, 
+                json_agg(json_build_object(
+                    'id', Questions.id, 
+                    'question', question,
+                    'answers', answers, 
+                    'questionNum', question_num
+                )) AS questions
             FROM Questions 
-            JOIN assessment on assessment.id=Questions.assessment_id
-            WHERE assessment_id=$${cnt++}
-            GROUP BY assessment.id
-            `
-            let values1=[assessmentId];
+            JOIN assessment ON assessment.id = Questions.assessment_id
+            JOIN candidates ON candidates.seeker_id = $${cnt++} AND candidates.job_id = $${cnt++}
+            WHERE assessment_id = $${cnt++}
+            GROUP BY assessment.id, candidates.assessment_deadline
+                `
+                let values1=[seekerId,jobId,assessmentId];
 
-            let result1=await client.query(query1,values1);
+                let result1=await client.query(query1,values1);
 
-            let currentTime = new Date();
-
-            // Get assessment time in milliseconds from db
-            let assessmentTime = result1.rows[0].assessment_time * 60 * 1000;
-            
-            let deadline = new Date(currentTime.getTime() + assessmentTime);
-
-            let formattedDeadline = deadline.toISOString().slice(0, 19).replace('T', ' ');
-            
-            let query2 = `
-                UPDATE candidates
-                SET assessment_deadline = $${cnt2++}
-                WHERE seeker_id = $${cnt2++} AND job_id = $${cnt2++};
-            `;
-            
-            let values2 = [formattedDeadline, seekerId, jobId];
-
-            await client.query(query2,values2);
-
-            if(result1.rowCount==0){
-                let err=new Error()
-                err.status=404;
-                err.msg="Assessment not found!"
-                throw err;
-            }
-            await client.query("COMMIT")
-            return result1.rows[0];
+                if(result1.rowCount==0){
+                    let err=new Error()
+                    err.status=404;
+                    err.msg="Assessment not found!"
+                    throw err;
+                }
+                if(result1.rows[0].assessment_time<0){
+                  result1.rows[0].assessment_time=0; // if the assessment time is over, set it to 0
+                }
+                await client.query("COMMIT")
+                return result1.rows[0];
+        }
 
         }catch(err){
             await client.query("ROLLBACK")

@@ -145,6 +145,7 @@ module.exports.compute_JobSeekerScoreService=async(assessmentId,jobId,jobSeekerI
     }
     
     let assessmentDeadline=await assessmentsModel.checkStartTime_assessmet(jobSeekerId,jobId);
+    assessmentDeadline=assessmentDeadline.toISOString().slice(0, 19).replace('T', ' '); 
     let currentTime = new Date();
     const timestamp = currentTime.toISOString().slice(0, 19).replace('T', ' ');    
     if(assessmentDeadline<timestamp){
@@ -203,11 +204,12 @@ module.exports.get_Seeker_Assessment_DashboardService=async(seekerId,country,cit
 module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,jobId)=>{
 
     let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
-    
-    // if(checkTimme!=null){
-    //     return false;
-    // }
-    let result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId);
+    let result
+    if(checkTimme!=null){
+        result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId,0);//refresh 
+    }
+    else
+    result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId,1);//first time
     return result
 }
 

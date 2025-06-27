@@ -1,6 +1,6 @@
 process.env.TZ = 'UTC';
 const express = require('express');
-const { port, role } = require('../config/config');
+const { port } = require('../config/config');
 const { errorHandlingMiddleware, notFound } = require('./common/errorMiddleware');
 const { minioConnect } = require('../config/MinIO');
 const candidateRoutes = require('./features/candidates/candidateRoutes');
@@ -30,33 +30,21 @@ minioConnect();
 
 app.use(
     helmet({
-      crossOriginResourcePolicy: false,
+        crossOriginResourcePolicy: { policy: "cross-origin" },
     }),
 );
 
 /* To be removed after integration because api request and frontend files will be served from the
 same origin (the reverse proxy) */
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 
-// app.use(cookieParser(process.env.COOKIE_SECRET));
-
-app.use((req, res, next) => {
-    // console.log('request reached')
-    req.userId = 12;
-    req.userRole = role.jobSeeker;
-    next();
-});
-
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
+app.use(authenticateUser); // this middleware will authenticate the user for all the routes below it
 
-// parse the cv when the user uploads it, doesn't need to be authenticated
-app.use('/api/cvs', cvRoutes);
-
-// this middleware will authenticate the user for all the routes below it
-// app.use(authenticateUser);
-
+app.use('/api/cvs', cvRoutes); // parses the cv when the user uploads it
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/jobs', jobRoutes);
@@ -73,6 +61,7 @@ app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
 app.use('/api/skills', skillsRoutes);
 
+// error handling
 app.use(notFound);
 app.use(errorHandlingMiddleware);
 
