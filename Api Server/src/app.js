@@ -52,7 +52,7 @@ app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
 app.use('/api/skills', skillsRoutes);
 
-// error handling
+
 // error handling
 app.use(notFound);
 app.use(errorHandlingMiddleware);
