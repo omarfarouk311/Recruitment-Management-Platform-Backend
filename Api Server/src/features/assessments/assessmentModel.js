@@ -524,7 +524,7 @@ class assessmentsModel{
         try{
 
             await client.query("BEGIN")
-            if(state==0){
+            if(state==1){
                 let cnt=1,cnt2=1;;
 
                 let query1=
