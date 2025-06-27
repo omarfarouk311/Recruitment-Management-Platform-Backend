@@ -20,48 +20,75 @@ class Experience {
         return rows;
     }
 
-    static async addExperience(experienceData) {
-        const pool = getWritePool();
-        const query = `
+    static async addExperience(experienceData, produce) {
+        const client = await getWritePool().connect();
+
+        try {
+            await client.query('begin');
+
+            const query = `
             INSERT INTO User_Experience (user_id, company_name, start_date, end_date, description, job_title, country, city)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING *;
-        `;
-        const values = [
-            experienceData.userId,
-            experienceData.companyName,
-            experienceData.startDate,
-            experienceData.endDate,
-            experienceData.description,
-            experienceData.jobTitle,
-            experienceData.country,
-            experienceData.city
-        ];
-        const { rows } = await pool.query(query, values);
-        return rows[0];
+            RETURNING id;
+            `;
+            const values = [
+                experienceData.userId,
+                experienceData.companyName,
+                experienceData.startDate,
+                experienceData.endDate,
+                experienceData.description,
+                experienceData.jobTitle,
+                experienceData.country,
+                experienceData.city
+            ];
+            const { rows } = await client.query(query, values);
+
+            if (produce) await produce();
+            await client.query('commit');
+            return rows[0];
+        }
+        catch (err) {
+            await client.query('rollback')
+            throw err;
+        }
+        finally {
+            client.release();
+        }
     }
 
-    static async updateExperience(experienceId, experienceData) {
-        const pool = getWritePool();
-        const query = `
+    static async updateExperience(experienceId, experienceData, produce) {
+        const client = await getWritePool().connect();
+
+        try {
+            await client.query('begin');
+
+            const query = `
             UPDATE User_Experience
             SET company_name = $1, start_date = $2, end_date = $3, description = $4, job_title = $5, country = $6, city = $7
             WHERE id = $8
-            RETURNING *;
-        `;
-        const values = [
-            experienceData.companyName,
-            experienceData.startDate,
-            experienceData.endDate,
-            experienceData.description,
-            experienceData.jobTitle,
-            experienceData.country,
-            experienceData.city,
-            experienceId,
-        ];
-        console.log(experienceData);
-        const { rows } = await pool.query(query, values);
-        return rows[0];
+            `;
+            const values = [
+                experienceData.companyName,
+                experienceData.startDate,
+                experienceData.endDate,
+                experienceData.description,
+                experienceData.jobTitle,
+                experienceData.country,
+                experienceData.city,
+                experienceId,
+            ];
+            await client.query(query, values);
+
+            if (produce) await produce();
+            await client.query('commit');
+        }
+        catch (err) {
+            await client.query('rollback')
+            throw err;
+        }
+        finally {
+            client.release();
+        }
     }
 
     static async deleteExperience(experienceId) {
@@ -69,22 +96,20 @@ class Experience {
         const query = `
             DELETE FROM User_Experience
             WHERE id = $1
-            RETURNING *;
         `;
         const values = [experienceId];
-        const { rows } = await pool.query(query, values);
-        return rows[0];
+        await pool.query(query, values);
     }
 
-    static async getExperienceById(experienceId) {
+    static async getExperienceOwner(experienceId) {
         const pool = getReadPool();
         const query = `
-            SELECT * FROM User_Experience
+            SELECT user_id as "userId" FROM User_Experience
             WHERE id = $1;
         `;
         const values = [experienceId];
         const { rows } = await pool.query(query, values);
-        return rows[0];
+        return rows.length === 0 ? null : rows[0].userId;
     }
 }
 

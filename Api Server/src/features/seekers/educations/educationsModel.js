@@ -1,132 +1,92 @@
-const primaryPool=require('../../../../config/db')
-const replicaPool=require('../../../../config/db')
+const { getWritePool, getReadPool } = require('../../../../config/db')
 
 class educationModel {
-    constructor(school_name, field, degree, grade, start_date, end_date) {
-        this.school_name = school_name;
-        this.field = field;
-        this.degree = degree;  
+    static getPrimaryPool() {
+        return getWritePool();
     }
 
-    static async addEducation(userId,school_name,field,degree,grade,start_date,end_date){
-        let primary_DB=primaryPool.getWritePool();
-        try{
+    static getReplicaPool() {
+        return getReadPool();
+    }
 
-            let placeHolder=[];
-            let values=[];
-            let query=
-            `INSERT INTO Education (user_id,school_name,field,degree
-            `
-            placeHolder=[`$1`,`$2`,`$3`,`$4`]
-            values.push(userId,school_name,field,degree);
+    static async addEducation(seekerId, school_name, field, degree, grade, start_date, end_date, produce) {
+        const client = await educationModel.getPrimaryPool().connect();
+        try {
+            await client.query('begin');
 
-            let cnt=5;
-            if(grade!=null){
-                query += `, grade`;
-                placeHolder.push(`$${cnt++}`)
-                values.push(grade);
-            }
-            if(start_date!=null){
-                query += `, start_date`;
-                placeHolder.push(`$${cnt++}`)
-                values.push(start_date);
-            }
-            if(end_date!=null){
-                query += `, end_date`;
-                placeHolder.push(`$${cnt++}`)
-                values.push(end_date);
-            }
-            query+=`) VALUES(${placeHolder.join(', ')}) RETURNING id`
+            const values = [seekerId, school_name, field, degree, grade, start_date, end_date];
+            const placeHolder = [`$1`, `$2`, `$3`, `$4`, `$5`, `$6`, `$7`];
+            let query = 'INSERT INTO Education (user_id, school_name, field, degree, grade, start_date, end_date)';
+            query += ` VALUES(${placeHolder.join(', ')}) RETURNING id`;
+            const res = await client.query(query, values);
 
-            const res = await primary_DB.query(query,values);
-            if (res.rowCount) {
-                return res.rows[0].id;
-            }
-            throw new Error('Failed to add education');
-
-        }catch(err){
-            console.log("err in addEducation model",err.message);
+            if (produce) await produce();
+            await client.query('commit');
+            return res.rows[0].id;
+        }
+        catch (err) {
+            await client.query('rollback')
             throw err;
+        }
+        finally {
+            client.release();
         }
     }
 
-    static async getEducation(seekerId){
-
-        let replica_DB=replicaPool.getReadPool();
-        try{
-            let query=
+    static async getEducation(seekerId) {
+        let replica_DB = educationModel.getReplicaPool();
+        let query =
             `SELECT id,school_name,field,degree,grade,start_date,end_date
             FROM Education 
             WHERE user_id=$1
             ORDER BY end_date DESC
-            `
-            let value=[seekerId]
-            let queryResult=await replica_DB.query(query,value)
-            let result=queryResult.rows
-            return result
-        }catch(err){
-            console.log("err in getEducation model",err.message)
-            throw err;
-        }
-
+            `;
+        let value = [seekerId];
+        let { rows } = await replica_DB.query(query, value);
+        return rows;
     }
 
-    static async deleteEducation(educationId,seekerId){
-        let primary_DB=primaryPool.getWritePool();
-        try{
-
-            let query=
-            `DELETE 
-            FROM Education
-            WHERE id=$1 AND user_id=$2
-            returning *
-            `
-            let values=[educationId,seekerId]
-            await primary_DB.query(query,values)
-            return true 
-
-        }catch(err){
-            console.log('err in deleteEducation model',err.message)
-            throw err;
-        }
+    static async deleteEducation(educationId, seekerId) {
+        let primary_DB = educationModel.getPrimaryPool();
+        let query = `DELETE FROM Education WHERE id=$1 AND user_id=$2`;
+        let values = [educationId, seekerId];
+        await primary_DB.query(query, values);
     }
 
-    static async editEducation(seekerId,educationId,school_name,field,degree,grade,start_date,end_date){
-      
-        try{
+    static async editEducation(seekerId, educationId, school_name, field, degree, grade, start_date, end_date, produce) {
+        const client = await educationModel.getPrimaryPool().connect();
+        try {
+            await client.query('begin');
 
-            let values=[];
-            let cnt=4;
-            let query=
-            `UPDATE Education 
-            SET school_name=$1,field=$2,degree=$3
-            `
-            values=[school_name,field,degree];
-            if(grade!=null){
-                query+=`,grade=$${cnt++}`
-                values.push(grade);
-            }
-            if(start_date!=null){
-                query+=`,start_date=$${cnt++}`
-                values.push(start_date)
-            }
-            if(end_date!=null){
-                query+=`,end_date=$${cnt++}`
-                values.push(end_date);
-            }
+            const query = ` 
+            UPDATE Education SET school_name = $1, field = $2, degree = $3, grade = $4, start_date = $5, end_date = $6
+            WHERE id = $7 AND user_id = $8
+            `;
+            const values = [school_name, field, degree, grade, start_date, end_date, educationId, seekerId];
+            await client.query(query, values);
 
-            query+=` WHERE id=$${cnt++} AND user_id=$${cnt++}`
-            values.push(educationId,seekerId)
-
-            await client.query(query,values)
-            return true;
-
-        }catch(err){
-            console.log('err in editEducation model',err.message)
+            if (produce) await produce();
+            await client.query('commit');
+        }
+        catch (err) {
+            await client.query('rollback')
             throw err;
+        }
+        finally {
+            client.release();
         }
     }
 
+    static async getEducationOwner(educationId) {
+        const pool = educationModel.getReplicaPool();
+        const query = `
+            SELECT user_id as "userId" FROM Education
+            WHERE id = $1;
+        `;
+        const values = [educationId];
+        const { rows } = await pool.query(query, values);
+        return rows.length === 0 ? null : rows[0].userId;
+    }
 }
 
-module.exports=educationModel
+module.exports = educationModel;

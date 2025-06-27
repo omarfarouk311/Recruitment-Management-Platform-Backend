@@ -1,44 +1,56 @@
-let{check,body,param}=require('express-validator')
+const { body, param } = require('express-validator')
 
+const validateEducationName = () =>
+    body('school_name')
+        .isString()
+        .notEmpty()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('School name must be between 1 and 100 characters');
 
+const validateFieldName = () =>
+    body('field')
+        .isString()
+        .notEmpty()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Field of study must be between 1 and 100 characters');
 
-const validateEducationName=()=>{
-    return body('school_name').notEmpty().withMessage('Education name is required')
-}
-const validateFieldName=()=>{
-    return body('field').notEmpty().withMessage('Field of study is required')
-}
-const validateDegree=()=>{
-    return body('degree').notEmpty().withMessage('Degree is required') 
-}
+const validateDegree = () =>
+    body('degree')
+        .isString()
+        .notEmpty()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Degree must be between 1 and 100 characters');
 
-const validateStartDate = ()=> 
+const validateGrade = () =>
+    body('grade')
+        .isString()
+        .notEmpty()
+        .isLength({ min: 1, max: 10 })
+        .withMessage('Grade must be between 1 and 10 characters');
+
+const validateStartDate = () =>
     body('start_date', 'Start date is required')
-    .notEmpty()
-    .isISO8601()
-    .withMessage('End date must be ISO string')
-    .toDate();
+        .notEmpty()
+        .isISO8601()
+        .withMessage('Start date must be ISO string')
+        .toDate();
 
-
-const validateEndDate = ()=> 
+const validateEndDate = () =>
     body('end_date', 'End date is required')
-    .notEmpty()
-    .isISO8601()
-    .withMessage('End date must be ISO string')
-    .toDate();
+        .notEmpty()
+        .isISO8601()
+        .withMessage('End date must be ISO string')
+        .toDate();
 
-module.exports.validateEducationId=[
-    param('educationId').notEmpty().withMessage('Education Id is required').bail().isInt().toInt().withMessage("Education Id should be integer")
-]
-module.exports.validatSeekerId=[
-    param('seekerId').notEmpty().withMessage('Seeker Id is required').bail().isInt().toInt().withMessage("seeker Id should be integer")
-]
+module.exports.validateEducationId = param('educationId').notEmpty().withMessage('Education Id is required').bail().isInt().toInt().withMessage("Education Id should be integer");
 
+module.exports.validateSeekerId = param('seekerId').notEmpty().withMessage('Seeker Id is required').bail().isInt().toInt().withMessage("Seeker Id should be integer");
 
-module.exports.validateEducation=[
+module.exports.validateEducation = [
     validateEducationName(),
     validateFieldName(),
     validateDegree(),
+    validateGrade(),
     validateStartDate(),
     validateEndDate(),
 ]

@@ -1,6 +1,8 @@
 services:
   nginx:
-    image: nginx:1.27.4-bookworm
+    build:
+      context: .
+      dockerfile: Dockerfile
     networks:
       - internal-net
     container_name: nginx

@@ -29,7 +29,6 @@ for topic in "${topics[@]}"; do
 if topic_exists "$topic"; then
     echo "Topic '$topic' already exists."
 else
-    kafka-topics.sh --create --bootstrap-server kafka1:9092 --partitions 1 --topic "$topic"
-    echo "Topic '$topic' created."
+    kafka-topics.sh --create --bootstrap-server kafka1:9092 --partitions 1 --replication-factor 2 --topic "$topic"
 fi
 done;

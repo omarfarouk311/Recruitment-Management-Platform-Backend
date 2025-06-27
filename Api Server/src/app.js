@@ -1,3 +1,4 @@
+console.log = () => { };
 process.env.TZ = 'UTC';
 const express = require('express');
 const { port } = require('../config/config');
@@ -21,28 +22,18 @@ const cvRoutes = require('./features/cvs/cvRoutes');
 const authRoutes = require('./features/auth/authRoutes');
 const skillsRoutes = require('./features/skills/skillsRoutes');
 const { authenticateUser } = require('./features/auth/authController');
-const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const app = express();
 
 minioConnect();
 
-app.use(
-    helmet({
-        crossOriginResourcePolicy: { policy: "cross-origin" },
-    }),
-);
-
-/* To be removed after integration because api request and frontend files will be served from the
-same origin (the reverse proxy) */
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-
+app.use(helmet());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
-app.use(authenticateUser); // this middleware will authenticate the user for all the routes below it
+app.use(authenticateUser); // authenticates the user for all the routes below it
 
 app.use('/api/cvs', cvRoutes); // parses the cv when the user uploads it
 app.use('/api/assessments', assessmentRoutes);
@@ -61,6 +52,7 @@ app.use('/api/seekers', seekerRoutes);
 app.use('/api/industries', industryRoutes);
 app.use('/api/skills', skillsRoutes);
 
+// error handling
 // error handling
 app.use(notFound);
 app.use(errorHandlingMiddleware);

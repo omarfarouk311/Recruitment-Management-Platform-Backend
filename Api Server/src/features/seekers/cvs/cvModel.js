@@ -193,16 +193,42 @@ class CV {
     }
 
     static async deleteCV(cvId, userId) {
-        const client = getWritePool();
+        let client;
         try {
-            await client.query(`
+            client = await getWritePool().connect();
+            await client.query('BEGIN');
+            let result = await client.query(`
+                SELECT id
+                FROM CV
+                WHERE id != $1 AND user_id = $2 AND deleted = $3
+                LIMIT 1
+                FOR UPDATE;
+            `, [cvId, userId, false]);
+            
+            if (result.rowCount === 0) {
+                const error = new Error('Seeker must have at least one CV');
+                error.msg = 'Seeker must have at least one CV';
+                error.status = 409;
+                throw error;
+            }
+            
+            let id = await client.query(`
                 UPDATE CV
                 SET deleted = $1
-                WHERE id = $2 and user_id = $3;
+                WHERE id = $2 and user_id = $3
+                RETURNING id;
             `, [true, cvId, userId]);
-            return 'CV deleted successfully';
+            
+            await client.query('COMMIT');
         } catch (err) {
+            if (client) {
+                await client.query('ROLLBACK');
+            }
             throw err;
+        } finally {
+            if (client) {
+                client.release();
+            }
         }
     }
 
@@ -212,19 +238,14 @@ class CV {
         try {
             const query = `
                 SELECT c.id, c.name
-                FROM (
-                    SELECT id, name
-                    FROM cv
-                    WHERE user_id = $1 and deleted = $2
-                ) as c
-                JOIN cv_embedding ce
-                ON ce.cv_id = c.id
-                CROSS JOIN (
+                FROM cv c
+                LEFT JOIN cv_embedding ce ON ce.cv_id = c.id
+                WHERE c.user_id = $1 and c.deleted = $2
+                ORDER BY ce.vector <=> (
                     SELECT embedding
-                    FROM job_embedding 
+                    FROM job_embedding
                     WHERE job_id = $3
-                ) as j
-                ORDER BY ce.vector <=> j.embedding
+                )
             `;
             const values = [seekerId, false, jobId];
             const { rows } = await client.query(query, values);

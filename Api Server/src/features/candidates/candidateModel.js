@@ -533,7 +533,7 @@ class CandidateModel {
             JOIN job ON candidates.job_id = job.id
             WHERE candidates.recruiter_id = $1
         `, [userId]);
-        return rows[0];
+        return rows[0].jobTitle ? rows[0].jobTitle : [];
     }
 }
 

@@ -32,19 +32,18 @@ exports.login = async (req, res, next) => {
             name
         } = await authService.login(data);
 
-        // change samesite to 'Lax' after completing development
         res
             .status(200)
             .cookie('refreshToken', refreshToken, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 604800 * 1000)
             })
             .cookie('JWT', token, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 900 * 1000)
@@ -71,19 +70,18 @@ exports.refreshToken = async (req, res, next) => {
             refreshToken
         } = authService.refreshToken(data);
 
-        // change samesite to 'Lax' after completing development
         res
             .status(204)
             .cookie('refreshToken', refreshToken, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 604800 * 1000)
             })
             .cookie('JWT', token, {
                 httpOnly: true,
-                sameSite: 'None',
+                sameSite: 'Lax',
                 signed: true,
                 secure: true,
                 expires: new Date(Date.now() + 900 * 1000)
@@ -104,7 +102,7 @@ exports.authenticateUser = async (req, res, next) => {
         const {
             userId,
             userRole
-        } = authService.authenticateUser(data);
+        } = await authService.authenticateUser(data);
 
         req.userId = userId;
         req.userRole = userRole;
@@ -124,9 +122,23 @@ exports.checkAuth = async (req, res, next) => {
         const {
             userId,
             userRole
-        } = authService.authenticateUser(data);
+        } = await authService.authenticateUser(data);
         const name = await User.getUserName(userId, userRole);
         res.status(200).json({ isProfileFinished: Boolean(name) });
+    }
+    catch (err) {
+        next(err);
+    }
+}
+
+exports.logout = async (req, res, next) => {
+    const data = { token: req.signedCookies.JWT };
+
+    try {
+        const { userId } = await authService.authenticateUser(data);
+        await authService.logout({ userId });
+        res.setHeader("Clear-Site-Data", '"cache", "cookies", "storage"');
+        res.status(204).end();
     }
     catch (err) {
         next(err);

@@ -3,6 +3,7 @@ const experienceController = require('./experienceController');
 const experienceValidation = require('./experienceValidation');
 const experienceAuth = require('./experienceAuthorization.js');
 const { handleValidationErrors } = require('../../../common/util');
+const { authorizeAccess } = require('../jobs_applied_for/jobsAppliedForAuthorization.js');
 const router = Router();
 
 router.get(
@@ -11,10 +12,12 @@ router.get(
     handleValidationErrors,
     experienceController.getAllExperiences
 );
+
 router.post(
     '/',
     experienceValidation.addExperienceValidator,
     handleValidationErrors,
+    authorizeAccess,
     experienceController.addExperience
 );
 

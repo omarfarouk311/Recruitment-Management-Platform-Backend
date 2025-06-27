@@ -1,17 +1,37 @@
 const Experience = require('./experienceModel');
+const { produce } = require('../../../common/kafka');
+const { profile_embedding_topic } = require('../../../../config/config');
 
 exports.getAllExperiences = async (userId) => {
-    return await Experience.getAllExperiences(userId);
+    return Experience.getAllExperiences(userId);
 };
 
 exports.addExperience = async (experienceData) => {
-    return await Experience.addExperience(experienceData);
+    const kafkaProduce = async () => {
+        // produced message into profile embedding topic
+        const data = {
+            id: null,
+            userId: experienceData.userId
+        };
+        await produce(data, profile_embedding_topic);
+    }
+
+    return Experience.addExperience(experienceData, kafkaProduce);
 };
 
 exports.updateExperience = async (experienceId, experienceData) => {
-    return await Experience.updateExperience(experienceId, experienceData);
+    const kafkaProduce = async () => {
+        // produced message into profile embedding topic
+        const data = {
+            id: null,
+            userId: experienceData.userId
+        };
+        await produce(data, profile_embedding_topic);
+    }
+
+    return Experience.updateExperience(experienceId, experienceData, kafkaProduce);
 };
 
 exports.deleteExperience = async (experienceId) => {
-    return await Experience.deleteExperience(experienceId);
+    return Experience.deleteExperience(experienceId);
 };
