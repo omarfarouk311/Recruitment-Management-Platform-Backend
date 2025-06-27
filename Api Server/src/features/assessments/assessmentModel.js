@@ -482,9 +482,9 @@ class assessmentsModel{
             let cnt=1;
             let values=[];
             let query=
-            `SELECT job_title,company_name,country,city,date_applied,job_id,CASE WHEN ${status}=1 THEN 'Accepted' ELSE 'Rejected' END as status 
+            `SELECT job_title,company_name,country,city,date_applied,job_id,'Completed' as status 
             FROM Candidate_History 
-            WHERE seeker_id=$${cnt++} AND status=$${cnt++} AND phase_type=$${cnt++}
+            WHERE seeker_id=$${cnt++} AND phase_type=$${cnt++}
             `
             values.push(seekerId,status,phase_types);
             

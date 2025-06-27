@@ -32,6 +32,7 @@ app.use(helmet());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 
+
 app.use('/api/auth', authRoutes);
 app.use(authenticateUser); // authenticates the user for all the routes below it
 
