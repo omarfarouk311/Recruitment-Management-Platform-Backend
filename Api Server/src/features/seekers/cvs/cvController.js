@@ -10,8 +10,8 @@ exports.uploadCV = async (req, res, next) => {
     };
 
     try {
-        const response = await cvService.uploadCV(cvData);
-        res.status(201).json(response);
+        const id = await cvService.uploadCV(cvData);
+        res.status(201).json({ id });
     }
     catch (err) {
         next(err);

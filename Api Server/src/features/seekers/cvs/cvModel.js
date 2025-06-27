@@ -36,16 +36,13 @@ class CV {
             const query = `
                 insert into cv (id, user_id, name, created_at, deleted)
                 values ($1, $2, $3, $4, $5)
-                RETURNING id
             `;
             const values = [this.id, this.seekerId, this.name, this.createdAt, this.deleted];
-            const { rows } = await client.query(query, values);
+            await client.query(query, values);
 
             await produce(this.id);
 
             await client.query('COMMIT');
-
-            return rows[0];
         }
         catch (err) {
             await client.query('ROLLBACK');
@@ -63,19 +60,17 @@ class CV {
 
     static async getCvName(jobId, seekerId, userId, userRole) {
         const client = getReadPool();
-        try {
-            let query;
-            if (userRole == role.jobSeeker) {
-                query = await client.query(`
+        let query;
+        if (userRole === role.jobSeeker) {
+            query = await client.query(`
                     SELECT id, name, created_at
                     FROM CV
                     WHERE user_id = $1 
                     AND deleted = $2;
                 `, [userId, false]);
-            }
-            else {
-                if (userRole == role.recruiter) {
-                    query = await client.query(`
+        }
+        else if (userRole === role.recruiter) {
+            query = await client.query(`
                         SELECT id, name
                         FROM (
                                 SELECT cv_id
@@ -87,66 +82,58 @@ class CV {
                         JOIN CV cv
                         ON cv.id = tmp.cv_id
                 `, [jobId, seekerId, userId]);
-                }
-                else {
-                    query = await client.query(`
-                        SELECT recruiter_id
-                        FROM Candidates
-                        WHERE seeker_id = $1 
-                        AND job_id = $2`
-                        , [seekerId, jobId]
-                    )
-                    let query2 = await client.query(`
-                        select company_id
-                        from Recruiter
-                        WHERE id = $1;
-                    `, [query.rows[0].recruiter_id])
 
-                    if (query2.rows[0].company_id != userId) {
-                        const error = new Error('You are not authorized to access this CV');
-                        error.status = 403;
-                        error.msg = 'Authorization Error';
-                        throw error;
-                    }
-                    console.log(query2.rows[0].company_id)
-                    query = await client.query(`
+            if (query.rows.length == 0) {
+                const error = new Error('Recruiter is not authorized to access this CV');
+                error.status = 403;
+                error.msg = 'Authorization Error';
+                throw error;
+            }
+        }
+        else if (userRole === role.company) {
+            query = await client.query(`
                         SELECT id, name
                         FROM (
-                                SELECT cv_id
-                                FROM Candidates
-                                WHERE job_id = $1
-                                AND seeker_id = $2
+                                SELECT c.cv_id
+                                FROM Candidates c
+                                JOIN Job j
+                                ON j.id = c.job_id
+                                WHERE c.job_id = $1
+                                AND c.seeker_id = $2
+                                AND j.company_id = $3
                             ) as tmp
                         JOIN CV cv
                         ON cv.id = tmp.cv_id
-                `, [jobId, seekerId]);
-                }
+                `, [jobId, seekerId, userId]);
+
+            if (query.rows.length == 0) {
+                const error = new Error('Company is not authorized to access this CV');
+                error.status = 403;
+                error.msg = 'Authorization Error';
+                throw error;
             }
-            return query.rows;
-        } catch (err) {
-            throw err;
         }
+        return query.rows;
     }
 
     static async downloadCV(cvId, userId, userRole, seekerId, jobId) {
         const client = getReadPool();
-        try {
-            let query;
-            if (userRole == role.jobSeeker) {
-                query = await client.query(`
+        let query;
+        if (userRole == role.jobSeeker) {
+            query = await client.query(`
                     SELECT user_id
                     FROM CV
                     WHERE id = $1;
                 `, [cvId]);
-                if (query.rows[0].user_id != userId) {
-                    const error = new Error('You are not authorized to access this CV');
-                    error.status = 403;
-                    error.msg = 'Authorization Error';
-                    throw error;
-                }
-            } else {
-                if (userRole == role.recruiter) {
-                    query = await client.query(`
+            if (query.rows[0].user_id != userId) {
+                const error = new Error('You are not authorized to access this CV');
+                error.status = 403;
+                error.msg = 'Authorization Error';
+                throw error;
+            }
+        }
+        else if (userRole == role.recruiter) {
+            query = await client.query(`
                         SELECT 1
                         FROM Candidates
                         WHERE seeker_id = $1
@@ -154,41 +141,35 @@ class CV {
                         AND recruiter_id = $3;
                     `, [seekerId, jobId, userId]);
 
-                    if (query.rows.length == 0) {
-                        const error = new Error('You are not authorized to access this CV');
-                        error.status = 403;
-                        error.msg = 'Authorization Error';
-                        throw error;
-                    }
-                } else {
-                    query = await client.query(`
-                        SELECT recruiter_id
-                        FROM Candidates
-                        WHERE seeker_id = $1
-                        AND job_id = $2;
-                    `, [seekerId, jobId]);
-                    if (query.rows.length == 0) {
-                        const error = new Error();
-                        error.status = 403;
-                        error.msg = 'seeker id and job id are incorrect';
-                        throw error;
-                    }
-                    let query2 = await client.query(`
-                        select company_id
-                        from Recruiter
-                        WHERE id = $1;
-                    `, [query.rows[0].recruiter_id])
-                    if (query2.rows[0].company_id != userId) {
-                        const error = new Error('You are not authorized to access this CV');
-                        error.status = 403;
-                        error.msg = 'Authorization Error';
-                        throw error;
-                    }
-                }
-                return;
+            if (query.rows.length == 0) {
+                const error = new Error('Recruiter is not authorized to access this CV');
+                error.status = 403;
+                error.msg = 'Authorization Error';
+                throw error;
             }
-        } catch (err) {
-            throw err;
+        }
+        else if (userRole === role.company) {
+            query = await client.query(`
+                    SELECT id, name
+                    FROM (
+                            SELECT c.cv_id
+                            FROM Candidates c
+                            JOIN Job j
+                            ON j.id = c.job_id
+                            WHERE c.job_id = $1
+                            AND c.seeker_id = $2
+                            AND j.company_id = $3
+                        ) as tmp
+                    JOIN CV cv
+                    ON cv.id = tmp.cv_id
+            `, [jobId, seekerId, userId]);
+
+            if (query.rows.length == 0) {
+                const error = new Error('Company is not authorized to access this CV');
+                error.status = 403;
+                error.msg = 'Authorization Error';
+                throw error;
+            }
         }
     }
 
@@ -204,21 +185,21 @@ class CV {
                 LIMIT 1
                 FOR UPDATE;
             `, [cvId, userId, false]);
-            
+
             if (result.rowCount === 0) {
                 const error = new Error('Seeker must have at least one CV');
                 error.msg = 'Seeker must have at least one CV';
                 error.status = 409;
                 throw error;
             }
-            
+
             let id = await client.query(`
                 UPDATE CV
                 SET deleted = $1
                 WHERE id = $2 and user_id = $3
                 RETURNING id;
             `, [true, cvId, userId]);
-            
+
             await client.query('COMMIT');
         } catch (err) {
             if (client) {
