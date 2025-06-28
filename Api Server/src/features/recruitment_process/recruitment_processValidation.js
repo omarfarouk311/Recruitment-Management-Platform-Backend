@@ -1,5 +1,6 @@
 const { check, body, query } = require('express-validator');
 const { validatePage } = require('../../common/util');
+const {phase_types_numbers} = require('../../../config/config')
 
 module.exports.validateCompanyId = (req, res, next) => {
     try {
@@ -40,7 +41,13 @@ const validateProcessName = () => {
 
 const validateRecruitmentProcessBody = () => {
     return body('phases')
-        .isArray().withMessage('Phases must be an array');
+        .isArray().withMessage('Phases must be an array').custom((value, {req}) => {
+            if(value[value.length - 1].phaseType !== phase_types_numbers.job_offer)
+                throw new Error("Last phase must be job offer")
+            if(value.filter(val => val.phaseType === phase_types_numbers.job_offer).length > 1)
+                throw new Error("There can be only one job offer phase")
+            return true;
+        });
 };
 
 const validateRecruitmentProcessPhaseNumber = () => {
