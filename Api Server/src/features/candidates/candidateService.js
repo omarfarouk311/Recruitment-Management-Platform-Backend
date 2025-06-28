@@ -23,9 +23,9 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
         await produce({
             id: uuid(),
             action_type: action_types.assign_candidate,
-            perfomed_by: companyName,
+            performed_by: companyName,
             created_at: new Date(),
-            companyId: companyId,
+            company_id: companyId,
             extra_data: {
                 recruiterId: recruiterId,
                 seekerIds: result.updated_candidates.map((value) => value.seeker_id)
@@ -64,8 +64,8 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
     let result; 
     try {
         result = CandidateQueryset.makeDecisionToCandidates(seekerIds, jobId, decision);
-        let performed_by = (await CandidateQueryset.getCompanyName(userId)) || CandidateQueryset.getRecruiterName(userId);
-        let recProc = CandidateQueryset.getRecruitementPhases(jobId);
+        let performed_by = userRole === role.company? CandidateQueryset.getCompanyName(userId) : CandidateQueryset.getRecruiterName(userId);
+        let recProc = await CandidateQueryset.getRecruitementPhases(jobId);
         [result, performed_by, recProc] = await Promise.all([result, performed_by, recProc]);
         
         let logId;
@@ -75,9 +75,9 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
             promises.push(produce({
                 id: logId,
                 action_type: action_types.move_candidate,
-                perfomed_by: performed_by.name,
+                performed_by: performed_by.name,
                 created_at: new Date(),
-                companyId: userId,
+                company_id: userRole === role.company? userId: performed_by.company_id,
                 extra_data: {
                     job_seekers_data: result.updatedCandidates.map((value) => {
                         return {
@@ -146,9 +146,9 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
         await produce({
             id: logId,
             action_type: action_types.unassign_candidate,
-            perfomed_by: companyName,
+            performed_by: companyName,
             created_at: new Date(),
-            companyId: companyId,
+            company_id: companyId,
             extra_data: {
                 seekerIds: result.seekerIds,
                 recruiterName: result.recruiterName
