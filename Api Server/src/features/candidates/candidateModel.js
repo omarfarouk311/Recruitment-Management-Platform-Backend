@@ -320,7 +320,8 @@ class CandidateModel {
                     assessment_deadline = NULL,
                     last_status_update = NOW(),
                     recruiter_id = NULL,
-                    submited = FALSE
+                    submited = FALSE,
+                    interview_link = NULL
                     WHERE seeker_id = ANY($1) AND job_id = $2;
                     `;
                     
