@@ -20,6 +20,7 @@ class CandidateModel {
                     job_seeker.city as "candidateCity",
                     recruiter.name as "recruiterName",
                     candidates.recruiter_id as "recruiterId",
+                    rt.id as "phaseType",
                     CASE 
                         WHEN 
                             rt.name = 'assessment' AND candidates.phase_deadline < NOW() 

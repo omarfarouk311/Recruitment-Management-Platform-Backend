@@ -7,13 +7,15 @@ function validatePlaceholders(value) {
     const placeholders = value.match(placeholderPattern);
 
 
-    for (const placeholder of placeholders) {
-        const content = placeholder.slice(2, -2).trim(); // Extract content inside {{ }}
+    if(placeholders && placeholders.length > 0) {
+        for (const placeholder of placeholders) {
+            const content = placeholder.slice(2, -2).trim(); // Extract content inside {{ }}
 
-        if (!/^[a-zA-Z\s_]+$/.test(content)) {
-            throw new Error(`Placeholder {{${content}}} must contain only alphabetical characters and underscores`);
+            if (!/^[a-zA-Z\s_]+$/.test(content)) {
+                throw new Error(`Placeholder {{${content}}} must contain only alphabetical characters and underscores`);
+            }
         }
-    }
+    } 
 
     return true;
 }

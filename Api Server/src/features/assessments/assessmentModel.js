@@ -583,7 +583,7 @@ class assessmentsModel{
                 let query1=
                 ` SELECT
                 assessment.name,
-                ROUND(EXTRACT(EPOCH FROM (candidates.assessment_deadline - NOW())) / 60)::INT AS assessment_time,
+                ROUND(EXTRACT(EPOCH FROM (candidates.assessment_deadline - NOW())))::INT AS assessment_time,
                 assessment.num_of_questions, 
                 json_agg(json_build_object(
                     'id', Questions.id, 

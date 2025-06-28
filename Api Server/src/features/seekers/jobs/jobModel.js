@@ -205,8 +205,8 @@ class Job {
             const insertCandidate =
                 `
                 insert into Candidates
-                (seeker_id, phase, recruiter_id, job_id, date_applied, last_status_update, similarity_score, cv_id, phase_deadline, template_id, placeholders_params, recruitment_process_id, assessment_deadline)
-                select $1, 1, NULL, $2, $3::timestamp, $3, $4, $5, $3 + (r.deadline * INTERVAL '1 day'), NULL, NULL, j.recruitment_process_id, NULL
+                (seeker_id, phase, recruiter_id, job_id, date_applied, last_status_update, similarity_score, cv_id, phase_deadline, template_id, placeholders_params, recruitment_process_id, assessment_deadline, submited, interview_link)
+                select $1, 1, NULL, $2, $3::timestamp, $3, $4, $5, $3 + (r.deadline * INTERVAL '1 day'), NULL, NULL, j.recruitment_process_id, NULL, false, NULL
                 from Job j
                 join Recruitment_Phase r on j.recruitment_process_id = r.recruitment_process_id and r.phase_num = 1
                 where j.id = $2
