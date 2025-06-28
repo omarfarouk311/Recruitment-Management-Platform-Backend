@@ -551,7 +551,7 @@ class assessmentsModel{
                 let currentTime = new Date();
 
                 // Get assessment time in milliseconds from db
-                let assessmentTime = result1.rows[0].assessment_time * 60 * 1000;
+                let assessmentTime = result1.rows[0].assessment_time * 1000;
                 
                 let deadline = new Date(currentTime.getTime() + assessmentTime);
 
