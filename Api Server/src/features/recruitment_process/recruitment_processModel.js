@@ -156,6 +156,15 @@ class recruitment_process {
 
     static async updateRecruitmentProcess(companyId, processId, processName, data) {
         let pool = Pool.getWritePool();
+        let readPool = Pool.getReadPool();
+        const isProcessUsedQuery = `select 1 from job where recruitment_process_id = $1 and closed = false`;
+        const { rowCount } = await readPool.query(isProcessUsedQuery, [processId]);
+        if (rowCount > 0) {
+            const error = new Error('Recruitment process is currently in use by an open job');
+            error.status = 400;
+            error.msg = 'Recruitment process is currently in use by an open job';
+            throw error;
+        }
         pool = await pool.connect()
         try {
             const validationPromises = data.map(async (item) => {
