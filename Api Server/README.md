@@ -33,12 +33,16 @@ The API Server is the central backend service for the platform, handling all HTT
 - **Company Management**: Company profiles, jobs, reviews, and images.
 - **Recruitment Process**: Multi-phase recruitment workflows, including assessments and interviews.
 - **CV Handling**: Upload, parse (via gRPC), download, and delete CVs with streaming and MinIO integration.
-- **Reviews & Reports**: Company and seeker reviews, reporting system.
+- **Reviews & Reports**: Company and seeker reviews and reporting system.
 - **Logging & Auditing**: Action logs, event tracking, and Kafka-based log streaming.
 - **Skills & Education**: Management of user skills and educational background.
 - **Statistics**: Aggregated stats for seekers and companies.
 - **Templates**: Job offer templates and communication management.
 - **Advanced Authorization**: Role-based access control and resource-level permissions.
+- **Authentication Flow**: A secure authentication system using access tokens, refresh tokens, and token versioning for enhanced security and enabling secure, stateless authentication.
+- **Multipart File Handling**: Efficient handling of multipart file uploads using custom middleware.
+- **Error Handling**: Centralized error handling with custom error middlewares.
+- **Scalable:** Can be scaled horizontally by running multiple instances.
 
 ## Folder Structure
 

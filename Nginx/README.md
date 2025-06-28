@@ -5,7 +5,7 @@ This folder contains the configuration and setup for the Nginx reverse proxy use
 ## Features
 
 - **Reverse Proxy for API**: Forwards `/api` requests to the backend API server.
-- **Load Balancing**: Uses the `least_conn` strategy to distribute requests among backend servers.
+- **Load Balancing**: Uses L7 load balancing and the `least_conn` strategy to distribute requests among backend servers.
 - **Frontend Static File Serving**: Serves frontend files from `/var/www/frontend`, with fallback to `index.html` for SPA routing.
 - **Static Caching**: Caches company image responses for improved performance and reduced backend load.
 - **Rate Limiting**: The number of requests per IP for API and image endpoints is limited to prevent abuse.
@@ -67,22 +67,29 @@ This folder contains the configuration and setup for the Nginx reverse proxy use
 - API and proxy requests: Maximum body size is 10MB.
 - Static file uploads: Maximum body size is 1MB.
 
-## Usage
+## Running the Server
 
-### Build and Run with Docker Compose
+### Prerequisites
 
-1. **Build and Start Nginx:**
+- `internal-net` Docker network created (see below)
+
+### Steps
+
+1. **Create the Docker network (if not already present):**
+
+   ```sh
+   docker network create internal-net
+   ```
+
+2. **Build and Start Nginx:**
    ```sh
    docker compose up -d
    ```
 
-2. **Access the Services:**
+3. **Access the Services:**
    - Nginx will be available on port `8080` (mapped to container port `80`).
    - API requests: `http://localhost:8080/api/...`
    - Frontend: `http://localhost:8080/`
-
-3. **Network Configuration:**
-   - Nginx is attached to the `internal-net` Docker network.
 
 ## Notes
 
