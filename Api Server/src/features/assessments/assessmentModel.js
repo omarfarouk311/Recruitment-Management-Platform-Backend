@@ -424,7 +424,7 @@ class assessmentsModel{
     static async get_Seeker_Assessment_Dashboard_Pending(seekerId,country,city,companyName,sorted,page=1){
         let replica_DB=replicaPool.getReadPool();
         try{
-            console.log("her")
+           
             let cnt=1;
             let values=[];
             let currentTime = new Date();
@@ -433,7 +433,7 @@ class assessmentsModel{
             `WITH getSeekerData as(
             SELECT job_id,date_applied,phase_deadline,recruitment_process_id,phase,assessment_deadline
             FROM Candidates
-            WHERE seeker_id=$${cnt++}
+            WHERE seeker_id=$${cnt++} AND submited=false
             )
             SELECT Job.title,Company.name,Job.country,Job.city,getSeekerData.assessment_deadline,
             getSeekerData.date_applied,getSeekerData.phase_deadline,t1.assessment_id,Job.id as jobId,Company.id as companyId,a.assessment_time,'Pending' as status
@@ -442,7 +442,7 @@ class assessmentsModel{
             JOIN Job ON getSeekerData.job_id=Job.id
             JOIN Company ON Job.company_id=Company.id
             JOIN Assessment a on a.id=t1.assessment_id
-            WHERE getSeekerData.assessment_deadline is null AND getSeekerData.phase_deadline>= $${cnt++} 
+            WHERE getSeekerData.phase_deadline>= $${cnt++}
 
             `
             console.log("sss",timestamp)
@@ -460,6 +460,7 @@ class assessmentsModel{
                 values.push(companyName)
             }
             if(sorted==null || sorted==asc_order){
+                console.log("here")
                 query+=` ORDER BY getSeekerData.date_applied ASC`
             }
             else if(sorted==desc_order){
@@ -480,7 +481,7 @@ class assessmentsModel{
 
     }
 
-    static async get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,status,sorted,page,phase_types){
+    static async get_Seeker_Assessment_Dashboard_History(seekerId,country,city,companyName,sorted,page){
         let replica_DB=replicaPool.getReadPool();
         try{
 
@@ -491,9 +492,9 @@ class assessmentsModel{
             FROM job 
             JOIN assessment_score ON job.id=assessment_score.job_id
             JOIN company ON job.company_id=company.id
-            WHERE seeker_id=$${cnt++} AND phase_type=$${cnt++}
+            WHERE seeker_id=$${cnt++} 
             `
-            values.push(seekerId,status,phase_types);
+            values.push(seekerId);
             
             if(country){
                 query+=` AND country=$${cnt++}`
