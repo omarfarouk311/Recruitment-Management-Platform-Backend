@@ -138,6 +138,7 @@ class CandidateModel {
         if (!simplified) {
             query += `,
             candidates.date_applied as "dateApplied",
+            rt.id as "phaseType",
             CASE
                 WHEN candidates.template_id IS NOT NULL THEN
                     true
@@ -147,7 +148,7 @@ class CandidateModel {
             job_seeker.country as "candidateCountry",
             job_seeker.city as "candidateCity",
             job.country as "jobCountry",
-            job.city as "jobCity", rt.name as "phaseType",
+            job.city as "jobCity",
             CASE 
                 WHEN 
                     rt.name = 'assessment' AND candidates.phase_deadline < NOW() 
