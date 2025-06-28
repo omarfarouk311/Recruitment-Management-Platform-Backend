@@ -24,6 +24,10 @@ const validateMetaData=()=>{
     body('metaData[*].correctAnswers').isArray().withMessage('Correct Answers must be array').custom((value) => value.length > 0).withMessage('Correct Answers cannot be empty')
 }
 
+const validateQuestions = () => body('metaData')
+    .isArray({ min: 1 })
+    .withMessage(`Assessment must contain at least 1 question`);
+
 const validateId=(parm)=>{
    
     return check(parm).not().isEmpty().withMessage('id has to passed in req').
@@ -47,6 +51,7 @@ module.exports.assessmentBodyValidation=[
     validateAssessmentTime(),
     validateJobTitle(),
     validateMetaData(),
+    validateQuestions()
 ]
 
 
