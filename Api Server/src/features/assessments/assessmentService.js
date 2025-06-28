@@ -199,11 +199,16 @@ module.exports.get_Seeker_Assessment_DetailsService=async(assessmentId,seekerId,
 
     let checkTimme=await assessmentsModel.checkStartTime_assessmet(seekerId,jobId);
     let result
-    if(checkTimme!=null){
+
+    let currentTime = new Date();
+   
+    if(checkTimme!=null && currentTime<new Date(checkTimme)){ // if the assessment is already started
+        console.log("enter");
         result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId,0);//refresh 
     }
-    else
-    result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId,1);//first time
+    else if(checkTimme==null){
+        result=await assessmentsModel.get_Seeker_Assessment_DetailsModel(assessmentId,seekerId,jobId,1);//first time
+    }
     return result
 }
 

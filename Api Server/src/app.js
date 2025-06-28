@@ -56,5 +56,5 @@ app.use(notFound);
 app.use(errorHandlingMiddleware);
 
 app.listen(port, () => {
-    console.log(`The server is running and listening on port ${port}`);
+    console.log('The server is running and listening on port ${port}');
 });

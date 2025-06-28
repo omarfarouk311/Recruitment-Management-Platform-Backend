@@ -541,7 +541,7 @@ class assessmentsModel{
                     json_agg(json_build_object('id', Questions.id, 'question',question,'answers',answers, 'questionNum', question_num)) as questions
                 FROM Questions 
                 JOIN assessment on assessment.id=Questions.assessment_id
-                WHERE assessment_id=$${cnt++}
+                WHERE assessment_id=$${cnt++} 
                 GROUP BY assessment.id
                 `
                 let values1=[assessmentId];
@@ -583,7 +583,11 @@ class assessmentsModel{
                 let query1=
                 ` SELECT
                 assessment.name,
-                ROUND(EXTRACT(EPOCH FROM (candidates.assessment_deadline - NOW())))::INT AS assessment_time,
+                 CASE 
+                    WHEN ROUND(EXTRACT(EPOCH FROM (candidates.assessment_deadline - NOW())))::INT < 0 
+                    THEN 0 
+                    ELSE ROUND(EXTRACT(EPOCH FROM (candidates.assessment_deadline - NOW())))::INT 
+                END AS assessment_time,
                 assessment.num_of_questions, 
                 json_agg(json_build_object(
                     'id', Questions.id, 
