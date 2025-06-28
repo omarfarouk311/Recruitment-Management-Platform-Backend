@@ -104,7 +104,7 @@ class Invitation {
                 err.status = 409;
                 throw err;
             }
-
+            console.log(this.companyId,this.recruiterEmail,this.department,this.createdAt,this.deadline,this.status)
             const insertInvitation =
                 `
                 INSERT INTO Company_Invitations (recruiter_id, company_id, department, created_at, deadline, status)
@@ -115,14 +115,16 @@ class Invitation {
                 `;
             values = [this.recruiterEmail, this.companyId, this.department, this.createdAt, this.deadline, this.status];
             const { rows, rowCount } = await client.query(insertInvitation, values);
-
+            console.log(rows,rowCount)
             if (!rowCount) {
                 const err = new Error('recruiter not found while sending an invitation to him');
                 err.msg = 'recruiter not found';
                 err.status = 404;
                 throw err;
             }
+          
             const { recruiterId, invitationId } = rows[0];
+
 
             // retrieve the company name to add it to the produced message
             const getCompanyName =

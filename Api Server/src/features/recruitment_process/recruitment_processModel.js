@@ -40,7 +40,7 @@ class recruitment_process {
                     JOIN Phase_Type p
                     ON r.type = p.id
                 )
-                SELECT t.phase_num, t.name as phaseName, t.type, t.deadline, a.name as assessmentName, a.assessment_time
+                SELECT t.phase_num, t.name as phaseName, t.type, t.deadline, a.name as assessmentName, a.assessment_time, a.id as assessmentId
                 FROM typeId t
                 LEFT JOIN Assessment a
                 ON assessment_id = id
@@ -115,7 +115,7 @@ class recruitment_process {
             try {
                 await pool.query('COMMIT');
             } catch (err) {
-                await produce({
+                await produce.produce({
                         id,
                         type: 0
                 }, logs_topic);
@@ -156,6 +156,15 @@ class recruitment_process {
 
     static async updateRecruitmentProcess(companyId, processId, processName, data) {
         let pool = Pool.getWritePool();
+        let readPool = Pool.getReadPool();
+        const isProcessUsedQuery = `select 1 from job where recruitment_process_id = $1 and closed = false`;
+        const { rowCount } = await readPool.query(isProcessUsedQuery, [processId]);
+        if (rowCount > 0) {
+            const error = new Error('Recruitment process is currently in use by an open job');
+            error.status = 400;
+            error.msg = 'Recruitment process is currently in use by an open job';
+            throw error;
+        }
         pool = await pool.connect()
         try {
             const validationPromises = data.map(async (item) => {
@@ -214,7 +223,7 @@ class recruitment_process {
             try {
                 await pool.query('COMMIT');
             } catch (err) {
-                await produce({
+                await produce.produce({
                     id,
                     type: 0
                 }, logs_topic);
@@ -234,6 +243,15 @@ class recruitment_process {
 
     static async deleteRecruitmentProcess(companyId, processId) {
         try {
+            const isProcessUsedQuery = `select 1 from job where recruitment_process_id = $1 and closed = false`;
+            let readPool = Pool.getReadPool();
+            const { rowCount } = await readPool.query(isProcessUsedQuery, [processId]);
+            if (rowCount > 0) {
+                const error = new Error('Recruitment process is currently in use by an open job');
+                error.status = 400;
+                error.msg = 'Recruitment process is currently in use by an open job';
+                throw error;
+            }
             const deleteQuery = `DELETE FROM recruitment_process WHERE id = $1`;
             const values = [processId];
             let pool = Pool.getWritePool();
@@ -253,7 +271,7 @@ class recruitment_process {
             try {
                 await pool.query(deleteQuery, values);
             } catch (err) {
-                await produce({
+                await produce.produce({
                     id,
                     type: 0
                 }, logs_topic);
