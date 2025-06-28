@@ -25,7 +25,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const app = express();
-
 minioConnect();
 
 app.use(helmet());
@@ -57,5 +56,5 @@ app.use(notFound);
 app.use(errorHandlingMiddleware);
 
 app.listen(port, () => {
-    console.log('The server is running and listening on port ${port}');
+    console.log(`The server is running and listening on port ${port}`);
 });
