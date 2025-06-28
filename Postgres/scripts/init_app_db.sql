@@ -98,6 +98,7 @@ CREATE TABLE Candidates (
   placeholders_params JSON,
   recruitment_process_id int NOT NULL,
   assessment_deadline TIMESTAMP,
+  submited BOOLEAN NOT NULL,
   PRIMARY KEY (job_id, seeker_id)
 );
 
