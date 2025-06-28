@@ -121,7 +121,7 @@ class recruitment_process {
                 }, logs_topic);
                 throw err;
             }
-            return { message: 'Recruitment process created successfully' };
+            return { id: processId };
         } catch (error) {
             await pool.query('ROLLBACK');
             console.log('Error in createRecruitmentProcess');
