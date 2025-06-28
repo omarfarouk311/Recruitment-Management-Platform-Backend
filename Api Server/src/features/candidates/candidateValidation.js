@@ -28,7 +28,6 @@ const simplified = query("simplified", "invalid simplified query parameter")
 const jobTitle = query("jobTitle", "invalid jobTitle query parameter")
     .optional()
     .isString()
-    .isAlphanumeric()
     .withMessage("Value for jobTitle must be alphanumeric");
 
 const phaseType = query("phaseType", "invalid phaseType query parameter")

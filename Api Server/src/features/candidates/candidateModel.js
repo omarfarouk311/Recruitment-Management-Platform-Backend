@@ -138,6 +138,7 @@ class CandidateModel {
         if (!simplified) {
             query += `,
             candidates.date_applied as "dateApplied",
+            rt.id as "phaseType",
             CASE
                 WHEN candidates.template_id IS NOT NULL THEN
                     true
