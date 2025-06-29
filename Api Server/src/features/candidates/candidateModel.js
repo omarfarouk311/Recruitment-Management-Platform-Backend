@@ -248,7 +248,7 @@ class CandidateModel {
             let result = await client.query(`
                 UPDATE recruiter 
                 SET assigned_candidates_cnt = $1
-                WHERE id = $2;
+                WHERE id = $2
                 RETURNING name`, [assigned_candidates_cnt, recruiterId]);
 
             
