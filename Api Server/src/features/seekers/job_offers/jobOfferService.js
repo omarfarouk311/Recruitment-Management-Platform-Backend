@@ -24,7 +24,6 @@ exports.replyToJobOffer = async (userId, jobId, status) => {
     try {
         let companyId = await JobOfferModel.getCompanyId(jobId);
         if (result.updatedCandidates && result.updatedCandidates.length) {
-            delete result.client;
             produce({
                 jobId: jobId,
                 companyId: companyId,
@@ -41,7 +40,10 @@ exports.replyToJobOffer = async (userId, jobId, status) => {
         client.query('ROLLBACK;')
         throw error;
     } finally {
-        client.release();
+        if (result.client) {
+            result.client.release();
+            delete result.client;
+        }
     }
 }
 

@@ -44,19 +44,20 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
             throw error
         }
         [].find
-        delete result.client;
+        
         return { 
             assignedCandidatesCnt: result.assigned_candidates_cnt, 
             invalidCandidates: seekerIds.filter((value) => result.updated_candidates.find((seeker) => seeker.seeker_id === value) === undefined) };
     } catch (error) {
         if (result.client) {
             await result.client.query('ROLLBACK;');
-            delete result.client;
         }
         throw error;
     } finally {
-        if (result.client)
+        if (result.client) {
             result.client.release();
+            delete result.client;
+        }
     }
 };
 
@@ -116,7 +117,6 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
                 }, 'logs');
             throw error
         }
-        delete result.client;
         delete result.decision;
         result.updatedCandidates = result.updatedCandidates.map((value) => {
             delete value.phase_type;
@@ -127,12 +127,13 @@ exports.MakeDecisionToCandidates = async (seekerIds, jobId, decision, userId, us
     } catch (error) {
         if (result.client) {
             await result.client.query('ROLLBACK;');
-            delete result.client;
         }
         throw error;
     } finally {
-        if (result.client)
+        if (result.client) {
             result.client.release();
+            delete result.client;
+        }
     }
 };
 
@@ -162,18 +163,19 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
                 type: 0
             }, 'logs');
         }
-        delete result.client;
+        
         delete result.seekerIds;
         return result;
     } catch(error) {
         if (result.client) {
             await result.client.query('ROLLBACK;');
-            delete result.client;
         }
         throw error;
     } finally {
-        if (result.client)
+        if (result.client) {
             result.client.release();
+            delete result.client;
+        }
     }
 };
 
