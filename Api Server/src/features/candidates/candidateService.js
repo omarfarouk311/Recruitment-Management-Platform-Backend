@@ -17,18 +17,18 @@ exports.assignCandidatesToRecruiter = async (seekerIds, recruiterId, jobId, comp
     let result;
     try {
         result = CandidateQueryset.assignCandidatesToRecruiter(seekerIds, recruiterId, jobId);
-        let companyName = CandidateQueryset.getCompanyName(companyId);
-        [result, companyName] = await Promise.all([result, companyName]);
+        let company = CandidateQueryset.getCompanyName(companyId);
+        [result, company] = await Promise.all([result, company]);
         let logId = uuid();
         await produce({
             id: uuid(),
             action_type: action_types.assign_candidate,
-            performed_by: companyName,
+            performed_by: company.name,
             created_at: new Date(),
             company_id: companyId,
             extra_data: {
-                recruiterId: recruiterId,
-                seekerIds: result.updated_candidates.map((value) => value.seeker_id)
+                recruiterName: result.recruiterName,
+                seekerIds: result.seekerNames.map((value) => value.name)
             }
         }, 'logs');
 
@@ -140,13 +140,13 @@ exports.unassignCandidatesFromRecruiter = async (seekerIds, jobId, companyId) =>
     let result;
     try {
         result = CandidateQueryset.unassignCandidatesFromRecruiter(seekerIds, jobId);
-        let companyName = CandidateQueryset.getCompanyName(companyId);
-        [result, companyName] = await Promise.all([result, companyName]);
+        let company = CandidateQueryset.getCompanyName(companyId);
+        [result, company] = await Promise.all([result, company]);
         const logId = uuid();
         await produce({
             id: logId,
             action_type: action_types.unassign_candidate,
-            performed_by: companyName,
+            performed_by: company.name,
             created_at: new Date(),
             company_id: companyId,
             extra_data: {

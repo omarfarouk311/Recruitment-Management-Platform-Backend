@@ -230,6 +230,12 @@ class CandidateModel {
                 RETURNING seeker_id;`;
             const params = [recruiterId, seekerIds, jobId];
             let updated_candidates = (await client.query(query, params));
+
+            let seekerNames = await client.query(`
+                SELECT name
+                FROM job_seeker
+                WHERE id = ANY($1)
+            `, [updated_candidates.rows.map(value => value.seeker_id)])
             
             let assigned_candidates_cnt = (await client.query(`
                 SELECT assigned_candidates_cnt
@@ -239,13 +245,14 @@ class CandidateModel {
             `, [recruiterId])
             ).rows[0].assigned_candidates_cnt + updated_candidates.rowCount;
             
-            await client.query(`
+            let result = await client.query(`
                 UPDATE recruiter 
                 SET assigned_candidates_cnt = $1
-                WHERE id = $2;`, [assigned_candidates_cnt, recruiterId]);
+                WHERE id = $2;
+                RETURNING name`, [assigned_candidates_cnt, recruiterId]);
 
             
-            return {assigned_candidates_cnt: assigned_candidates_cnt, updated_candidates: updated_candidates.rows, client: client};
+            return {assigned_candidates_cnt: assigned_candidates_cnt, seekerNames: seekerNames.rows, updated_candidates: updated_candidates.rows, recruiterName: result.rows[0].name, client: client};
         } catch (error) {
             await client.query('ROLLBACK;');
             throw error;
@@ -403,7 +410,7 @@ class CandidateModel {
         if(!results.rows.length) {
             return undefined;
         }
-        return results.rows[0].name;
+        return results.rows[0];
     }
 
     static async getRecruiterName(recruiterId) {
