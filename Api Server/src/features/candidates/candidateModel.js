@@ -374,8 +374,10 @@ class CandidateModel {
                     SELECT COUNT(*) 
                     FROM candidates 
                     WHERE seeker_id = ANY($1) AND job_id = $2 AND recruiter_id = recruiter.id
-                ) RETURNING assigned_candidates_cnt, recruiter.name as recruiter_name;
-            `, [seekerIds, jobId]);
+                ) 
+                WHERE id = ANY($3) 
+                RETURNING assigned_candidates_cnt, recruiter.name as recruiter_name;
+            `, [seekerIds, jobId, recruiters]);
             let {assigned_candidates_count , recruiter_name} = assigned_candidates_cnt.rows[0];
 
             await client.query(`
