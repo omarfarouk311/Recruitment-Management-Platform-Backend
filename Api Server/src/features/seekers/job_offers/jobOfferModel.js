@@ -11,7 +11,7 @@ class JobOfferModel {
                         j.title AS "jobTitle", comp.name AS "companyName", comp.id AS "companyId", 
                         j.id AS "jobId", j.country AS country, j.city AS city, 
                         c.last_status_update AS "dateRecieved", 
-                        ${constants.candidate_status_pending} AS "status"
+                        'Pending' AS "status"
                     FROM candidates c
                     JOIN job j ON c.job_id = j.id
                     JOIN company comp ON j.company_id = comp.id
@@ -26,7 +26,7 @@ class JobOfferModel {
                     j.title AS "jobTitle", comp.name AS "companyName", comp.id AS "companyId",
                     j.id AS "jobId", j.country AS country, j.city AS city, 
                     c.last_status_update AS "dateRecieved",
-                    ${status} AS "status"
+                    ${status == constants.candidate_status_rejected? `'Rejected'` : `'Accepted'`} AS "status"
                 FROM candidate_history c
                 JOIN job j ON c.job_id = j.id
                 JOIN company comp ON j.company_id = comp.id
