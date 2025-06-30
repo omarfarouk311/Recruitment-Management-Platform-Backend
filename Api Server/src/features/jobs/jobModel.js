@@ -56,7 +56,7 @@ class jobModel {
                         'description', j.description,
                         'country', j.country,
                         'city', j.city,
-                        'created_at', j.created_at,
+                        'created_at', j.created_at::timestamptz,
                         'remote', j.remote,
                         'applied_cnt', j.applied_cnt,
                         'closed', j.closed,
@@ -81,7 +81,7 @@ class jobModel {
                                 'role', r.role,
                                 'description', r.description,
                                 'rating', r.rating,
-                                'created_at', r.created_at
+                                'created_at', r.created_at::timestamptz
                             )
                         )
                         FROM (
