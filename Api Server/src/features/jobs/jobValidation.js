@@ -1,4 +1,5 @@
 const { check, body, query } = require('express-validator');
+const config = require('../../../config/config');
 
 const titleVlidation = () => body('jobTitle')
     .exists().withMessage('Title is required')
@@ -10,7 +11,8 @@ const descriptionValidation = () => body('jobDescription')
     .exists().withMessage('Description is required')
     .isString().withMessage('Description must be a string')
     .trim()
-    .isLength({ min: 5, max: 500 }).withMessage('Description must be between 10 and 500 characters');
+    .isLength({ min: 5, max: config.maxDescriptionLength })
+    .withMessage(`Description must be between 5 and ${config.maxDescriptionLength} characters`);
 
 const skillsValidation = () => body('skills')
     .custom((skills) => {
@@ -97,7 +99,7 @@ const jobsQueryValidate = [
 
     query()
         .custom((value, { req }) => {
-            const allowedParams = ['sort', 'title'];  
+            const allowedParams = ['sort', 'title'];
             const invalidParams = Object.keys(req.query).filter(param => !allowedParams.includes(param));
 
             if (invalidParams.length > 0) {
