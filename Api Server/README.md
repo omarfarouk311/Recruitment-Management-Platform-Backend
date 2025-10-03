@@ -38,7 +38,7 @@ The API Server is the central backend service for the platform, handling all HTT
 - **Skills & Education**: Management of user skills and educational background.
 - **Statistics**: Aggregated stats for seekers and companies.
 - **Templates**: Job offer templates and communication management.
-- **Advanced Authorization**: Role-based access control and resource-level permissions.
+- **Advanced Authorization**: Role-based and Attribute-based access control.
 - **Authentication Flow**: A secure authentication system using access tokens, refresh tokens, and token versioning for enhanced security and enabling secure, stateless authentication.
 - **Multipart File Handling**: Efficient handling of multipart file uploads using custom middleware.
 - **Error Handling**: Centralized error handling with custom error middlewares.
