@@ -7,9 +7,9 @@ This repository contains the PostgreSQL setup for our Recruitment Management Pla
 ## Key Features
 
 ### 1. Asynchronous Replication
-- **Architecture:** Single master node with two standby nodes.
+- **Architecture:** Single master node with two replica nodes.
 - **Purpose:** Ensures high availability and data redundancy.
-- **Setup:** Automated scripts for initializing replication and managing standby nodes.
+- **Setup:** Automated scripts for initializing replication and managing replica nodes.
 
 ### 2. Partitioning on Recommendations Table
 - **Dynamic Partitioning:** The `recommendations` table is partitioned to optimize query performance and data management.
@@ -19,9 +19,10 @@ This repository contains the PostgreSQL setup for our Recruitment Management Pla
 - **Usage:** Enables vector similarity search for job recommendations and candidate ranking.
 - **Benefits:** Powers AI-driven matching and ranking by storing and querying vector embeddings efficiently.
 
-### 4. Full Text Search
-- **Indexes:** Utilizes both GIST and GIN indexes for fast and flexible full-text search capabilities.
-- **Application:** Enhances search experience for jobs and companies.
+### 4. Full Text Search with pg_trgm
+- **Extension:** Uses the `pg_trgm` extension for advanced text search and similarity matching.
+- **Indexes:** Employs both GIST and GIN indexes on relevant columns to accelerate full-text and fuzzy search queries.
+- **Application:** Enables fast, flexible, and typo-tolerant search for jobs and companies.
 
 ### 5. Scripts & Configuration
 - **Automated Setup:** Includes scripts for database creation, user management, partitioning, and replication.
@@ -39,21 +40,20 @@ This repository contains the PostgreSQL setup for our Recruitment Management Pla
    - Scripts handle replication setup automatically.
 3. **Partitioning & Triggers:**
    - Partition management is handled via triggers and scripts in the `scripts/` folder.
-4. **pgvector & Full Text Search:**
-   - Ensure the `pgvector` extension is installed and enabled.
-   - Full text search is available out-of-the-box with pre-configured indexes.
+4. **pgvector & pg_trgm:**
+   - Ensure the `pgvector` and `pg_trgm` extensions are installed and enabled.
 
 ## Technologies Used
 - **PostgreSQL**
 - **pgvector**
-- **GIST & GIN Indexes**
+- **pg_trgm with GIST & GIN Indexes**
 - **Shell & PowerShell Scripts**
 
 ## Showcase
 This database setup demonstrates:
-- Scalable architecture with replication and partitioning
+- Scalable and highly available architecture with replication and partitioning
 - AI-powered recommendations using vector search
-- Advanced full-text search for a rich user experience
+- Advanced full-text search for a rich user experience using pg_trgm
 - Automated management for seamless operations
 
 ---
