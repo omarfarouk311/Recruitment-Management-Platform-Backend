@@ -14,6 +14,9 @@ Key features include:
 ## System Design
 <img width="2994" height="1981" alt="System_Design2" src="https://github.com/user-attachments/assets/ce35a9e6-6d6c-44fe-9e8f-d5f163db4b77" />
 
+## Use Case Diagram
+<img width="958" height="1563" alt="Use_Case_Diagram" src="https://github.com/user-attachments/assets/375873dd-4289-4c84-8a2c-728104e6ab14" />
+
 ## Project Structure
 
 - [`Api Server`](./Api%20Server/README.md) — Main backend API, business logic, and orchestration.
